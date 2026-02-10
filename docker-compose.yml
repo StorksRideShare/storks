@@ -1,0 +1,64 @@
+version: "3.8"
+
+services:
+  # Admin Service
+  # Java
+  auth-service:
+    build: ./services/admin-serive-java
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - DB_HOST=postgres
+      - DB_PORT=5432
+    networks:
+      - microservices-network
+    depends_on:
+      - postgres
+      - redis
+
+  # ... continue for all 9 services
+
+  # Shared Infrastructure
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: microservices
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - microservices-network
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - microservices-network
+
+  # API Gateway (optional)
+  # api-gateway:
+  #   build: ./gateway
+  #   ports:
+  #     - "8080:8080"
+  #   environment:
+  #     - AUTH_SERVICE_URL=http://auth-service:8001
+  #     - USER_SERVICE_URL=http://user-service:8002
+  #     - PRODUCT_SERVICE_URL=http://product-service:8003
+  #   networks:
+  #     - microservices-network
+  #   depends_on:
+  #     - auth-service
+  #     - user-service
+  #     - product-service
+
+networks:
+  microservices-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
