@@ -2,8 +2,9 @@
 
 # dependencies
 node_modules/
-.idea/
 .vscode/
+.idea/
+
 # Expo
 .expo/
 dist/
@@ -36,8 +37,6 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
-
-app-example
 
 # generated native folders
 /ios
