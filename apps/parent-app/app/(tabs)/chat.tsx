@@ -21,7 +21,7 @@ export default function TabTwoScreen() {
           roomId="room-123"
           name="Alice"
           recentMessage="See you tomorrow!"
-          notificationCount={5}
+          notificationCount={50}
         />
         <ChatCard
           type="direct"
