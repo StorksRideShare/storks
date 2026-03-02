@@ -14,6 +14,7 @@
     "@gluestack-ui/utils": "3.0.11",
     "@legendapp/motion": "2.5.3",
     "@react-navigation/native": "^7.1.28",
+    "buffer": "^6.0.3",
     "expo": "~55.0.4",
     "expo-constants": "~55.0.7",
     "expo-font": "~55.0.4",
