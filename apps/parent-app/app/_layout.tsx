@@ -20,7 +20,7 @@ import "@/global.css";
 
 export {
   // Catch any errors thrown by the Layout component.
-  ErrorBoundary
+  ErrorBoundary,
 } from "expo-router";
 
 export const unstable_settings = {
@@ -66,6 +66,7 @@ function RootLayoutNav() {
             <Stack.Screen name="(auth)" options={{ headerShown: false }} />
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen name="modal" options={{ presentation: "modal" }} />
+            <Stack.Screen name="chats" options={{ headerShown: false }} />
           </Stack>
         </ClerkProvider>
       </ThemeProvider>
