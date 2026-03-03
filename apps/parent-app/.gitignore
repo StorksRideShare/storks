@@ -4,7 +4,7 @@
 node_modules/
 .vscode/
 .idea/
-
+.env 
 # Expo
 .expo/
 dist/
