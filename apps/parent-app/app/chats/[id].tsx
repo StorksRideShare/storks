@@ -1,7 +1,8 @@
-import { Text } from "@/components/ui/text";
+import ChatRoom from "@/components/mobile/ChatRoom";
 import { useLocalSearchParams } from "expo-router";
 
-export default function ChatRoom() {
-  const { id } = useLocalSearchParams();
-  return <Text>Chat room: {id}</Text>;
+export default function ChatRoomLayout() {
+  const { id } = useLocalSearchParams(); // id = "room-123"
+
+  return <ChatRoom />;
 }

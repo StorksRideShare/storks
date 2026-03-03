@@ -10,10 +10,11 @@ export default function TabTwoScreen() {
       <VStack space="xs">
         <ChatCard
           type="direct"
-          roomId="room-123"
-          avatar="https://example.com/avatar.jpg"
+          roomId="user_1234"
+          avatar="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=687&q=80"
           name="Alice"
           recentMessage="See you tomorrow!"
+          showBadge={true}
           notificationCount={5}
         />
         <ChatCard
