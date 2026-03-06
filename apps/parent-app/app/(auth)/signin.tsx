@@ -1,6 +1,6 @@
 import { Text } from "@/components/Themed";
-import { useSignIn } from "@clerk/clerk-expo";
-import type { EmailCodeFactor } from "@clerk/types";
+import { useSignIn } from "@clerk/expo/legacy";
+import type { EmailCodeFactor } from "@clerk/shared/types";
 import { Link, useRouter } from "expo-router";
 import * as React from "react";
 import { Pressable, StyleSheet, TextInput, View } from "react-native";

@@ -4,7 +4,7 @@ import {
   AvatarImage,
 } from "@/components/ui/avatar";
 import { Box } from "@/components/ui/box";
-import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
+import { Button, ButtonText } from "@/components/ui/button";
 import { HStack } from "@/components/ui/hstack";
 import { Input, InputField } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
@@ -51,10 +51,8 @@ export default function ChatRoom() {
       {/* Header */}
       <HStack className="p-4 items-center border-b border-gray-200" space="lg">
         <Button variant="link" onPress={() => router.back()}>
-          <ButtonText />
-          <ButtonIcon>
-            <ArrowLeft size={24} color={"#ffffff"} />
-          </ButtonIcon>
+          <ArrowLeft size={24} color={"#ffffff"} />
+          <ButtonText>Back</ButtonText>
         </Button>
         <Avatar size="sm" className="ml-2">
           <AvatarFallbackText>{displayName}</AvatarFallbackText>

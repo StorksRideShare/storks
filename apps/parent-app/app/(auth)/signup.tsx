@@ -1,5 +1,5 @@
 import { Text } from "@/components/Themed";
-import { useSignUp } from "@clerk/clerk-expo";
+import { useSignUp } from "@clerk/expo/legacy";
 import { Link, useRouter } from "expo-router";
 import * as React from "react";
 import { Pressable, StyleSheet, TextInput, View } from "react-native";

@@ -1,7 +1,7 @@
 import { View } from "@/components/Themed";
 import ChatCard from "@/components/mobile/ChatCard";
 import { VStack } from "@/components/ui/vstack";
-import { useSession, useUser } from "@clerk/clerk-expo";
+import { useSession, useUser } from "@clerk/expo";
 import { StyleSheet } from "react-native";
 
 export default function TabTwoScreen() {
