@@ -1,0 +1,11 @@
+FROM eclipse-temurin:21-jdk-alpine
+WORKDIR /app
+
+# Install gradle wrapper if not present (but we'll mount the whole project)
+# The project source is mounted as a volume, so we don't need to copy anything.
+
+# Expose the port
+EXPOSE 8084
+
+# The command will be overridden by docker-compose, but we can set a default
+CMD ["./gradlew", "bootRun"]
