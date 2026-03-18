@@ -1,3 +1,3 @@
 package com.storks.livemessaging.dto;
 
-public record UserAuthClaim(String userId, String email, boolean isDeleted) {}
+public record UserAuthClaim(String providerUserId, String email, boolean isDeleted, java.util.UUID userId) {}

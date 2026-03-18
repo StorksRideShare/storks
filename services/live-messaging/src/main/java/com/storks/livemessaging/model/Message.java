@@ -29,7 +29,7 @@ public class Message {
 
     @ManyToOne
     @JoinColumn(name = "sender_id")
-    private User senders;
+    private User sender;
 
     private String content;
 

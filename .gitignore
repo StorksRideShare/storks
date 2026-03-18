@@ -2,3 +2,4 @@ services/live-messaging/database_schema/schema.sql
 /services/live-messaging/database_schema
 shared/models.zip
 services/live-messaging/database_schema/schema.sql
+*.log

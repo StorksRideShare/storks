@@ -17,10 +17,14 @@ CREATE TABLE cards
     CONSTRAINT pk_cards PRIMARY KEY (card_id)
 );
 
-CREATE TABLE chat_room_users
+CREATE TABLE chat_room_participants
 (
-    room_id UUID NOT NULL,
-    user_id UUID NOT NULL
+    id         UUID NOT NULL,
+    room_id    UUID NOT NULL,
+    user_id    UUID NOT NULL,
+    joined_at  TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    is_removed BOOLEAN DEFAULT FALSE,
+    CONSTRAINT pk_chat_room_participants PRIMARY KEY (id)
 );
 
 CREATE TABLE chat_rooms
@@ -316,11 +320,11 @@ ALTER TABLE schedules
 ALTER TABLE vehicles
     ADD CONSTRAINT FK_VEHICLES_ON_DRIVER FOREIGN KEY (driver_id) REFERENCES drivers (user_id);
 
-ALTER TABLE chat_room_users
-    ADD CONSTRAINT fk_charoouse_on_chat_room FOREIGN KEY (room_id) REFERENCES chat_rooms (room_id);
+ALTER TABLE chat_room_participants
+    ADD CONSTRAINT fk_chat_room_participants_on_chat_room FOREIGN KEY (room_id) REFERENCES chat_rooms (room_id);
 
-ALTER TABLE chat_room_users
-    ADD CONSTRAINT fk_charoouse_on_user FOREIGN KEY (user_id) REFERENCES users (user_id);
+ALTER TABLE chat_room_participants
+    ADD CONSTRAINT fk_chat_room_participants_on_user FOREIGN KEY (user_id) REFERENCES users (user_id);
 
 ALTER TABLE driver_secondary_phones
     ADD CONSTRAINT fk_driver_secondary_phones_on_driver FOREIGN KEY (driver_id) REFERENCES drivers (user_id);

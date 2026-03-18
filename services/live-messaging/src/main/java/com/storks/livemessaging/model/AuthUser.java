@@ -4,4 +4,5 @@ public interface AuthUser {
     String getProviderUserId();
     String getEmail();
     boolean isDeleted();
+    java.util.UUID getUserId();
 }

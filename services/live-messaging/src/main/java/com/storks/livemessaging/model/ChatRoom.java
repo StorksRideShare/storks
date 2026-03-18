@@ -21,13 +21,8 @@ public class ChatRoom {
     @Enumerated(EnumType.STRING)
     private RoomType chatRoomType;
 
-    @ManyToMany
-    @JoinTable(
-            name = "chat_room_users",
-            joinColumns = @JoinColumn(name = "room_id"),
-            inverseJoinColumns = @JoinColumn(name = "user_id")
-    )
-    private List<User> users;
+    @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ChatRoomParticipant> participants;
 
     @ManyToOne
     @JoinColumn(name = "offer_id")
