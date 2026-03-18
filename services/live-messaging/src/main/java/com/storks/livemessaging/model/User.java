@@ -24,7 +24,6 @@ public abstract class User {
     private UUID userId;
 
     private String email;
-    private String passwordHash;
 
     private String firstName;
     private String lastName;

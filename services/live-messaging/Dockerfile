@@ -30,4 +30,4 @@ USER gradle
 
 COPY --chown=gradle:gradle . .
 
-CMD ["gradle", "bootRun", "--continuous"]
+CMD ["gradle", "bootRun", "--no-daemon"]

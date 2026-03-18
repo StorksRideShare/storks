@@ -19,6 +19,7 @@ bin/
 
 ### IntelliJ IDEA ###
 .idea/
+.agents/
 *.iws
 *.iml
 *.ipr
