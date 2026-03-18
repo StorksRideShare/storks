@@ -1,5 +1,5 @@
-import { ClerkProvider } from "@clerk/clerk-expo";
-import { tokenCache } from "@clerk/clerk-expo/token-cache";
+import { ClerkProvider } from "@clerk/expo";
+import { tokenCache } from "@clerk/expo/token-cache";
 import {
   DarkTheme,
   DefaultTheme,
@@ -30,6 +30,7 @@ export const unstable_settings = {
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
+const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
@@ -60,7 +61,7 @@ function RootLayoutNav() {
   return (
     <GluestackUIProvider mode="dark">
       <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-        <ClerkProvider tokenCache={tokenCache}>
+        <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
           <Stack>
             <Stack.Screen name="(home)" options={{ headerShown: false }} />
             <Stack.Screen name="(auth)" options={{ headerShown: false }} />
