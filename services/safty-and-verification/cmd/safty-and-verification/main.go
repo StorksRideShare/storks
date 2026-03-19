@@ -6,9 +6,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"safty-and-verification/internal/api/handlers"
+	"safty-and-verification/internal/api/middleware"
 	"safty-and-verification/internal/config"
 	"safty-and-verification/internal/kafka"
 	"safty-and-verification/internal/repository"
+	"safty-and-verification/internal/service"
 )
 
 func main() {
@@ -51,6 +54,33 @@ func main() {
 			"status": "ok",
 		})
 	})
+
+	// Test endpoints (no auth required)
+	testGrp := r.Group("/api/v1/test")
+	testGrp.POST("/mock-user", handlers.PostTestMockUser(dbPool))
+
+	// Public API group using Auth Middleware
+	apiGrp := r.Group("/api/v1")
+	apiGrp.Use(middleware.AuthMiddleware(dbPool, cfg.ClerkSecretKey))
+	
+	verificationSvc := service.NewVerificationService(dbPool, redisClient, cfg.QRSecret)
+
+	// Start Scheduler
+	scheduler := service.NewScheduler(verificationSvc)
+	scheduler.Start(context.Background())
+
+	otpHandler := handlers.NewOTPHandler(verificationSvc)
+
+	apiGrp.POST("/otp/request", otpHandler.HandleOTPRequest)
+	apiGrp.POST("/otp/verify", otpHandler.HandleOTPVerify)
+
+	qrSvc := service.NewQRService(dbPool, redisClient, cfg.QRSecret)
+	qrHandler := handlers.NewQRHandler(qrSvc)
+	
+	apiGrp.POST("/qr/request", qrHandler.HandleQRRequest)
+	apiGrp.POST("/qr/verify", qrHandler.HandleQRVerify)
+	
+	_ = apiGrp
 
 	log.Printf("Starting server on port %s...", cfg.Port)
 	if err := r.Run(":" + cfg.Port); err != nil {

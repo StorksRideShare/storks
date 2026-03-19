@@ -8,11 +8,12 @@ import (
 )
 
 type Config struct {
-	Port         string
-	DatabaseURL  string
-	RedisURL     string
-	KafkaBrokers string
-	QRSecret     string
+	Port           string
+	DatabaseURL    string
+	RedisURL       string
+	KafkaBrokers   string
+	QRSecret       string
+	ClerkSecretKey string
 }
 
 func LoadConfig() (*Config, error) {
@@ -27,11 +28,12 @@ func LoadConfig() (*Config, error) {
 	}
 
 	cfg := &Config{
-		Port:         port,
-		DatabaseURL:  os.Getenv("DATABASE_URL"),
-		RedisURL:     os.Getenv("REDIS_URL"),
-		KafkaBrokers: os.Getenv("KAFKA_BROKERS"),
-		QRSecret:     os.Getenv("QR_SECRET"),
+		Port:           port,
+		DatabaseURL:    os.Getenv("DATABASE_URL"),
+		RedisURL:       os.Getenv("REDIS_URL"),
+		KafkaBrokers:   os.Getenv("KAFKA_BROKERS"),
+		QRSecret:       os.Getenv("QR_SECRET"),
+		ClerkSecretKey: os.Getenv("CLERK_SECRET_KEY"),
 	}
 
 	return cfg, nil

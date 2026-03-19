@@ -4,3 +4,6 @@ shared/models.zip
 services/live-messaging/database_schema/schema.sql
 *.log
 services/safty-and-verification/.env
+*.env
+services/safty-and-verification/database_setup.sql
+services/safty-and-verification/.env
