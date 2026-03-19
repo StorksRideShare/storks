@@ -25,7 +25,8 @@ func TestGeneratePIN(t *testing.T) {
 
 func TestQRSignature(t *testing.T) {
 	// Initialize QRService with a dummy secret, we don't need Db or Redis for signing math
-	svc := NewQRService(nil, nil, "supersecretqrtestkey")
+	// Passing nil for the kafka producer
+	svc := NewQRService(nil, nil, "supersecretqrtestkey", nil)
 
 	payload := &QRPayload{
 		Type:      "morning",

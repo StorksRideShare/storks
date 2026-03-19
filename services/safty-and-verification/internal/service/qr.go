@@ -11,19 +11,22 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
+	"safty-and-verification/internal/kafka"
 )
 
 type QRService struct {
 	dbPool      *pgxpool.Pool
 	redisClient *redis.Client
 	qrSecret    string
+	producer    *kafka.Producer
 }
 
-func NewQRService(dbPool *pgxpool.Pool, redisClient *redis.Client, qrSecret string) *QRService {
+func NewQRService(dbPool *pgxpool.Pool, redisClient *redis.Client, qrSecret string, producer *kafka.Producer) *QRService {
 	return &QRService{
 		dbPool:      dbPool,
 		redisClient: redisClient,
 		qrSecret:    qrSecret,
+		producer:    producer,
 	}
 }
 
@@ -73,6 +76,13 @@ func (s *QRService) GenerateMorningQR(ctx context.Context, rideID, groupID strin
 	}
 	s.signPayload(payload)
 
+	if s.producer != nil {
+		s.producer.PublishJSONEvent(ctx, "morning_qr_generated", map[string]string{
+			"ride_id":  rideID,
+			"group_id": groupID,
+		})
+	}
+
 	return payload, nil
 }
 
@@ -103,6 +113,14 @@ func (s *QRService) VerifyMorningQR(ctx context.Context, driverID string, payloa
 		VALUES (gen_random_uuid(), 'morning_qr', $1, $2, 'success', $3)
 	`, payload.RideID, payload.GroupID, now)
 
+	if s.producer != nil {
+		s.producer.PublishJSONEvent(ctx, "morning_qr_verified", map[string]string{
+			"ride_id":  payload.RideID,
+			"group_id": payload.GroupID,
+			"driver_id": driverID,
+		})
+	}
+
 	return nil
 }
 
@@ -116,6 +134,13 @@ func (s *QRService) GenerateAfternoonQR(ctx context.Context, groupID, childID st
 		ExpiresAt: 0,
 	}
 	s.signPayload(payload)
+
+	if s.producer != nil {
+		s.producer.PublishJSONEvent(ctx, "afternoon_qr_generated", map[string]string{
+			"group_id": groupID,
+			"child_id": childID,
+		})
+	}
 
 	// In the real system, you might save this in the database permanently to track generation
 	return payload, nil
@@ -162,6 +187,15 @@ func (s *QRService) VerifyAfternoonQR(ctx context.Context, driverID string, payl
 		INSERT INTO verification_logs (id, verification_type, ride_id, group_id, child_id, status, verified_at)
 		VALUES (gen_random_uuid(), 'afternoon_qr', $1, $2, $3, 'success', $4)
 	`, rideID, payload.GroupID, payload.ChildID, now)
+
+	if s.producer != nil {
+		s.producer.PublishJSONEvent(ctx, "afternoon_qr_verified", map[string]string{
+			"ride_id":  rideID,
+			"group_id": payload.GroupID,
+			"child_id": payload.ChildID,
+			"driver_id": driverID,
+		})
+	}
 
 	return nil
 }

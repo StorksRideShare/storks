@@ -9,19 +9,22 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
+	"safty-and-verification/internal/kafka"
 )
 
 type VerificationService struct {
 	dbPool      *pgxpool.Pool
 	redisClient *redis.Client
 	qrSecret    string
+	producer    *kafka.Producer
 }
 
-func NewVerificationService(dbPool *pgxpool.Pool, redisClient *redis.Client, qrSecret string) *VerificationService {
+func NewVerificationService(dbPool *pgxpool.Pool, redisClient *redis.Client, qrSecret string, producer *kafka.Producer) *VerificationService {
 	return &VerificationService{
 		dbPool:      dbPool,
 		redisClient: redisClient,
 		qrSecret:    qrSecret,
+		producer:    producer,
 	}
 }
 
@@ -80,6 +83,13 @@ func (s *VerificationService) HandleMorningOTPRequest(ctx context.Context, userI
 		return "", fmt.Errorf("failed to save pin: %v", err)
 	}
 
+	if s.producer != nil {
+		s.producer.PublishJSONEvent(ctx, "morning_otp_generated", map[string]string{
+			"ride_id": rideID,
+			"group_id": groupID,
+		})
+	}
+
 	return pin, nil
 }
 
@@ -127,6 +137,14 @@ func (s *VerificationService) VerifyMorningOTP(ctx context.Context, userID, ride
 		INSERT INTO verification_logs (id, verification_type, ride_id, group_id, status, verified_at)
 		VALUES (gen_random_uuid(), 'morning_otp', $1, $2, 'success', $3)
 	`, rideID, groupID, now)
+	
+	if s.producer != nil {
+		s.producer.PublishJSONEvent(ctx, "morning_otp_verified", map[string]string{
+			"ride_id": rideID,
+			"group_id": groupID,
+			"driver_id": userID,
+		})
+	}
 
 	return nil
 }
@@ -192,6 +210,14 @@ func (s *VerificationService) HandleAfternoonOTPRequest(ctx context.Context, use
 			`, groupID, cid, pin, now, tomorrow)
 		}
 	}
+	
+	if s.producer != nil {
+		s.producer.PublishJSONEvent(ctx, "afternoon_otp_batch_generated", map[string]interface{}{
+			"group_id": groupID,
+			"children_count": len(childPins),
+			"active_date": tomorrow,
+		})
+	}
 
 	return childPins, nil
 }
@@ -243,6 +269,15 @@ func (s *VerificationService) VerifyAfternoonOTP(ctx context.Context, userID, ri
 			INSERT INTO verification_logs (id, verification_type, ride_id, group_id, child_id, status, verified_at)
 			VALUES (gen_random_uuid(), 'afternoon_otp', $1, $2, $3, 'success', $4)
 		`, rideID, groupID, cp.ChildID, now)
+		
+		if s.producer != nil {
+			s.producer.PublishJSONEvent(ctx, "afternoon_otp_verified", map[string]string{
+				"ride_id": rideID,
+				"group_id": groupID,
+				"child_id": cp.ChildID,
+				"driver_id": userID,
+			})
+		}
 	}
 
 	return nil

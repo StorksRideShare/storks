@@ -23,67 +23,82 @@ func main() {
 	// Init DB
 	dbPool, err := repository.NewPostgresPool(context.Background(), cfg.DatabaseURL)
 	if err != nil {
-		log.Printf("Warning: Failed to connect to database: %v", err)
-	} else {
-		defer dbPool.Close()
-		log.Println("Connected to PostgreSQL")
+		log.Fatalf("Failed to connect to database: %v\n", err)
 	}
+	defer dbPool.Close()
 
-	// Init Redis
 	redisClient, err := repository.NewRedisClient(context.Background(), cfg.RedisURL)
 	if err != nil {
-		log.Printf("Warning: Failed to connect to Redis: %v", err)
-	} else {
-		defer redisClient.Close()
-		log.Println("Connected to Redis")
+		log.Fatalf("Failed to connect to redis: %v\n", err)
 	}
+	defer redisClient.Close()
 
-	// Init Kafka Producer
+	// Initialize Kafka Producer
 	kafkaProducer := kafka.NewProducer(cfg.KafkaBrokers)
-	if kafkaProducer != nil {
-		defer kafkaProducer.Close()
-		log.Println("Initialized Kafka Producer")
-	} else {
-		log.Printf("Warning: Database or Kafka not configured properly")
-	}
+	defer func() {
+		if kafkaProducer != nil {
+			_ = kafkaProducer.Close()
+		}
+	}()
 
 	r := gin.Default()
 
 	r.GET("/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"status": "ok",
-		})
+		c.JSON(200, gin.H{"status": "ok"})
 	})
 
-	// Test endpoints (no auth required)
-	testGrp := r.Group("/api/v1/test")
-	testGrp.POST("/mock-user", handlers.PostTestMockUser(dbPool))
+	// Add the testing mechanism directly (Not protected by middleware)
+	r.POST("/api/v1/test/mock-user", handlers.PostTestMockUser(dbPool))
 
 	// Public API group using Auth Middleware
 	apiGrp := r.Group("/api/v1")
 	apiGrp.Use(middleware.AuthMiddleware(dbPool, cfg.ClerkSecretKey))
 	
-	verificationSvc := service.NewVerificationService(dbPool, redisClient, cfg.QRSecret)
+	verificationSvc := service.NewVerificationService(dbPool, redisClient, cfg.QRSecret, kafkaProducer)
 
-	// Start Scheduler
-	scheduler := service.NewScheduler(verificationSvc)
-	scheduler.Start(context.Background())
+	// Cron Scheduler (background process)
+	sched := service.NewScheduler(verificationSvc)
+	sched.Start(context.Background())
 
 	otpHandler := handlers.NewOTPHandler(verificationSvc)
 
 	apiGrp.POST("/otp/request", otpHandler.HandleOTPRequest)
 	apiGrp.POST("/otp/verify", otpHandler.HandleOTPVerify)
 
-	qrSvc := service.NewQRService(dbPool, redisClient, cfg.QRSecret)
+	qrSvc := service.NewQRService(dbPool, redisClient, cfg.QRSecret, kafkaProducer)
 	qrHandler := handlers.NewQRHandler(qrSvc)
 	
 	apiGrp.POST("/qr/request", qrHandler.HandleQRRequest)
 	apiGrp.POST("/qr/verify", qrHandler.HandleQRVerify)
 	
-	_ = apiGrp
+	// Initialize Kafka Consumer
+	kafkaConsumer := kafka.NewConsumer(cfg.KafkaBrokers)
+	if kafkaConsumer != nil {
+		kafkaConsumer.Start(context.Background(), func(ctx context.Context, action string, payload map[string]interface{}) {
+			// Extremely simple routing for kafka commands
+			log.Printf("Kafka Request received: %s", action)
+			
+			switch action {
+			case "generate_morning_otp":
+				rID, _ := payload["ride_id"].(string)
+				gID, _ := payload["group_id"].(string)
+				// We pass a generic system user for kafka-originated cmds 
+				_, _ = verificationSvc.HandleMorningOTPRequest(ctx, "kafka_system", rID, gID)
+			case "generate_morning_qr":
+				rID, _ := payload["ride_id"].(string)
+				gID, _ := payload["group_id"].(string)
+				_, _ = qrSvc.GenerateMorningQR(ctx, rID, gID)
+			case "generate_afternoon_qr":
+				cID, _ := payload["child_id"].(string)
+				gID, _ := payload["group_id"].(string)
+				_, _ = qrSvc.GenerateAfternoonQR(ctx, gID, cID)
+			}
+		})
+		defer kafkaConsumer.Close()
+	}
 
-	log.Printf("Starting server on port %s...", cfg.Port)
+	log.Printf("Starting server on port %s...\n", cfg.Port)
 	if err := r.Run(":" + cfg.Port); err != nil {
-		log.Fatalf("Failed to start server: %v", err)
+		log.Fatalf("Server failed to start: %v\n", err)
 	}
 }
