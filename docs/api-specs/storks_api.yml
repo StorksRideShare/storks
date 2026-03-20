@@ -1,0 +1,28 @@
+openapi: "3.0.3"
+info:
+  title: Storks API
+  version: "1.0"
+servers:
+  - url: http:localhost:8080
+    description: >
+      Default Server, this is simply serving our homepage.
+paths:
+  /test:
+    get:
+      responses:
+        "200":
+          description: OK
+  /health:
+    get:
+      description: ""
+      parameters: []
+      responses:
+        "200":
+          description: OK
+  /:
+    get:
+      responses:
+        "200":
+          description: >
+            OK
+            Serves Homepage

@@ -1,0 +1,229 @@
+<!doctype html>
+<html>
+  <head>
+    <title>WebSocket Chat Test</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 600px;
+        margin: 20px auto;
+      }
+      #messages {
+        border: 1px solid #ccc;
+        height: 300px;
+        overflow-y: scroll;
+        padding: 10px;
+        margin-bottom: 10px;
+      }
+      .message {
+        margin: 5px 0;
+        padding: 5px;
+        border-radius: 3px;
+      }
+      .sent {
+        background-color: #e3f2fd;
+        text-align: right;
+      }
+      .received {
+        background-color: #f1f8e9;
+        text-align: left;
+      }
+      input,
+      button {
+        padding: 8px;
+        margin: 5px;
+      }
+      button {
+        cursor: pointer;
+      }
+      .status {
+        color: #666;
+        font-style: italic;
+        margin: 5px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>WebSocket Live Message Test</h2>
+
+    <div>
+      <label>Server URL:</label>
+      <input
+        type="text"
+        id="serverUrl"
+        value="ws://localhost:8089/ws"
+        size="40"
+      />
+    </div>
+    <div>
+      <label>User ID:</label>
+      <input type="text" id="userId" placeholder="e.g., user123" />
+      <button id="connectBtn">Connect</button>
+      <button id="disconnectBtn" disabled>Disconnect</button>
+    </div>
+    <div id="connectionStatus" class="status">Not connected</div>
+
+    <hr />
+
+    <div>
+      <label>Conversation ID:</label>
+      <input type="text" id="conversationId" placeholder="e.g., room1" />
+      <button id="joinBtn" disabled>Join Room</button>
+    </div>
+
+    <div id="messages"></div>
+
+    <div>
+      <input
+        type="text"
+        id="messageInput"
+        placeholder="Type a message..."
+        style="width: 70%"
+        disabled
+      />
+      <button id="sendBtn" disabled>Send</button>
+    </div>
+
+    <script>
+      let ws = null;
+      let currentUserId = "";
+      let currentRoom = "";
+
+      const serverUrl = document.getElementById("serverUrl");
+      const userId = document.getElementById("userId");
+      const connectBtn = document.getElementById("connectBtn");
+      const disconnectBtn = document.getElementById("disconnectBtn");
+      const joinBtn = document.getElementById("joinBtn");
+      const sendBtn = document.getElementById("sendBtn");
+      const messageInput = document.getElementById("messageInput");
+      const messagesDiv = document.getElementById("messages");
+      const connectionStatus = document.getElementById("connectionStatus");
+      const conversationId = document.getElementById("conversationId");
+
+      function addMessage(text, type = "received") {
+        const msgDiv = document.createElement("div");
+        msgDiv.classList.add("message", type === "sent" ? "sent" : "received");
+        msgDiv.textContent = text;
+        messagesDiv.appendChild(msgDiv);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      }
+
+      function setConnected(connected) {
+        connectBtn.disabled = connected;
+        disconnectBtn.disabled = !connected;
+        joinBtn.disabled = !connected;
+        sendBtn.disabled = !connected || !currentRoom;
+        messageInput.disabled = !connected || !currentRoom;
+        if (!connected) {
+          currentRoom = "";
+          joinBtn.textContent = "Join Room";
+        }
+      }
+
+      connectBtn.addEventListener("click", () => {
+        const uid = userId.value.trim();
+        if (!uid) {
+          alert("Please enter a user ID");
+          return;
+        }
+        currentUserId = uid;
+
+        const url =
+          serverUrl.value.trim() + "?user_id=" + encodeURIComponent(uid);
+        ws = new WebSocket(url);
+
+        ws.onopen = () => {
+          connectionStatus.textContent = "Connected as " + uid;
+          setConnected(true);
+          addMessage("Connected to server", "received");
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            // Display incoming message
+            addMessage(
+              `[${data.sender_id || "unknown"}] ${data.content}`,
+              "received",
+            );
+          } catch (e) {
+            // If not JSON, just show raw
+            addMessage(event.data, "received");
+          }
+        };
+
+        ws.onerror = (error) => {
+          console.error("WebSocket error:", error);
+          addMessage("WebSocket error", "received");
+        };
+
+        ws.onclose = () => {
+          connectionStatus.textContent = "Disconnected";
+          setConnected(false);
+          addMessage("Disconnected from server", "received");
+          ws = null;
+        };
+      });
+
+      disconnectBtn.addEventListener("click", () => {
+        if (ws) {
+          ws.close();
+        }
+      });
+
+      joinBtn.addEventListener("click", () => {
+        const room = conversationId.value.trim();
+        if (!room) {
+          alert("Please enter a conversation ID");
+          return;
+        }
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(
+            JSON.stringify({
+              type: "join",
+              conversation_id: room,
+            }),
+          );
+          currentRoom = room;
+          joinBtn.textContent = "Joined " + room;
+          sendBtn.disabled = false;
+          messageInput.disabled = false;
+          addMessage(`Joined room: ${room}`, "received");
+        } else {
+          alert("WebSocket not connected");
+        }
+      });
+
+      sendBtn.addEventListener("click", () => {
+        const content = messageInput.value.trim();
+        if (!content) return;
+        if (!currentRoom) {
+          alert("Join a room first");
+          return;
+        }
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(
+            JSON.stringify({
+              type: "chat",
+              conversation_id: currentRoom,
+              sender_id: currentUserId,
+              content: content,
+            }),
+          );
+          // Show sent message optimistically
+          addMessage(`You: ${content}`, "sent");
+          messageInput.value = "";
+        } else {
+          alert("WebSocket not connected");
+        }
+      });
+
+      // Allow Enter key to send
+      messageInput.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") {
+          sendBtn.click();
+        }
+      });
+    </script>
+  </body>
+</html>
