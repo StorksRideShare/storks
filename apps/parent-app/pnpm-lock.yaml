@@ -11,6 +11,9 @@ importers:
       '@clerk/clerk-expo':
         specifier: ^2.19.30
         version: 2.19.30(@solana/web3.js@1.98.4(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6))(@types/react@19.2.14)(bs58@5.0.0)(bufferutil@4.1.0)(expo-auth-session@55.0.6(expo@55.0.4)(react-native@0.83.2(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.0)(utf-8-validate@6.0.6))(react@19.2.0)(typescript@5.9.3))(expo-crypto@55.0.8(expo@55.0.4))(expo-secure-store@55.0.8(expo@55.0.4))(expo-web-browser@55.0.9(expo@55.0.4)(react-native@0.83.2(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.0)(utf-8-validate@6.0.6)))(fastestsmallesttextencoderdecoder@1.0.22)(react-dom@19.2.0(react@19.2.0))(react-native@0.83.2(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.0)(utf-8-validate@6.0.6))(react@19.2.0)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.0))(utf-8-validate@6.0.6)(zod@3.25.76)
+      '@expo-google-fonts/syne':
+        specifier: ^0.4.2
+        version: 0.4.2
       '@expo/html-elements':
         specifier: 0.10.1
         version: 0.10.1
@@ -768,6 +771,9 @@ packages:
 
   '@expo-google-fonts/material-symbols@0.4.24':
     resolution: {integrity: sha512-1bJ63Yv2Bn8SN2MjrlbwLwUhnC8COOeejd15H88WjCtw5iNErqEPaBnpvmYyqciVYwudGo5drUIdY9C/5yPGbg==}
+
+  '@expo-google-fonts/syne@0.4.2':
+    resolution: {integrity: sha512-H8VJqvbZRfbfhzAcBa0N++j/2b//RuadZE+VhZ6hzUUtlCw4CyTBrQN7G2UZ+w5DCkFQyRgZ17pmFYy6b0or4Q==}
 
   '@expo/cli@55.0.14':
     resolution: {integrity: sha512-glXPSjjLCIz+KX/ezqLTGIF9eTE1lexiCxunvB3loRZNnGeBDGW3eF++cuPKudW26jeC6bqZkcqBG7Lp0Sp9qg==}
@@ -5823,6 +5829,8 @@ snapshots:
   '@emotion/weak-memoize@0.3.1': {}
 
   '@expo-google-fonts/material-symbols@0.4.24': {}
+
+  '@expo-google-fonts/syne@0.4.2': {}
 
   '@expo/cli@55.0.14(@expo/dom-webview@55.0.3)(@expo/metro-runtime@55.0.6)(bufferutil@4.1.0)(expo-constants@55.0.7)(expo-font@55.0.4)(expo-router@55.0.3)(expo@55.0.4)(react-dom@19.2.0(react@19.2.0))(react-native@0.83.2(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.0)(utf-8-validate@6.0.6))(react@19.2.0)(typescript@5.9.3)(utf-8-validate@6.0.6)':
     dependencies:

@@ -1,51 +1,65 @@
-import { Text } from "@/components/Themed";
 import { useSignIn } from "@clerk/clerk-expo";
 import type { EmailCodeFactor } from "@clerk/types";
 import { Link, useRouter } from "expo-router";
 import * as React from "react";
-import { Pressable, StyleSheet, TextInput, View } from "react-native";
+import {
+  Syne_400Regular,
+  Syne_600SemiBold,
+  Syne_700Bold,
+} from "@expo-google-fonts/syne";
+import { useFonts } from "expo-font";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  SafeAreaView,
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
+} from "react-native";
 
 export default function Page() {
   const { signIn, setActive, isLoaded } = useSignIn();
   const router = useRouter();
 
+  const [fontsLoaded] = useFonts({
+    Syne_400Regular,
+    Syne_600SemiBold,
+    Syne_700Bold,
+  });
+
   const [emailAddress, setEmailAddress] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [code, setCode] = React.useState("");
   const [showEmailCode, setShowEmailCode] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
 
-  // Handle the submission of the sign-in form
   const onSignInPress = React.useCallback(async () => {
     if (!isLoaded) return;
+    setIsLoading(true);
+    setError(null);
 
-    // Start the sign-in process using the email and password provided
     try {
       const signInAttempt = await signIn.create({
         identifier: emailAddress,
         password,
       });
 
-      // If sign-in process is complete, set the created session as active
-      // and redirect the user
       if (signInAttempt.status === "complete") {
         await setActive({
           session: signInAttempt.createdSessionId,
           navigate: async ({ session }) => {
             if (session?.currentTask) {
-              // Check for tasks and navigate to custom UI to help users resolve them
-              // See https://clerk.com/docs/guides/development/custom-flows/authentication/session-tasks
               console.log(session?.currentTask);
               return;
             }
-
             router.replace("/");
           },
         });
       } else if (signInAttempt.status === "needs_second_factor") {
-        // Check if email_code is a valid second factor
-        // This is required when Client Trust is enabled and the user
-        // is signing in from a new device.
-        // See https://clerk.com/docs/guides/secure/client-trust
         const emailCodeFactor = signInAttempt.supportedSecondFactors?.find(
           (factor): factor is EmailCodeFactor =>
             factor.strategy === "email_code",
@@ -59,20 +73,25 @@ export default function Page() {
           setShowEmailCode(true);
         }
       } else {
-        // If the status is not complete, check why. User may need to
-        // complete further steps.
         console.error(JSON.stringify(signInAttempt, null, 2));
+        setError("Sign in failed. Please try again.");
       }
-    } catch (err) {
-      // See https://clerk.com/docs/guides/development/custom-flows/error-handling
-      // for more info on error handling
+    } catch (err: any) {
       console.error(JSON.stringify(err, null, 2));
+      const message =
+        err?.errors?.[0]?.longMessage ??
+        err?.errors?.[0]?.message ??
+        "Something went wrong. Please try again.";
+      setError(message);
+    } finally {
+      setIsLoading(false);
     }
   }, [isLoaded, signIn, setActive, router, emailAddress, password]);
 
-  // Handle the submission of the email verification code
   const onVerifyPress = React.useCallback(async () => {
     if (!isLoaded) return;
+    setIsLoading(true);
+    setError(null);
 
     try {
       const signInAttempt = await signIn.attemptSecondFactor({
@@ -85,143 +104,261 @@ export default function Page() {
           session: signInAttempt.createdSessionId,
           navigate: async ({ session }) => {
             if (session?.currentTask) {
-              // Check for tasks and navigate to custom UI to help users resolve them
-              // See https://clerk.com/docs/guides/development/custom-flows/authentication/session-tasks
               console.log(session?.currentTask);
               return;
             }
-
             router.replace("/");
           },
         });
       } else {
         console.error(JSON.stringify(signInAttempt, null, 2));
+        setError("Invalid code. Please try again.");
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(JSON.stringify(err, null, 2));
+      const message =
+        err?.errors?.[0]?.longMessage ??
+        err?.errors?.[0]?.message ??
+        "Something went wrong. Please try again.";
+      setError(message);
+    } finally {
+      setIsLoading(false);
     }
   }, [isLoaded, signIn, setActive, router, code]);
 
-  // Display email code verification form
+  if (!fontsLoaded) return null;
+
+  // ------------------------------------------------------------------
+  // UI: EMAIL VERIFICATION STEP
+  // ------------------------------------------------------------------
   if (showEmailCode) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.title}>Verify your email</Text>
-        <Text style={styles.description}>
-          A verification code has been sent to your email.
-        </Text>
-        <TextInput
-          style={styles.input}
-          value={code}
-          placeholder="Enter verification code"
-          placeholderTextColor="#666666"
-          onChangeText={(code) => setCode(code)}
-          keyboardType="numeric"
-        />
-        <Pressable
-          style={({ pressed }) => [
-            styles.button,
-            pressed && styles.buttonPressed,
-          ]}
-          onPress={onVerifyPress}
+      <SafeAreaView style={styles.container}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.keyboardView}
         >
-          <Text style={styles.buttonText}>Verify</Text>
-        </Pressable>
-      </View>
+          <View style={styles.logoContainer}>
+            <Text style={styles.logoText}>
+              <Text style={styles.logoHighlight}>S</Text>torks
+            </Text>
+          </View>
+
+          <View style={styles.contentContainer}>
+            <Text style={styles.title}>Verify your email</Text>
+            <Text style={styles.description}>
+              A verification code has been sent to your email.
+            </Text>
+
+            {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+            <TextInput
+              style={styles.input}
+              value={code}
+              placeholder="Enter verification code"
+              placeholderTextColor="#7A726E"
+              onChangeText={(val) => {
+                setCode(val);
+                setError(null);
+              }}
+              keyboardType="numeric"
+            />
+
+            <TouchableOpacity
+              style={[
+                styles.loginButton,
+                (!code || isLoading) && styles.buttonDisabled,
+              ]}
+              activeOpacity={0.8}
+              onPress={onVerifyPress}
+              disabled={!code || isLoading}
+            >
+              {isLoading ? (
+                <ActivityIndicator color="#000000" />
+              ) : (
+                <Text style={styles.loginButtonText}>Verify</Text>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.footerContainer}
+              activeOpacity={0.6}
+              onPress={() => {
+                setShowEmailCode(false);
+                setCode("");
+                setError(null);
+              }}
+            >
+              <Text style={styles.footerText}>Go back</Text>
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
     );
   }
 
+  // ------------------------------------------------------------------
+  // UI: MAIN SIGN IN STEP
+  // ------------------------------------------------------------------
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Sign in</Text>
-      <Text style={styles.label}>Email address</Text>
-      <TextInput
-        style={styles.input}
-        autoCapitalize="none"
-        value={emailAddress}
-        placeholder="Enter email"
-        placeholderTextColor="#666666"
-        onChangeText={(emailAddress) => setEmailAddress(emailAddress)}
-        keyboardType="email-address"
-      />
-      <Text style={styles.label}>Password</Text>
-      <TextInput
-        style={styles.input}
-        value={password}
-        placeholder="Enter password"
-        placeholderTextColor="#666666"
-        secureTextEntry={true}
-        onChangeText={(password) => setPassword(password)}
-      />
-      <Pressable
-        style={({ pressed }) => [
-          styles.button,
-          (!emailAddress || !password) && styles.buttonDisabled,
-          pressed && styles.buttonPressed,
-        ]}
-        onPress={onSignInPress}
-        disabled={!emailAddress || !password}
+    <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.keyboardView}
       >
-        <Text style={styles.buttonText}>Sign in</Text>
-      </Pressable>
-      <View style={styles.linkContainer}>
-        <Text>Don't have an account? </Text>
-        <Link href="/signup">
-          <Text>Sign up</Text>
-        </Link>
-      </View>
-    </View>
+        <View style={styles.logoContainer}>
+          <Text style={styles.logoText}>
+            <Text style={styles.logoHighlight}>S</Text>torks
+          </Text>
+        </View>
+
+        <View style={styles.contentContainer}>
+          <Text style={styles.title}>Welcome Back!</Text>
+
+          {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+          <TextInput
+            style={styles.input}
+            placeholder="Email"
+            placeholderTextColor="#7A726E"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+            value={emailAddress}
+            onChangeText={(val) => {
+              setEmailAddress(val);
+              setError(null);
+            }}
+          />
+
+          <TextInput
+            style={styles.input}
+            placeholder="Password"
+            placeholderTextColor="#7A726E"
+            secureTextEntry
+            value={password}
+            onChangeText={(val) => {
+              setPassword(val);
+              setError(null);
+            }}
+          />
+
+          <TouchableOpacity
+            style={[
+              styles.loginButton,
+              (!emailAddress || !password || isLoading) &&
+                styles.buttonDisabled,
+            ]}
+            activeOpacity={0.8}
+            onPress={onSignInPress}
+            disabled={!emailAddress || !password || isLoading}
+          >
+            {isLoading ? (
+              <ActivityIndicator color="#000000" />
+            ) : (
+              <Text style={styles.loginButtonText}>Log In</Text>
+            )}
+          </TouchableOpacity>
+
+          <Link href="/signup" asChild>
+            <TouchableOpacity
+              style={styles.footerContainer}
+              activeOpacity={0.6}
+            >
+              <Text style={styles.footerText}>Don't have an account yet?</Text>
+            </TouchableOpacity>
+          </Link>
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-    gap: 12,
+    backgroundColor: "#171412",
+  },
+  keyboardView: {
+    flex: 1,
+  },
+  logoContainer: {
+    paddingTop: Platform.OS === "android" ? 40 : 20,
+    paddingLeft: 24,
+  },
+  logoText: {
+    fontFamily: "Syne_700Bold",
+    fontSize: 22,
+    color: "#FFFFFF",
+    letterSpacing: 0.5,
+  },
+  logoHighlight: {
+    fontFamily: "Syne_700Bold",
+    color: "#E66B00",
+  },
+  contentContainer: {
+    flex: 1,
+    justifyContent: "center",
+    paddingHorizontal: 32,
   },
   title: {
-    marginBottom: 8,
+    fontFamily: "Syne_400Regular",
+    fontSize: 16,
+    color: "#FFFFFF",
+    textAlign: "center",
+    marginBottom: 48,
   },
   description: {
+    fontFamily: "Syne_400Regular",
     fontSize: 14,
-    marginBottom: 16,
-    opacity: 0.8,
+    color: "#7A726E",
+    textAlign: "center",
+    marginBottom: 32,
+    lineHeight: 20,
   },
-  label: {
-    fontWeight: "600",
-    fontSize: 14,
+  errorText: {
+    fontFamily: "Syne_400Regular",
+    color: "#FF6B6B",
+    fontSize: 13,
+    textAlign: "center",
+    marginBottom: 16,
   },
   input: {
+    height: 56,
     borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    backgroundColor: "#fff",
-  },
-  button: {
-    backgroundColor: "#0a7ea4",
-    paddingVertical: 12,
+    borderColor: "#E66B00",
+    borderRadius: 28,
     paddingHorizontal: 24,
-    borderRadius: 8,
+    color: "#FFFFFF",
+    fontFamily: "Syne_400Regular",
+    fontSize: 15,
+    marginBottom: 20,
+    backgroundColor: "transparent",
+  },
+  loginButton: {
+    height: 56,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 28,
+    justifyContent: "center",
     alignItems: "center",
     marginTop: 8,
-  },
-  buttonPressed: {
-    opacity: 0.7,
+    marginBottom: 40,
   },
   buttonDisabled: {
     opacity: 0.5,
   },
-  buttonText: {
-    color: "#fff",
-    fontWeight: "600",
+  loginButtonText: {
+    fontFamily: "Syne_700Bold",
+    color: "#000000",
+    fontSize: 15,
   },
-  linkContainer: {
-    flexDirection: "row",
-    gap: 4,
-    marginTop: 12,
+  footerContainer: {
+    marginTop: 32,
     alignItems: "center",
+  },
+  footerText: {
+    fontFamily: "Syne_600SemiBold",
+    color: "#E66B00",
+    fontSize: 14,
   },
 });
