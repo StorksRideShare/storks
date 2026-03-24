@@ -21,15 +21,27 @@ public class UserAuthJwtAuthenticationConverter implements Converter<Jwt, Abstra
 
     @Override
     public AbstractAuthenticationToken convert(Jwt jwt) {
-        String userId = jwt.getClaims().get("userId").toString();
-        UserAuthClaim userClaim;
+        Object sub = jwt.getClaims().get("sub");
         Logger logger = LoggerFactory.getLogger(UserAuthJwtAuthenticationConverter.class);
-        logger.info("Converting JWT Claims to UserAuthClaim{}", userId);
-        try {
-            userClaim = userAuthService.getUserById(userId);
-        } catch (IllegalArgumentException | InvalidUserIdException e) {
+        
+        if (sub == null) {
+            logger.warn("JWT conversion failed: 'sub' claim is missing");
             return null;
         }
+        
+        String userId = sub.toString();
+        logger.info("Converting JWT Claims to UserAuthClaim for providerUserId: {}", userId);
+        
+        UserAuthClaim userClaim;
+        try {
+            userClaim = userAuthService.getUserById(userId);
+            logger.info("Successfully retrieved UserAuthClaim for userId: {}", userClaim.userId());
+        } catch (Exception e) {
+            logger.error("User mapping failed for provider ID: {} - Error: {}", userId, e.getMessage());
+            // Re-throw as a standardized security exception that results in 401
+            throw new org.springframework.security.oauth2.server.resource.InvalidBearerTokenException("User mapping failed: " + e.getMessage());
+        }
+        
         return new UsernamePasswordAuthenticationToken(userClaim, jwt, Collections.emptyList());
     }
 }

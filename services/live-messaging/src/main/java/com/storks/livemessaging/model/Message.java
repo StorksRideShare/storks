@@ -27,6 +27,9 @@ public class Message {
 
     private LocalDateTime sentAt;
 
+    @Enumerated(EnumType.STRING)
+    private MessageType type = MessageType.CHAT;
+
     @ManyToOne
     @JoinColumn(name = "sender_id")
     private User sender;

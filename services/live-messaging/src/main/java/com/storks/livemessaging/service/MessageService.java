@@ -73,6 +73,7 @@ public class MessageService {
             message.setSender(sender);
             message.setContent(payload.getContent());
             message.setSentAt(payload.getSentAt());
+            message.setType(payload.getType());
             message.setDeleted(false);
             
             messageRepository.save(message);
@@ -85,6 +86,18 @@ public class MessageService {
 
         } catch (Exception e) {
             log.error("Error persisting message from Kafka: {}", payload.getMessageId(), e);
+        }
+    }
+
+    @org.springframework.transaction.annotation.Transactional
+    public void markMessageAsRead(UUID messageId, UUID userId) {
+        Message message = messageRepository.findById(messageId).orElse(null);
+        User user = userRepository.findByUserId(userId);
+        if (message != null && user != null) {
+            if (!message.getReadBy().contains(user)) {
+                message.getReadBy().add(user);
+                messageRepository.save(message);
+            }
         }
     }
 

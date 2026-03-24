@@ -2,7 +2,7 @@
 
 # Define baseUrl
 BASE_URL="http://localhost:8085"
-TOKEN=eyJhbGciOiJSUzI1NiIsImNhdCI6ImNsX0I3ZDRQRDIyMkFBQSIsImtpZCI6Imluc18zQUtPcHlZa1o2WW1WUlRwUHozN1Q4d0g3aDAiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJodHRwczovL3JlYWwtYmlyZC0yMC5hY2NvdW50cy5kZXYiLCJlbWFpbCI6ImNob290eWJhYmEzMjFAZ21haWwuY29tIiwiZXhwIjoxNzczOTA1MDMyLCJmaXJzdE5hbWUiOiJLYXZpbmR1IiwiaWF0IjoxNzczOTA0OTcyLCJpc3MiOiJodHRwczovL3JlYWwtYmlyZC0yMC5jbGVyay5hY2NvdW50cy5kZXYiLCJqdGkiOiIzMTRlM2I2ZWM0Mzg1ZTNmNGI5YSIsImxhc3ROYW1lIjoiTmlybWFsIiwibmJmIjoxNzczOTA0OTY3LCJzdWIiOiJ1c2VyXzNCNzhPaEhNRnllQllmUTJyQjhoYkxFclF2WCIsInVzZXJJZCI6InVzZXJfM0I3OE9oSE1GeWVCWWZRMnJCOGhiTEVyUXZYIn0.o2kCQNB9jaP8BMh7mmPeBaqvZx3e3Aed-SIRcSckqzeSnjU5IugzEII-0ThOjiQRUm-Z36kZk5SHf6A1XwSL8ca_KnUnQfETkpsUQjyal6AdBI138pXeWFD5MKnhZmLw53NP2I0jV4NdRaM1TZ35pag_SUmvvSkzeKiEqfu2cyskdVADt1izACz5dhQv0NljvAAXI3kxJAo07YdnDEyaunYADeglBu9F_cCG2uhzB53Rz-X4Yie5MSFaeM5wI0t-YZKBzfCGxjiqdwTcQVAKvh8XjYeInkWLI8pPp8lm5FYl9VL8AtV1a587Ai1qeIPm5eWLoY9J7BR-fSWfSXBEvA
+TOKEN=eyJhbGciOiJSUzI1NiIsImNhdCI6ImNsX0I3ZDRQRDIyMkFBQSIsImtpZCI6Imluc18zQUtPcHlZa1o2WW1WUlRwUHozN1Q4d0g3aDAiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJodHRwczovL3JlYWwtYmlyZC0yMC5hY2NvdW50cy5kZXYiLCJleHAiOjE3NzQ2MTcxMDcsImlhdCI6MTc3NDAxNzEwNywiaXNzIjoiaHR0cHM6Ly9yZWFsLWJpcmQtMjAuY2xlcmsuYWNjb3VudHMuZGV2IiwianRpIjoiYTdlNTAxZmViMGE0ZGQ5MTdmZmUiLCJuYmYiOjE3NzQwMTcxMDIsInN1YiI6InVzZXJfM0I3OE9oSE1GeWVCWWZRMnJCOGhiTEVyUXZYIn0.EcOy5O5dO0Ehn_icB2ahC2e5GJtWmlWtHeLRBF_-M2lMsrsm-sZHJx6RBaNQVGKRUIL-hLEL3pPSbts3XudKJ9nuDsrPAfN_tJ3TiGvmPP-cC3KVDpKFgvQPNjkkDwhXpsEs1rKeM6SRDf5ofezCmvv0sr3sF3e6xg18mByVvs3PMANtrrV_T_4VgTBolcL7kyjAU4O0VQABE13GY5w6_Fx-FcxQV-Kmvf4-YoF2nXCJ0ZZDkaWgYxu_SI3gdY8JmSSLZK5V8AgQctzraipzL_KZ6KXnS08sRMdbtBIxgqcDDrCYYlF22qUvk_MVSmUvLMj2qBLYwUTouE1LGY4gBQ
 
 echo "=== Storks Safety & Verification API Test Script ==="
 echo "Note: Ensure you have Docker Compose running and created the ride_passangers table."
@@ -34,5 +34,17 @@ curl -s -X POST "$BASE_URL/api/v1/qr/request?type=morning" \
     -H "Authorization: Bearer $TOKEN" \
     -H "Content-Type: application/json" \
     -d '{"group_id":"00000000-0000-0000-0000-000000000001", "ride_id":"00000000-0000-0000-0000-000000000002"}'
+    
+curl -s -X POST "$BASE_URL/api/v1/otp/request?type=afternoon" \
+    -H "Authorization: Bearer $TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{"group_id":"00000000-0000-0000-0000-000000000001", "ride_id":"00000000-0000-0000-0000-000000000002"}'
+
+echo "\n\n3. Request Morning QR..."
+curl -s -X POST "$BASE_URL/api/v1/qr/request?type=afternoon" \
+    -H "Authorization: Bearer $TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{"group_id":"00000000-0000-0000-0000-000000000001", "ride_id":"00000000-0000-0000-0000-000000000002"}'
+
 
 echo "\n\nTest script complete. Modify UUIDs for real DB records."
