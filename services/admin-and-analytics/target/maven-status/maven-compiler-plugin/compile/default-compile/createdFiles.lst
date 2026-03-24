@@ -1,5 +1,7 @@
+com\storks\repository\EmergencyAlertRepository.class
 com\storks\entity\DriverScore.class
 com\storks\kafka\RideEventConsumer.class
+com\storks\controller\EmergencyController.class
 com\storks\model\User.class
 com\storks\controller\AuthController$AuthRequest.class
 com\storks\security\UserDetailsServiceImpl.class
@@ -9,9 +11,11 @@ com\storks\repository\PrivacySettingsRepository.class
 com\storks\repository\DriverScoreRepository.class
 com\storks\security\AuditLoggingFilter.class
 com\storks\entity\Child.class
+com\storks\dto\EmergencyEvent.class
 com\storks\controller\PrivacyController.class
 com\storks\controller\ChildController.class
 com\storks\adminandanalytics\AdminAndAnalyticsApplication.class
+com\storks\util\DistanceCalculator.class
 com\storks\views\UserViews$DriverView.class
 com\storks\views\UserViews$AdminView.class
 com\storks\controller\SafetyController.class
@@ -19,6 +23,7 @@ com\storks\views\UserViews.class
 com\storks\repository\ChildRepository.class
 com\storks\security\JwtAuthenticationFilter.class
 com\storks\repository\VehicleMaintenanceRepository.class
+com\storks\entity\EmergencyAlert.class
 com\storks\service\PrivacyMaskingService.class
 com\storks\repository\AuditLogRepository.class
 com\storks\model\Role.class
@@ -36,3 +41,4 @@ com\storks\entity\VehicleMaintenance.class
 com\storks\dto\ChildDto.class
 com\storks\security\MaskingAdvice.class
 com\storks\entity\PrivacySettings.class
+com\storks\service\EmergencyService.class
