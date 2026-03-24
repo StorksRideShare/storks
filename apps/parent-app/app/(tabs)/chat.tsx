@@ -108,7 +108,7 @@ export default function TabTwoScreen() {
 
   const getChatName = (room: Room) => {
     if (room.chatRoomType === "DIRECT") {
-      const other = room.participants.find((p) => p.userId !== user?.id);
+      const other = room.participants.find((p) => p.providerUserId !== user?.id);
       return other ? `${other.firstName} ${other.lastName}`.trim() || "Direct Chat" : "Direct Chat";
     }
     // For group chats, find the driver participant by role

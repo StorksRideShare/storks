@@ -1,12 +1,10 @@
 package com.storks.livemessaging.model;
 
 import com.storks.livemessaging.model.types.MessageType;
-import com.storks.livemessaging.model.types.RoomType;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.stereotype.Component;
-import java.security.Timestamp;
+import org.springframework.data.domain.Persistable;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -16,10 +14,28 @@ import java.util.UUID;
 @Getter
 @Setter
 @Table(name = "messages")
-public class Message {
+public class Message implements Persistable<UUID> {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID messageId;
+
+    @Transient
+    private boolean isNew = true;
+
+    @Override
+    public UUID getId() {
+        return messageId;
+    }
+
+    @Override
+    public boolean isNew() {
+        return isNew;
+    }
+
+    @PostLoad
+    @PostPersist
+    void markNotNew() {
+        this.isNew = false;
+    }
 
     @ManyToOne
     @JoinColumn(name = "room_id")

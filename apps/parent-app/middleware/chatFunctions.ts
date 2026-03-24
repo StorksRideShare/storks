@@ -28,6 +28,8 @@ export class StompChatClient {
   async connect(onConnect: () => void, onError: (err: any) => void) {
     this.client = new Client({
       brokerURL: this.wsUrl,
+      forceBinaryWSFrames: true,
+      appendMissingNULLonIncoming: true,
       reconnectDelay: 5000,
       debug: (str) => {
         if (__DEV__) console.log("STOMP:", str);

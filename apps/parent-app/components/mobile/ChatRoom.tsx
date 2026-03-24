@@ -38,7 +38,7 @@ export default function ChatRoom() {
 
   const displayName = (() => {
     if (room?.participants && user?.id) {
-      const other = room.participants.find((p: any) => p.userId !== user.id);
+      const other = room.participants.find((p: any) => p.providerUserId !== user.id);
       if (other) return `${other.firstName ?? ''} ${other.lastName ?? ''}`.trim() || name || "Chat";
     }
     return name || "Chat";
@@ -47,6 +47,11 @@ export default function ChatRoom() {
   const colors = Colors.dark;
   const scrollViewRef = useRef<ScrollView>(null);
   const stompClient = useRef<StompChatClient | null>(null);
+  const myBackendIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    myBackendIdRef.current = room?.participants?.find((p: any) => p.providerUserId === user?.id)?.userId || null;
+  }, [room, user?.id]);
 
   const fetchHistory = async () => {
     try {
@@ -82,7 +87,7 @@ export default function ChatRoom() {
         setIsConnected(true);
         client.subscribeToRoom(id, (msg) => {
           setMessages((prev) => {
-            const isEcho = msg.senderId === user?.id && msg.type === "CHAT";
+            const isEcho = msg.senderId === myBackendIdRef.current && msg.type === "CHAT";
             let newMessages = [...prev];
             if (isEcho) {
               const tempIdx = newMessages.findIndex(m => m.messageId.startsWith('temp-') && m.content === msg.content);
@@ -117,7 +122,7 @@ export default function ChatRoom() {
     const tempMessage: ChatMessage = {
       messageId: `temp-${Date.now()}`,
       roomId: id,
-      senderId: user?.id || "temp",
+      senderId: myBackendIdRef.current || "temp",
       content: trimmed,
       type: "CHAT",
     };
@@ -135,7 +140,7 @@ export default function ChatRoom() {
   };
 
   const renderMessage = (msg: ChatMessage, index: number) => {
-    const isMe = msg.senderId === user?.id;
+    const isMe = msg.senderId === myBackendIdRef.current;
     const isSystem = msg.type === "SYSTEM";
 
     const prevMsg = index > 0 ? messages[index - 1] : null;
@@ -178,7 +183,7 @@ export default function ChatRoom() {
         )}
         {showNewMessagesDivider && (
           <Center className="my-6">
-            <Box className="bg-blue-600 px-3 py-1 rounded-full border border-blue-500">
+            <Box className="bg-orange-500 px-3 py-1 rounded-full border border-orange-400">
               <Text className="text-[10px] text-white font-bold uppercase tracking-wider">New Messages</Text>
             </Box>
           </Center>
@@ -189,13 +194,13 @@ export default function ChatRoom() {
           <HStack space="xs" className="items-center mb-1 px-1">
             {!isMe && <Text className="text-[10px] text-gray-400 font-medium">{msg.senderId.slice(0, 8)}</Text>}
             <Text className="text-[9px] text-gray-500">{time}</Text>
-            {isMe && <Text className="text-[10px] text-blue-400 font-medium font-bold">You</Text>}
+            {isMe && <Text className="text-[10px] text-orange-400 font-medium font-bold">You</Text>}
           </HStack>
           
           <Box
             className={`px-4 py-2 rounded-2xl ${
               isMe 
-                ? "bg-blue-600 rounded-tr-none shadow-sm" 
+                ? "bg-orange-500 rounded-tr-none shadow-sm" 
                 : isAdmin 
                   ? "bg-amber-900 border border-amber-700 rounded-tl-none shadow-sm"
                   : "bg-gray-800 rounded-tl-none border border-gray-700"
@@ -282,7 +287,7 @@ export default function ChatRoom() {
             onPress={sendMessage}
             disabled={!isConnected || !inputText.trim()}
             className={`w-10 h-10 rounded-full items-center justify-center ${
-              isConnected && inputText.trim() ? "bg-blue-600" : "bg-gray-800"
+              isConnected && inputText.trim() ? "bg-orange-500" : "bg-gray-800"
             }`}
           >
             <Send size={20} color="#ffffff" />

@@ -109,8 +109,8 @@ export default function ParticipantProfile() {
                   </HStack>
                 </VStack>
                 {p.role === "DRIVER" && (
-                  <Box className="bg-blue-900/40 px-2 py-1 rounded border border-blue-800">
-                    <Text className="text-blue-400 text-[10px] font-bold">DRIVER</Text>
+                  <Box className="bg-orange-900/40 px-2 py-1 rounded border border-orange-800">
+                    <Text className="text-orange-400 text-[10px] font-bold">DRIVER</Text>
                   </Box>
                 )}
               </HStack>
