@@ -13,7 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -46,7 +46,7 @@ public class ChatRoomService {
                     ChatRoom room = chatRoomRepository.findById(roomId).orElseThrow();
                     if (room.isDeleted()) {
                         room.setDeleted(false);
-                        room.setUpdatedAt(LocalDateTime.now());
+                        room.setUpdatedAt(OffsetDateTime.now());
                         chatRoomRepository.save(room);
                     }
                     // Ensure participants are marked as not removed
@@ -63,8 +63,8 @@ public class ChatRoomService {
                     // Create new room
                     ChatRoom room = new ChatRoom();
                     room.setChatRoomType(RoomType.DIRECT);
-                    room.setCreatedAt(LocalDateTime.now());
-                    room.setUpdatedAt(LocalDateTime.now());
+                    room.setCreatedAt(OffsetDateTime.now());
+                    room.setUpdatedAt(OffsetDateTime.now());
                     room = chatRoomRepository.save(room);
 
                     User initiator = userRepository.findById(initiatorId).orElseThrow();
@@ -81,7 +81,7 @@ public class ChatRoomService {
         ChatRoomParticipant participant = new ChatRoomParticipant();
         participant.setRoom(room);
         participant.setUser(user);
-        participant.setJoinedAt(LocalDateTime.now());
+        participant.setJoinedAt(OffsetDateTime.now());
         participant.setRemoved(false);
         chatRoomParticipantRepository.save(participant);
     }

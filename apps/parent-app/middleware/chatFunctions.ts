@@ -17,6 +17,7 @@ export type ChatMessage = {
   content: string;
   sentAt?: string;
   type: "CHAT" | "JOIN" | "LEAVE" | "TYPING" | "READ_RECEIPT" | "SYSTEM";
+  status?: "sending" | "sent" | "read";
 };
 
 export class StompChatClient {

@@ -2,11 +2,9 @@ import SystemNotification from "@/components/mobile/SystemNotification";
 import {
   Avatar,
   AvatarFallbackText,
-  AvatarImage,
 } from "@/components/ui/avatar";
 import { Box } from "@/components/ui/box";
 import { Center } from "@/components/ui/center";
-import { Button, ButtonText } from "@/components/ui/button";
 import { HStack } from "@/components/ui/hstack";
 import { Input, InputField } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
@@ -16,57 +14,89 @@ import Colors from "@/constants/Colors";
 import { StompChatClient, ChatMessage } from "@/middleware/chatFunctions";
 import { useApiClient, WS_BASE_URL } from "@/middleware/apiClient";
 import { useUser, useSession } from "@clerk/expo";
-import { router, useLocalSearchParams } from "expo-router";
-import { ArrowLeft, Send } from "lucide-react-native";
+import { Link, router, useLocalSearchParams } from "expo-router";
+import { ArrowLeft, Send, Check, CheckCheck, Clock } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
-import { KeyboardAvoidingView, Platform, ScrollView, Pressable } from "react-native";
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Pressable,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+// Check if the sent messages are supposed to be in the same group.
+function sameGroup(a: ChatMessage, b: ChatMessage): boolean {
+  if (a.senderId !== b.senderId) return false;
+  if (!a.sentAt || !b.sentAt) return true; // temp messages
+  return Math.abs(new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime()) < 60_000;
+}
 
 export default function ChatRoom() {
   const { id, name } = useLocalSearchParams<{ id: string; name: string }>();
   const { user } = useUser();
   const { session } = useSession();
   const api = useApiClient();
-  
+
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [room, setRoom] = useState<any>(null);
   const [inputText, setInputText] = useState("");
   const [isConnected, setIsConnected] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [lastReadId, setLastReadId] = useState<string | null>(null);
-  const [showNewMessagesDivider, setShowNewMessagesDivider] = useState(false);
+  /** Set of messageIds for which we received a READ_RECEIPT */
+  const readIds = useRef<Set<string>>(new Set());
 
-  const displayName = (() => {
-    if (room?.participants && user?.id) {
-      const other = room.participants.find((p: any) => p.providerUserId !== user.id);
-      if (other) return `${other.firstName ?? ''} ${other.lastName ?? ''}`.trim() || name || "Chat";
-    }
-    return name || "Chat";
-  })();
-  
   const colors = Colors.dark;
   const scrollViewRef = useRef<ScrollView>(null);
   const stompClient = useRef<StompChatClient | null>(null);
+  /** Backend UUID of the current user */
   const myBackendIdRef = useRef<string | null>(null);
 
+  // Room name
+  const displayName = (() => {
+    if (room?.participants && user?.id) {
+      const other = room.participants.find((p: any) => p.providerUserId !== user.id);
+      if (other) return `${other.firstName ?? ""} ${other.lastName ?? ""}`.trim() || name || "Chat";
+    }
+    return name || "Chat";
+  })();
+
+  // keep ref in sync whenever room loads
   useEffect(() => {
-    myBackendIdRef.current = room?.participants?.find((p: any) => p.providerUserId === user?.id)?.userId || null;
+    myBackendIdRef.current =
+      room?.participants?.find((p: any) => p.providerUserId === user?.id)?.userId ?? null;
   }, [room, user?.id]);
 
+    // fetch history
   const fetchHistory = async () => {
     try {
       const roomData = await api.get<any>(`/api/v1/chats/${id}`);
       setRoom(roomData);
-      
       const history = await api.get<any[]>(`/api/v1/chats/${id}/messages/recent`);
-      setMessages(history.map(m => ({
-        messageId: m.messageId,
-        roomId: m.roomId,
-        senderId: m.senderId,
-        content: m.content,
-        sentAt: m.sentAt,
-        type: m.type
-      })));
+      // Sort to newest at the bottom
+      const sorted = [...history].sort(
+        (a, b) => new Date(a.sentAt).getTime() - new Date(b.sentAt).getTime()
+      );
+      
+      const myId = roomData?.participants?.find((p: any) => p.providerUserId === user?.id)?.userId;
+      
+      setMessages(
+        sorted.map((m) => {
+          const isMe = m.senderId === myId;
+          const isReadByOther = m.readBy && m.readBy.length > 0 && m.readBy.some((uid: string) => uid !== myId);
+          
+          return {
+            messageId: m.messageId,
+            roomId: m.roomId,
+            senderId: m.senderId,
+            content: m.content,
+            sentAt: m.sentAt,
+            type: m.type,
+            status: (isMe ? (isReadByOther ? "read" : "sent") : "read") as any,
+          };
+        })
+      );
     } catch (error) {
       console.error("Failed to fetch history:", error);
     } finally {
@@ -74,6 +104,7 @@ export default function ChatRoom() {
     }
   };
 
+  // STOMP
   useEffect(() => {
     if (!id || !session) return;
 
@@ -85,23 +116,61 @@ export default function ChatRoom() {
     client.connect(
       () => {
         setIsConnected(true);
-        client.subscribeToRoom(id, (msg) => {
+        client.subscribeToRoom(id, (msg: any) => {
+          if (msg.type === "READ_RECEIPT") {
+            // Mark the ack'd message as read
+            if (msg.messageId) {
+              readIds.current.add(msg.messageId);
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.messageId === msg.messageId ? { ...m, status: "read" } : m
+                )
+              );
+            }
+            return;
+          }
+
           setMessages((prev) => {
-            const isEcho = msg.senderId === myBackendIdRef.current && msg.type === "CHAT";
-            let newMessages = [...prev];
+            const backendId = myBackendIdRef.current;
+            // Determine if this is the echo of our own message
+            const isEcho =
+              msg.type === "CHAT" &&
+              (msg.senderId === backendId);
+
+            let updated = [...prev];
+
             if (isEcho) {
-              const tempIdx = newMessages.findIndex(m => m.messageId.startsWith('temp-') && m.content === msg.content);
+              // Replace temp bubble with the real one (mark as "sent")
+              const tempIdx = updated.findIndex(
+                (m) => m.messageId.startsWith("temp-") && m.content === msg.content
+              );
               if (tempIdx !== -1) {
-                newMessages.splice(tempIdx, 1);
+                updated[tempIdx] = { ...msg, status: "sent" };
+                return updated;
               }
             }
-            return [...newMessages, msg];
+
+            // Avoid duplicates
+            if (updated.some((m) => m.messageId === msg.messageId)) return updated;
+
+            const isReadByOther = msg.readBy && msg.readBy.length > 0 && msg.readBy.some((uid: string) => uid !== backendId);
+            const incomingStatus: ChatMessage["status"] = isEcho ? (isReadByOther ? "read" : "sent") : "read";
+            return [...updated, { ...msg, status: incomingStatus }];
           });
-          if (msg.senderId !== user?.id && msg.type === "CHAT") {
-             // Send read receipt
-             client.sendReadReceipt(id, msg.messageId);
+
+          // Send read receipt for NEW messages from others that we haven't read yet
+          if (msg.type === "CHAT") {
+            const isMe = msg.senderId === myBackendIdRef.current;
+            if (!isMe) {
+               // If the message came in without us in the readBy array, it's fresh -> send receipt
+               const iHaveReadIt = msg.readBy && msg.readBy.includes(myBackendIdRef.current);
+               if (!iHaveReadIt) {
+                 client.sendReadReceipt(id, msg.messageId);
+               }
+            }
           }
-          setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 100);
+
+          setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 80);
         });
       },
       (err) => {
@@ -115,28 +184,41 @@ export default function ChatRoom() {
     };
   }, [id, session]);
 
+  // Send messages
   const sendMessage = () => {
     const trimmed = inputText.trim();
     if (!trimmed || !isConnected || !stompClient.current) return;
 
+    const tempId = `temp-${Date.now()}`;
     const tempMessage: ChatMessage = {
-      messageId: `temp-${Date.now()}`,
+      messageId: tempId,
       roomId: id,
       senderId: myBackendIdRef.current || "temp",
       content: trimmed,
+      sentAt: new Date().toISOString(),
       type: "CHAT",
+      status: "sending",
     };
-    
+
     setMessages((prev) => [...prev, tempMessage]);
-    setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 100);
+    setInputText("");
+    setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 80);
 
     try {
       stompClient.current.sendMessage(id, trimmed);
-      setInputText("");
     } catch (error) {
       console.error("Failed to send message:", error);
-      setMessages((prev) => prev.filter(m => m.messageId !== tempMessage.messageId));
+      setMessages((prev) => prev.filter((m) => m.messageId !== tempId));
     }
+  };
+
+  // Renders
+
+  const StatusIcon = ({ status }: { status?: ChatMessage["status"] }) => {
+    if (status === "sending") return <Clock size={10} color="#9ca3af" />;
+    if (status === "sent") return <Check size={10} color="#9ca3af" />;
+    if (status === "read") return <CheckCheck size={10} color="#fab260ff" />;
+    return null;
   };
 
   const renderMessage = (msg: ChatMessage, index: number) => {
@@ -144,20 +226,38 @@ export default function ChatRoom() {
     const isSystem = msg.type === "SYSTEM";
 
     const prevMsg = index > 0 ? messages[index - 1] : null;
-    const showDateBreak = !prevMsg || 
-      (msg.sentAt && prevMsg.sentAt && new Date(msg.sentAt).toDateString() !== new Date(prevMsg.sentAt).toDateString());
-    
-    // Simplistic logic: if message is the first one after we re-opened and it's from someone else
-    const isFirstNew = false; // logic would need tracking last seen ID in DB
+    const nextMsg = index < messages.length - 1 ? messages[index + 1] : null;
 
-    const dateStr = msg.sentAt ? new Date(msg.sentAt).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' }) : "";
+    // Date divider
+    const showDateBreak =
+      !prevMsg ||
+      (msg.sentAt &&
+        prevMsg.sentAt &&
+        new Date(msg.sentAt).toDateString() !== new Date(prevMsg.sentAt).toDateString());
+
+    const dateStr = msg.sentAt
+      ? new Date(msg.sentAt).toLocaleDateString(undefined, {
+          weekday: "long",
+          month: "short",
+          day: "numeric",
+        })
+      : "";
+
+    // Grouping flags
+    const isFirstInGroup = !prevMsg || !sameGroup(prevMsg, msg);
+    const isLastInGroup = !nextMsg || !sameGroup(msg, nextMsg);
+
+    // How much space between bubbles (less within a group, more between groups)
+    const marginBottom = isLastInGroup ? 12 : 2;
 
     if (isSystem) {
       return (
         <VStack key={msg.messageId || index}>
           {showDateBreak && (
-            <Center className="my-6">
-              <Text className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">{dateStr}</Text>
+            <Center className="my-4">
+              <Text className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">
+                {dateStr}
+              </Text>
             </Center>
           )}
           <SystemNotification content={msg.content} />
@@ -165,54 +265,54 @@ export default function ChatRoom() {
       );
     }
 
-    const time = msg.sentAt 
-      ? new Date(msg.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      : "Sending...";
+    const time = msg.sentAt
+      ? new Date(msg.sentAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+      : "";
 
-    const isGroup = messages.some(m => m.senderId !== user?.id && m.senderId !== msg.senderId); // simplistic check
-    const isAdmin = false; // logic to determine if current message sender is admin/driver
+    // Bubble tail shape — only last in group gets a "pointed" corner
+    const bubbleRadius = isLastInGroup
+      ? isMe
+        ? "rounded-2xl rounded-tr-none"
+        : "rounded-2xl rounded-tl-none"
+      : "rounded-2xl";
 
     return (
-      <VStack key={msg.messageId || index}>
+      <VStack key={msg.messageId || index} style={{ marginBottom }}>
         {showDateBreak && (
-          <Center className="my-6">
+          <Center className="my-4">
             <Box className="bg-gray-800 px-3 py-1 rounded-full border border-gray-700">
-               <Text className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">{dateStr}</Text>
+              <Text className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">
+                {dateStr}
+              </Text>
             </Box>
           </Center>
         )}
-        {showNewMessagesDivider && (
-          <Center className="my-6">
-            <Box className="bg-orange-500 px-3 py-1 rounded-full border border-orange-400">
-              <Text className="text-[10px] text-white font-bold uppercase tracking-wider">New Messages</Text>
-            </Box>
-          </Center>
-        )}
+
         <VStack
-          className={`mb-4 max-w-[80%] ${isMe ? "self-end items-end" : "self-start items-start"}`}
+          className={`max-w-[80%] ${isMe ? "self-end items-end" : "self-start items-start"}`}
         >
-          <HStack space="xs" className="items-center mb-1 px-1">
-            {!isMe && <Text className="text-[10px] text-gray-400 font-medium">{msg.senderId.slice(0, 8)}</Text>}
-            <Text className="text-[9px] text-gray-500">{time}</Text>
-            {isMe && <Text className="text-[10px] text-orange-400 font-medium font-bold">You</Text>}
-          </HStack>
-          
+          {/* Sender label — only first bubble in a group from the other person */}
+          {!isMe && isFirstInGroup && (
+            <Text className="text-[10px] text-orange-400 font-semibold mb-1 px-1">
+              {displayName}
+            </Text>
+          )}
+
           <Box
-            className={`px-4 py-2 rounded-2xl ${
-              isMe 
-                ? "bg-orange-500 rounded-tr-none shadow-sm" 
-                : isAdmin 
-                  ? "bg-amber-900 border border-amber-700 rounded-tl-none shadow-sm"
-                  : "bg-gray-800 rounded-tl-none border border-gray-700"
+            className={`px-4 py-2 ${bubbleRadius} ${
+              isMe
+                ? "bg-orange-500 shadow-sm"
+                : "bg-gray-800 border border-gray-700"
             }`}
           >
-            <Text className="text-white text-sm leading-5">
-              {msg.content}
-            </Text>
+            <Text className="text-white text-sm leading-5">{msg.content}</Text>
           </Box>
-          {isMe && msg.type === "CHAT" && (
-            <HStack className="mt-1 px-1" space="xs">
-               <Text className="text-[9px] text-gray-500">Read</Text>
+
+         
+          {isLastInGroup && (
+            <HStack className="mt-1 px-1 items-center" space="xs">
+              <Text className="text-[9px] text-gray-500">{time}</Text>
+              {isMe && <StatusIcon status={msg.status} />}
             </HStack>
           )}
         </VStack>
@@ -220,7 +320,7 @@ export default function ChatRoom() {
     );
   };
 
-
+  // ── UI ──────────────────────────────────────────────────────────────────────
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
@@ -229,11 +329,8 @@ export default function ChatRoom() {
         <Pressable onPress={() => router.back()}>
           <ArrowLeft size={24} color="#ffffff" />
         </Pressable>
-        
-        <Link 
-          href={{ pathname: "/chats/[id]/profile", params: { id } }}
-          asChild
-        >
+
+        <Link href={{ pathname: "/chats/[id]/profile", params: { id } }} asChild>
           <Pressable className="flex-1 flex-row items-center gap-3">
             <Avatar size="sm">
               <AvatarFallbackText>{displayName}</AvatarFallbackText>
@@ -257,7 +354,7 @@ export default function ChatRoom() {
           <ScrollView
             ref={scrollViewRef}
             className="flex-1 px-4"
-            onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
+            onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: false })}
           >
             <VStack className="py-4">
               {messages.map((msg, idx) => renderMessage(msg, idx))}
@@ -283,7 +380,7 @@ export default function ChatRoom() {
               />
             </Input>
           </Box>
-          <Pressable 
+          <Pressable
             onPress={sendMessage}
             disabled={!isConnected || !inputText.trim()}
             className={`w-10 h-10 rounded-full items-center justify-center ${
@@ -297,7 +394,3 @@ export default function ChatRoom() {
     </SafeAreaView>
   );
 }
-
-import { View } from "react-native";
-import { Link } from "expo-router";
-

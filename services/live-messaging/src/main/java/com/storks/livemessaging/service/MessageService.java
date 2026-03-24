@@ -17,7 +17,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -43,7 +43,7 @@ public class MessageService {
             payload.setMessageId(UUID.randomUUID());
         }
         if (payload.getSentAt() == null) {
-            payload.setSentAt(LocalDateTime.now());
+            payload.setSentAt(OffsetDateTime.now());
         }
         
         kafkaTemplate.send(CHAT_MESSAGES_TOPIC, payload.getRoomId().toString(), payload)

@@ -5,7 +5,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.domain.Persistable;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -41,7 +41,7 @@ public class Message implements Persistable<UUID> {
     @JoinColumn(name = "room_id")
     private ChatRoom room;
 
-    private LocalDateTime sentAt;
+    private OffsetDateTime sentAt;
 
     @Enumerated(EnumType.STRING)
     private MessageType type = MessageType.CHAT;
@@ -52,7 +52,7 @@ public class Message implements Persistable<UUID> {
 
     private String content;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "message_read_by",
             joinColumns = @JoinColumn(name = "message_id"),
@@ -61,6 +61,6 @@ public class Message implements Persistable<UUID> {
     private List<User> readBy;
 
     private boolean isDeleted;
-    private LocalDateTime deletedAt;
+    private OffsetDateTime deletedAt;
 }
 

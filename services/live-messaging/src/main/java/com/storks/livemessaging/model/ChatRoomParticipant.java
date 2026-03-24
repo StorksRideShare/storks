@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Entity
@@ -24,7 +24,7 @@ public class ChatRoomParticipant {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    private LocalDateTime joinedAt = LocalDateTime.now();
+    private OffsetDateTime joinedAt = OffsetDateTime.now();
 
     private boolean isRemoved = false;
     
@@ -39,8 +39,8 @@ public class ChatRoomParticipant {
     public User getUser() { return user; }
     public void setUser(User user) { this.user = user; }
     
-    public LocalDateTime getJoinedAt() { return joinedAt; }
-    public void setJoinedAt(LocalDateTime joinedAt) { this.joinedAt = joinedAt; }
+    public OffsetDateTime getJoinedAt() { return joinedAt; }
+    public void setJoinedAt(OffsetDateTime joinedAt) { this.joinedAt = joinedAt; }
     
     public boolean isRemoved() { return isRemoved; }
     public void setRemoved(boolean isRemoved) { this.isRemoved = isRemoved; }
