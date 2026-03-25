@@ -368,7 +368,7 @@ export default function ChatRoom() {
         keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
       >
         <HStack className="p-4 bg-black border-t border-gray-800 items-end gap-2">
-          <Box className="flex-1 bg-gray-900 rounded-2xl border border-gray-700 px-3 py-1">
+          <Box className="flex-1 rounded-2xl border border-orange-500/60 px-3 py-1">
             <Input className="w-full border-0">
               <InputField
                 className="text-white text-sm min-h-[40px] w-full"
@@ -383,7 +383,7 @@ export default function ChatRoom() {
           <Pressable
             onPress={sendMessage}
             disabled={!isConnected || !inputText.trim()}
-            className={`w-10 h-10 rounded-full items-center justify-center ${
+            className={`w-10 h-10 text-center rounded-full items-center justify-center ${
               isConnected && inputText.trim() ? "bg-orange-500" : "bg-gray-800"
             }`}
           >
