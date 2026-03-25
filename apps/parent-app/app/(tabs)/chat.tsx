@@ -13,6 +13,7 @@ import { useEffect, useState } from "react";
 import { FlatList, RefreshControl, StyleSheet, Modal } from "react-native";
 import { useApiClient } from "@/middleware/apiClient";
 import { router } from "expo-router";
+import { useNotify } from "@/components/mobile/Notify";
 
 type Room = {
   roomId: string;
@@ -33,6 +34,7 @@ type UserSearch = {
 export default function TabTwoScreen() {
   const { isLoaded, isSignedIn, user } = useUser();
   const api = useApiClient();
+  const notify = useNotify();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -68,6 +70,7 @@ export default function TabTwoScreen() {
       setRooms(sorted);
     } catch (error) {
       console.error("Failed to fetch rooms:", error);
+      notify.error("Connection Error", "Could not load chats.");
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -87,6 +90,7 @@ export default function TabTwoScreen() {
       setSearchResults(results);
     } catch (error) {
       console.error("Search failed:", error);
+      notify.error("Search Error", "Search failed. Please try again.");
     } finally {
       setSearching(false);
     }
@@ -110,6 +114,7 @@ export default function TabTwoScreen() {
       });
     } catch (error) {
       console.error("Failed to create chat:", error);
+      notify.error("Creation Error", "Could not start new chat.");
     }
   };
 
