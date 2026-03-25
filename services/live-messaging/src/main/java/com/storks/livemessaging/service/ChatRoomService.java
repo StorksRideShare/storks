@@ -86,6 +86,59 @@ public class ChatRoomService {
         chatRoomParticipantRepository.save(participant);
     }
 
+    @Transactional
+    public ChatRoom createGroupChat(UUID offerId, UUID driverId) {
+        return chatRoomRepository.findByOffer_OfferId(offerId)
+                .orElseGet(() -> {
+                    ChatRoom room = new ChatRoom();
+                    room.setChatRoomType(RoomType.GROUP);
+                    room.setCreatedAt(OffsetDateTime.now());
+                    room.setUpdatedAt(OffsetDateTime.now());
+                    
+                    com.storks.livemessaging.model.Offer offer = new com.storks.livemessaging.model.Offer();
+                    offer.setOfferId(offerId);
+                    room.setOffer(offer);
+                    
+                    room = chatRoomRepository.save(room);
+
+                    User driver = userRepository.findById(driverId).orElseThrow();
+                    createParticipant(room, driver);
+
+                    return room;
+                });
+    }
+
+    @Transactional
+    public void addParticipantToOfferGroup(UUID offerId, UUID userId) {
+        ChatRoom room = chatRoomRepository.findByOffer_OfferId(offerId)
+                .orElseThrow(() -> new IllegalArgumentException("No chat room found for offer: " + offerId));
+        
+        User user = userRepository.findById(userId).orElseThrow();
+        
+        chatRoomParticipantRepository.findByRoomAndUser(room.getRoomId(), userId)
+                .ifPresentOrElse(
+                        p -> {
+                            if (p.isRemoved()) {
+                                p.setRemoved(false);
+                                chatRoomParticipantRepository.save(p);
+                            }
+                        },
+                        () -> createParticipant(room, user)
+                );
+    }
+
+    @Transactional
+    public void removeParticipantFromOfferGroup(UUID offerId, UUID userId) {
+        ChatRoom room = chatRoomRepository.findByOffer_OfferId(offerId)
+                .orElseThrow(() -> new IllegalArgumentException("No chat room found for offer: " + offerId));
+        
+        chatRoomParticipantRepository.findByRoomAndUser(room.getRoomId(), userId)
+                .ifPresent(p -> {
+                    p.setRemoved(true);
+                    chatRoomParticipantRepository.save(p);
+                });
+    }
+
     public ChatRoomResponse toResponse(ChatRoom room) {
         List<ChatRoomParticipant> participants = chatRoomParticipantRepository.findByRoom_RoomId(room.getRoomId());
         
@@ -100,6 +153,16 @@ public class ChatRoomService {
                         p.isRemoved()
                 ))
                 .collect(Collectors.toList());
+
+        String roomName = null;
+        if (room.getChatRoomType() == RoomType.GROUP && room.getOffer() != null) {
+            // Find driver
+            roomName = participants.stream()
+                    .filter(p -> p.getUser().getRole() == com.storks.livemessaging.model.types.RoleType.DRIVER)
+                    .findFirst()
+                    .map(p -> p.getUser().getFirstName() + "'s parents")
+                    .orElse("Group Chat");
+        }
 
         return new ChatRoomResponse(
                 room.getRoomId(),

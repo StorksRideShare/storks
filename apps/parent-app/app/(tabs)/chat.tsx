@@ -17,7 +17,7 @@ import { router } from "expo-router";
 type Room = {
   roomId: string;
   chatRoomType: "DIRECT" | "GROUP";
-  participants: any[]; // backend currently returns full participant objects
+  participants: any[];
   updatedAt: string;
 };
 
@@ -58,7 +58,12 @@ export default function TabTwoScreen() {
   const fetchRooms = async () => {
     try {
       const data = await api.get<any[]>("/api/v1/chats");
-      setRooms(data);
+      const sorted = [...data].sort((a, b) => {
+        if (a.chatRoomType === "GROUP" && b.chatRoomType !== "GROUP") return -1;
+        if (a.chatRoomType !== "GROUP" && b.chatRoomType === "GROUP") return 1;
+        return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+      });
+      setRooms(sorted);
     } catch (error) {
       console.error("Failed to fetch rooms:", error);
     } finally {
@@ -111,9 +116,9 @@ export default function TabTwoScreen() {
       const other = room.participants.find((p) => p.providerUserId !== user?.id);
       return other ? `${other.firstName} ${other.lastName}`.trim() || "Direct Chat" : "Direct Chat";
     }
-    // For group chats, find the driver participant by role
+    
     const driver = room.participants.find((p) => p.role === "DRIVER");
-    return driver ? `${driver.firstName} ${driver.lastName}`.trim() || "Group Chat" : "Group Chat";
+    return driver ? `${driver.firstName}'s parents` : "Group Chat";
   };
 
   if (loading) {

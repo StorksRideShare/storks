@@ -11,6 +11,8 @@ import { VStack } from "@/components/ui/vstack";
 import { HStack } from "@/components/ui/hstack";
 import { Link } from "expo-router";
 import { Pressable } from "react-native";
+import { Users } from "lucide-react-native";
+import { Center } from "@/components/ui/center";
 
 type ChatCardProps = {
   type: "direct" | "group";
@@ -28,6 +30,7 @@ const DEFAULT_MESSAGE = "No messages yet";
 const MAX_NOTIFICATION_COUNT = 9;
 
 export default function ChatCard({
+  type,
   roomId,
   avatar,
   showBadge = false,
@@ -62,6 +65,10 @@ export default function ChatCard({
             <Avatar>
               {avatar ? (
                 <AvatarImage source={{ uri: avatar }} />
+              ) : type === "group" ? (
+                <Center className="bg-orange-100 rounded-full w-full h-full">
+                  <Users size={20} color="#f97316" />
+                </Center>
               ) : (
                 <AvatarFallbackText>{displayName}</AvatarFallbackText>
               )}
