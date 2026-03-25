@@ -19,6 +19,8 @@ type Room = {
   chatRoomType: "DIRECT" | "GROUP";
   participants: any[];
   updatedAt: string;
+  lastMessageContent?: string;
+  lastMessageSentAt?: string;
 };
 
 type UserSearch = {
@@ -139,8 +141,10 @@ export default function TabTwoScreen() {
             type={item.chatRoomType.toLowerCase() as any}
             roomId={item.roomId}
             name={getChatName(item)}
-            recentMessage="Tap to chat" // In future, fetch last message from backend
-            lastMessageTime={new Date(item.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            recentMessage={item.lastMessageContent ?? "Tap to chat"}
+            lastMessageTime={item.lastMessageSentAt 
+              ? new Date(item.lastMessageSentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+              : new Date(item.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           />
         )}
         ListEmptyComponent={

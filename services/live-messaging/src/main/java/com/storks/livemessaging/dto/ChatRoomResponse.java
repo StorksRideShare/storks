@@ -11,5 +11,7 @@ public record ChatRoomResponse(
         RoomType chatRoomType,
         List<ParticipantResponse> participants,
         OffsetDateTime createdAt,
-        OffsetDateTime updatedAt
+        OffsetDateTime updatedAt,
+        String lastMessageContent,
+        OffsetDateTime lastMessageSentAt
 ) {}

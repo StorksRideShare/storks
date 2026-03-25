@@ -25,6 +25,7 @@ public class ChatRoomService {
     private final ChatRoomParticipantRepository chatRoomParticipantRepository;
     private final ChatRoomRepository chatRoomRepository;
     private final UserRepository userRepository;
+    private final com.storks.livemessaging.repositories.MessageRepository messageRepository;
 
     public List<ChatRoom> getUserActiveRooms(UUID userId) {
         List<ChatRoomParticipant> participants = chatRoomParticipantRepository.findByUser_UserIdAndIsRemovedFalse(userId);
@@ -164,12 +165,29 @@ public class ChatRoomService {
                     .orElse("Group Chat");
         }
 
+        String lastMessageContent = null;
+        OffsetDateTime lastMessageSentAt = null;
+
+        org.springframework.data.domain.Page<com.storks.livemessaging.model.Message> lastMessagePage = 
+            messageRepository.findByRoom_RoomIdAndIsDeletedFalseOrderBySentAtDesc(
+                room.getRoomId(), 
+                org.springframework.data.domain.PageRequest.of(0, 1)
+            );
+
+        if (!lastMessagePage.isEmpty()) {
+            com.storks.livemessaging.model.Message lastMessage = lastMessagePage.getContent().get(0);
+            lastMessageContent = lastMessage.getContent();
+            lastMessageSentAt = lastMessage.getSentAt();
+        }
+
         return new ChatRoomResponse(
                 room.getRoomId(),
                 room.getChatRoomType(),
                 participantDTOs,
                 room.getCreatedAt(),
-                room.getUpdatedAt()
+                room.getUpdatedAt(),
+                lastMessageContent,
+                lastMessageSentAt
         );
     }
 
