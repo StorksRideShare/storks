@@ -1,4 +1,4 @@
-import { useSignIn } from "@clerk/clerk-expo";
+import { useSignIn, useAuth } from "@clerk/clerk-expo";
 import type { EmailCodeFactor } from "@clerk/types";
 import { Link, useRouter } from "expo-router";
 import * as React from "react";
@@ -19,9 +19,11 @@ import {
   Platform,
   ActivityIndicator,
 } from "react-native";
+import { initUser, getAuthStatus } from "@/utils/api";
 
 export default function Page() {
   const { signIn, setActive, isLoaded } = useSignIn();
+  const { getToken } = useAuth();
   const router = useRouter();
 
   const [fontsLoaded] = useFonts({
@@ -37,6 +39,42 @@ export default function Page() {
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
+  // ------------------------------------------------------------------
+  // After Clerk session is active — init user if needed, then route
+  // ------------------------------------------------------------------
+  const checkStatusAndRoute = async (email: string) => {
+    try {
+      const token = await getToken();
+      if (!token) throw new Error("No token available");
+
+      // Always try initUser — backend ignores it if user already exists
+      try {
+        await initUser(token, email);
+      } catch (_) {
+        // Silently ignore — user likely already exists in DB
+      }
+
+      const status = await getAuthStatus(token);
+
+      if (status.isBanned) {
+        router.replace("/banned");
+        return;
+      }
+
+      if (!status.isOnboarded) {
+        router.replace("/onboarding");
+      } else {
+        router.replace("/(tabs)");
+      }
+    } catch (err) {
+      console.error("Auth status check failed:", err);
+      router.replace("/onboarding");
+    }
+  };
+
+  // ------------------------------------------------------------------
+  // Sign in with email + password
+  // ------------------------------------------------------------------
   const onSignInPress = React.useCallback(async () => {
     if (!isLoaded) return;
     setIsLoading(true);
@@ -49,16 +87,8 @@ export default function Page() {
       });
 
       if (signInAttempt.status === "complete") {
-        await setActive({
-          session: signInAttempt.createdSessionId,
-          navigate: async ({ session }) => {
-            if (session?.currentTask) {
-              console.log(session?.currentTask);
-              return;
-            }
-            router.replace("/");
-          },
-        });
+        await setActive({ session: signInAttempt.createdSessionId });
+        await checkStatusAndRoute(emailAddress);
       } else if (signInAttempt.status === "needs_second_factor") {
         const emailCodeFactor = signInAttempt.supportedSecondFactors?.find(
           (factor): factor is EmailCodeFactor =>
@@ -86,8 +116,11 @@ export default function Page() {
     } finally {
       setIsLoading(false);
     }
-  }, [isLoaded, signIn, setActive, router, emailAddress, password]);
+  }, [isLoaded, signIn, setActive, emailAddress, password]);
 
+  // ------------------------------------------------------------------
+  // 2FA email code verification
+  // ------------------------------------------------------------------
   const onVerifyPress = React.useCallback(async () => {
     if (!isLoaded) return;
     setIsLoading(true);
@@ -100,16 +133,8 @@ export default function Page() {
       });
 
       if (signInAttempt.status === "complete") {
-        await setActive({
-          session: signInAttempt.createdSessionId,
-          navigate: async ({ session }) => {
-            if (session?.currentTask) {
-              console.log(session?.currentTask);
-              return;
-            }
-            router.replace("/");
-          },
-        });
+        await setActive({ session: signInAttempt.createdSessionId });
+        await checkStatusAndRoute(emailAddress);
       } else {
         console.error(JSON.stringify(signInAttempt, null, 2));
         setError("Invalid code. Please try again.");
@@ -124,12 +149,12 @@ export default function Page() {
     } finally {
       setIsLoading(false);
     }
-  }, [isLoaded, signIn, setActive, router, code]);
+  }, [isLoaded, signIn, setActive, code, emailAddress]);
 
   if (!fontsLoaded) return null;
 
   // ------------------------------------------------------------------
-  // UI: EMAIL VERIFICATION STEP
+  // UI: EMAIL VERIFICATION STEP (2FA)
   // ------------------------------------------------------------------
   if (showEmailCode) {
     return (
@@ -198,7 +223,7 @@ export default function Page() {
   }
 
   // ------------------------------------------------------------------
-  // UI: MAIN SIGN IN STEP
+  // UI: MAIN SIGN IN
   // ------------------------------------------------------------------
   return (
     <SafeAreaView style={styles.container}>

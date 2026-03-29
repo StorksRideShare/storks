@@ -1,4 +1,4 @@
-import { ClerkProvider } from "@clerk/clerk-expo";
+import { ClerkProvider, ClerkLoaded, ClerkLoading } from "@clerk/clerk-expo";
 import { tokenCache } from "@clerk/clerk-expo/token-cache";
 import {
   DarkTheme,
@@ -14,29 +14,35 @@ import "react-native-reanimated";
 global.Buffer = Buffer;
 
 import { useColorScheme } from "@/components/useColorScheme";
-
 import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider";
 import "@/global.css";
 
+import LoadingScreen from "@/components/LoadingScreen";
+
+import {
+  Syne_400Regular,
+  Syne_600SemiBold,
+  Syne_700Bold,
+} from "@expo-google-fonts/syne";
+
 export {
-  // Catch any errors thrown by the Layout component.
   ErrorBoundary,
 } from "expo-router";
 
 export const unstable_settings = {
-  // Ensure that reloading on `/modal` keeps a back button present.
   initialRouteName: "(tabs)",
 };
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
+    Syne_400Regular,
+    Syne_600SemiBold,
+    Syne_700Bold,
   });
 
-  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
   useEffect(() => {
     if (error) throw error;
   }, [error]);
@@ -47,8 +53,9 @@ export default function RootLayout() {
     }
   }, [loaded]);
 
+  // Show loading screen while fonts are loading
   if (!loaded) {
-    return null;
+    return <LoadingScreen message="Initializing..." />;
   }
 
   return <RootLayoutNav />;
@@ -61,13 +68,25 @@ function RootLayoutNav() {
     <GluestackUIProvider mode="dark">
       <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
         <ClerkProvider tokenCache={tokenCache}>
-          <Stack>
-            <Stack.Screen name="(home)" options={{ headerShown: false }} />
-            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="modal" options={{ presentation: "modal" }} />
-            <Stack.Screen name="chats" options={{ headerShown: false }} />
-          </Stack>
+
+          {/* Show loading screen while Clerk initializes */}
+          <ClerkLoading>
+            <LoadingScreen message="Initializing..." />
+          </ClerkLoading>
+
+          {/* Render app only when Clerk is fully ready */}
+          <ClerkLoaded>
+            <Stack>
+              <Stack.Screen name="(home)"       options={{ headerShown: false }} />
+              <Stack.Screen name="(auth)"       options={{ headerShown: false }} />
+              <Stack.Screen name="(tabs)"       options={{ headerShown: false }} />
+              <Stack.Screen name="onboarding"   options={{ headerShown: false }} />
+              <Stack.Screen name="banned"       options={{ headerShown: false }} />
+              <Stack.Screen name="modal"        options={{ presentation: "modal" }} />
+              <Stack.Screen name="chats"        options={{ headerShown: false }} />
+            </Stack>
+          </ClerkLoaded>
+
         </ClerkProvider>
       </ThemeProvider>
     </GluestackUIProvider>
