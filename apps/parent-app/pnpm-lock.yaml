@@ -4,6 +4,135 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+dependencies:
+  '@clerk/expo':
+    specifier: '3'
+    version: 3.0.1(@solana/web3.js@1.98.4)(@types/react@19.2.14)(bs58@6.0.0)(expo-constants@55.0.7)(expo-modules-core@55.0.14)(expo-secure-store@55.0.8)(expo-web-browser@55.0.9)(expo@55.0.5)(fastestsmallesttextencoderdecoder@1.0.22)(react-dom@19.2.0)(react-native@0.83.2)(react@19.2.0)(typescript@5.9.3)
+  '@expo/html-elements':
+    specifier: 0.12.5
+    version: 0.12.5
+  '@expo/metro-runtime':
+    specifier: ^55.0.6
+    version: 55.0.6(@expo/dom-webview@55.0.3)(expo@55.0.5)(react-dom@19.2.0)(react-native@0.83.2)(react@19.2.0)
+  '@gluestack-ui/core':
+    specifier: 3.0.10
+    version: 3.0.10(@gluestack-ui/utils@3.0.11)(react-native-safe-area-context@5.6.1)(react-native-svg@15.15.3)(react-native-web@0.21.2)(react-native@0.83.2)(react@19.2.0)
+  '@gluestack-ui/utils':
+    specifier: 3.0.11
+    version: 3.0.11(react-dom@19.2.0)(react-native-web@0.21.2)(react-native@0.83.2)(react@19.2.0)(tailwindcss@3.4.17)
+  '@legendapp/motion':
+    specifier: 2.4.0
+    version: 2.4.0(nativewind@4.1.23)(react-native@0.83.2)(react@19.2.0)
+  '@react-navigation/native':
+    specifier: ^7.1.28
+    version: 7.1.33(react-native@0.83.2)(react@19.2.0)
+  '@stomp/stompjs':
+    specifier: ^7.3.0
+    version: 7.3.0
+  buffer:
+    specifier: ^6.0.3
+    version: 6.0.3
+  expo:
+    specifier: ~55.0.4
+    version: 55.0.5(@babel/core@7.29.0)(@expo/dom-webview@55.0.3)(@expo/metro-runtime@55.0.6)(expo-router@55.0.4)(react-dom@19.2.0)(react-native@0.83.2)(react@19.2.0)(typescript@5.9.3)
+  expo-camera:
+    specifier: ^55.0.11
+    version: 55.0.11(@types/emscripten@1.41.5)(expo@55.0.5)(react-native-web@0.21.2)(react-native@0.83.2)(react@19.2.0)
+  expo-constants:
+    specifier: ~55.0.7
+    version: 55.0.7(expo@55.0.5)(react-native@0.83.2)(typescript@5.9.3)
+  expo-font:
+    specifier: ~55.0.4
+    version: 55.0.4(expo@55.0.5)(react-native@0.83.2)(react@19.2.0)
+  expo-linking:
+    specifier: ~55.0.7
+    version: 55.0.7(expo@55.0.5)(react-native@0.83.2)(react@19.2.0)(typescript@5.9.3)
+  expo-router:
+    specifier: ~55.0.3
+    version: 55.0.4(@expo/log-box@55.0.7)(@expo/metro-runtime@55.0.6)(@types/react@19.2.14)(expo-constants@55.0.7)(expo-font@55.0.4)(expo-linking@55.0.7)(expo@55.0.5)(react-dom@19.2.0)(react-native-reanimated@4.2.1)(react-native-safe-area-context@5.6.1)(react-native-screens@4.23.0)(react-native-web@0.21.2)(react-native@0.83.2)(react@19.2.0)
+  expo-secure-store:
+    specifier: ^55.0.8
+    version: 55.0.8(expo@55.0.5)
+  expo-splash-screen:
+    specifier: ~55.0.10
+    version: 55.0.10(expo@55.0.5)(typescript@5.9.3)
+  expo-status-bar:
+    specifier: ~55.0.4
+    version: 55.0.4(react-native@0.83.2)(react@19.2.0)
+  expo-symbols:
+    specifier: ~55.0.4
+    version: 55.0.5(expo-font@55.0.4)(expo@55.0.5)(react-native@0.83.2)(react@19.2.0)
+  expo-system-ui:
+    specifier: ^55.0.9
+    version: 55.0.9(expo@55.0.5)(react-native-web@0.21.2)(react-native@0.83.2)
+  expo-web-browser:
+    specifier: ~55.0.9
+    version: 55.0.9(expo@55.0.5)(react-native@0.83.2)
+  lucide-react-native:
+    specifier: ^0.576.0
+    version: 0.576.0(react-native-svg@15.15.3)(react-native@0.83.2)(react@19.2.0)
+  nativewind:
+    specifier: 4.1.23
+    version: 4.1.23(react-native-reanimated@4.2.1)(react-native-safe-area-context@5.6.1)(react-native-svg@15.15.3)(react-native@0.83.2)(react@19.2.0)(tailwindcss@3.4.17)
+  react:
+    specifier: 19.2.0
+    version: 19.2.0
+  react-aria:
+    specifier: 3.46.0
+    version: 3.46.0(react-dom@19.2.0)(react@19.2.0)
+  react-dom:
+    specifier: 19.2.0
+    version: 19.2.0(react@19.2.0)
+  react-native:
+    specifier: 0.83.2
+    version: 0.83.2(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.2.0)
+  react-native-qrcode-svg:
+    specifier: ^6.3.21
+    version: 6.3.21(react-native-svg@15.15.3)(react-native@0.83.2)(react@19.2.0)
+  react-native-reanimated:
+    specifier: 4.2.1
+    version: 4.2.1(react-native-worklets@0.7.2)(react-native@0.83.2)(react@19.2.0)
+  react-native-safe-area-context:
+    specifier: ~5.6.1
+    version: 5.6.1(react-native@0.83.2)(react@19.2.0)
+  react-native-screens:
+    specifier: ~4.23.0
+    version: 4.23.0(react-native@0.83.2)(react@19.2.0)
+  react-native-svg:
+    specifier: 15.15.3
+    version: 15.15.3(react-native@0.83.2)(react@19.2.0)
+  react-native-web:
+    specifier: ~0.21.0
+    version: 0.21.2(react-dom@19.2.0)(react@19.2.0)
+  react-native-worklets:
+    specifier: 0.7.2
+    version: 0.7.2(@babel/core@7.29.0)(react-native@0.83.2)(react@19.2.0)
+  react-stately:
+    specifier: 3.44.0
+    version: 3.44.0(react@19.2.0)
+  tailwind-variants:
+    specifier: 0.1.20
+    version: 0.1.20(tailwindcss@3.4.17)
+  text-encoding:
+    specifier: ^0.7.0
+    version: 0.7.0
+
+devDependencies:
+  '@types/react':
+    specifier: ~19.2.2
+    version: 19.2.14
+  babel-plugin-module-resolver:
+    specifier: 5.0.0
+    version: 5.0.0
+  prettier-plugin-tailwindcss:
+    specifier: 0.5.11
+    version: 0.5.11(prettier@3.8.1)
+  tailwindcss:
+    specifier: 3.4.17
+    version: 3.4.17
+  typescript:
+    specifier: ~5.9.2
+    version: 5.9.3
 importers:
   .:
     dependencies:
@@ -13701,6 +13830,10 @@ snapshots:
       "@types/node": 25.3.5
     dev: false
 
+  /@types/emscripten@1.41.5:
+    resolution: {integrity: sha512-cMQm7pxu6BxtHyqJ7mQZ2kXWV5SLmugybFdHCBbJ5eHzOo6VhBckEgAT3//rP5FwPHNPeEiq4SmQ5ucBwsOo4Q==}
+    dev: false
+
   /@types/graceful-fs@4.1.9:
     resolution:
       {
@@ -14363,6 +14496,14 @@ snapshots:
         integrity: sha512-BLrgEcRTwX2o6gGxGOCNyMvGSp35YofuYzw9h1IMTRmKqttAZZVU67bdb9Pr2vUHA8+j3i2tJfjO6C6+4myGTA==,
       }
     engines: { node: 18 || 20 || >=22 }
+    dev: false
+
+  /barcode-detector@3.1.1(@types/emscripten@1.41.5):
+    resolution: {integrity: sha512-ghWlEAV93ZCUniO7Co3ih/01XPm+U30CV+NoPbO6Chj5lZzHydDAqKlrBEd+37TkoR+QTH3tnnwd8k8epGTfIg==}
+    dependencies:
+      zxing-wasm: 3.0.1(@types/emscripten@1.41.5)
+    transitivePeerDependencies:
+      - '@types/emscripten'
     dev: false
 
   /base-64@1.0.0:
@@ -15489,6 +15630,26 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
       - typescript
+    dev: false
+
+  /expo-camera@55.0.11(@types/emscripten@1.41.5)(expo@55.0.5)(react-native-web@0.21.2)(react-native@0.83.2)(react@19.2.0):
+    resolution: {integrity: sha512-8z8qVXHPj4lGF8n4e6zsYR1YkTjNPz6Vim8T+EwAWaG9+5gQw9ax+fCz6+J9FVCR4mjK5XjZj1UaG65NbYJOHg==}
+    peerDependencies:
+      expo: '*'
+      react: '*'
+      react-native: '*'
+      react-native-web: '*'
+    peerDependenciesMeta:
+      react-native-web:
+        optional: true
+    dependencies:
+      barcode-detector: 3.1.1(@types/emscripten@1.41.5)
+      expo: 55.0.5(@babel/core@7.29.0)(@expo/dom-webview@55.0.3)(@expo/metro-runtime@55.0.6)(expo-router@55.0.4)(react-dom@19.2.0)(react-native@0.83.2)(react@19.2.0)(typescript@5.9.3)
+      react: 19.2.0
+      react-native: 0.83.2(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.2.0)
+      react-native-web: 0.21.2(react-dom@19.2.0)(react@19.2.0)
+    transitivePeerDependencies:
+      - '@types/emscripten'
     dev: false
 
   /expo-constants@55.0.7(expo@55.0.5)(react-native@0.83.2)(typescript@5.9.3):
@@ -18570,6 +18731,14 @@ snapshots:
       sisteransi: 1.0.5
     dev: false
 
+  /prop-types@15.8.1:
+    resolution: {integrity: sha512-oj87CgZICdulUohogVAR7AjlC0327U4el4L6eAvOqCeudMDVU0NThNaV+b9Df4dXgSP1gXMTnPdhfe/2qDH5cg==}
+    dependencies:
+      loose-envify: 1.4.0
+      object-assign: 4.1.1
+      react-is: 16.13.1
+    dev: false
+
   /punycode@2.3.1:
     resolution:
       {
@@ -18726,6 +18895,10 @@ snapshots:
       react: 19.2.0
     dev: false
 
+  /react-is@16.13.1:
+    resolution: {integrity: sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==}
+    dev: false
+
   /react-is@18.3.1:
     resolution:
       {
@@ -18799,6 +18972,21 @@ snapshots:
     dependencies:
       react: 19.2.0
       react-native: 0.83.2(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.2.0)
+    dev: false
+
+  /react-native-qrcode-svg@6.3.21(react-native-svg@15.15.3)(react-native@0.83.2)(react@19.2.0):
+    resolution: {integrity: sha512-6vcj4rcdpWedvphDR+NSJcudJykNuLgNGFwm2p4xYjR8RdyTzlrELKI5LkO4ANS9cQUbqsfkpippPv64Q2tUtA==}
+    peerDependencies:
+      react: '*'
+      react-native: '>=0.63.4'
+      react-native-svg: '>=14.0.0'
+    dependencies:
+      prop-types: 15.8.1
+      qrcode: 1.5.4
+      react: 19.2.0
+      react-native: 0.83.2(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.2.0)
+      react-native-svg: 15.15.3(react-native@0.83.2)(react@19.2.0)
+      text-encoding: 0.7.0
     dev: false
 
   /react-native-reanimated@4.2.1(react-native-worklets@0.7.2)(react-native@0.83.2)(react@19.2.0):
@@ -19746,6 +19934,11 @@ snapshots:
       }
     engines: { node: ">= 0.4" }
 
+  /tagged-tag@1.0.0:
+    resolution: {integrity: sha512-yEFYrVhod+hdNyx7g5Bnkkb0G6si8HJurOoOEgC8B/O0uXLHlaey/65KRv6cuWBNhBgHKAROVpc7QyYqE5gFng==}
+    engines: {node: '>=20'}
+    dev: false
+
   /tailwind-merge@1.14.0:
     resolution:
       {
@@ -19958,6 +20151,13 @@ snapshots:
         integrity: sha512-Ne2YiiGN8bmrmJJEuTWTLJR32nh/JdL1+PSicowtNb0WFpn59GK8/lfD61bVtzguz7b3PBt74nxpv/Pw5po5Rg==,
       }
     engines: { node: ">=8" }
+    dev: false
+
+  /type-fest@5.5.0:
+    resolution: {integrity: sha512-PlBfpQwiUvGViBNX84Yxwjsdhd1TUlXr6zjX7eoirtCPIr08NAmxwa+fcYBTeRQxHo9YC9wwF3m9i700sHma8g==}
+    engines: {node: '>=20'}
+    dependencies:
+      tagged-tag: 1.0.0
     dev: false
 
   /typescript@5.9.3:
@@ -20553,4 +20753,13 @@ snapshots:
     dependencies:
       "@types/react": 19.2.14
       react: 19.2.0
+    dev: false
+
+  /zxing-wasm@3.0.1(@types/emscripten@1.41.5):
+    resolution: {integrity: sha512-3CLj6iaGkpqPWXAB4pIWkFOR63MwqGekpMzaROFKto4dFowiPmLlC56KoMoOSXzqOCOpI5DAvMdB8ku2va6fUg==}
+    peerDependencies:
+      '@types/emscripten': '>=1.39.6'
+    dependencies:
+      '@types/emscripten': 1.41.5
+      type-fest: 5.5.0
     dev: false
