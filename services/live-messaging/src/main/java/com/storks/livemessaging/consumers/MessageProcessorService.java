@@ -28,6 +28,6 @@ public class MessageProcessorService {
         messageService.persistAndCacheMessage(payload);
         
         // 2. Broadcast to online users in the room
-        messagingTemplate.convertAndSend("/topic/chat/" + payload.getRoomId(), payload);
+        messagingTemplate.convertAndSend("/topic/room/" + payload.getRoomId(), payload);
     }
 }

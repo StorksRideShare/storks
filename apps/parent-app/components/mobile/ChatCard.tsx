@@ -8,6 +8,7 @@ import { Badge, BadgeText } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
+import { HStack } from "@/components/ui/hstack";
 import { Link } from "expo-router";
 import { Pressable } from "react-native";
 
@@ -19,11 +20,11 @@ type ChatCardProps = {
   name?: string;
   recentMessage?: string;
   notificationCount?: number;
+  lastMessageTime?: string;
 };
 
-const DEFAULT_NAME = "John Smith";
-const DEFAULT_MESSAGE =
-  "Hey, can I come over for like i dont know something very big you know?!";
+const DEFAULT_NAME = "Unknown User";
+const DEFAULT_MESSAGE = "No messages yet";
 const MAX_NOTIFICATION_COUNT = 9;
 
 export default function ChatCard({
@@ -33,6 +34,7 @@ export default function ChatCard({
   name,
   recentMessage,
   notificationCount = 0,
+  lastMessageTime,
 }: ChatCardProps) {
   const displayName = name ?? DEFAULT_NAME;
   const displayRecent = recentMessage ?? DEFAULT_MESSAGE;
@@ -46,7 +48,7 @@ export default function ChatCard({
     <Link
       href={{
         pathname: "/chats/[id]",
-        params: { id: roomId },
+        params: { id: roomId, name: displayName },
       }}
       asChild
     >
@@ -67,25 +69,32 @@ export default function ChatCard({
             </Avatar>
 
             <VStack className="flex-1">
-              <Text className="text-lg font-bold">{displayName}</Text>
-              <Text className="text-sm text-gray-300" numberOfLines={1}>
-                {displayRecent}
-              </Text>
+              <HStack className="justify-between items-center">
+                <Text className="text-lg font-bold">{displayName}</Text>
+                {lastMessageTime && (
+                  <Text className="text-xs text-gray-500">{lastMessageTime}</Text>
+                )}
+              </HStack>
+              <HStack className="justify-between items-center">
+                <Text className="text-sm text-gray-400 flex-1" numberOfLines={1}>
+                  {displayRecent}
+                </Text>
+                {hasNotification && (
+                  <Badge
+                    variant="solid"
+                    className="h-5 min-w-[20px] items-center justify-center rounded-full bg-orange-600 ml-2"
+                  >
+                    <BadgeText className="text-center text-[10px] font-bold text-white">
+                      {notificationLabel}
+                    </BadgeText>
+                  </Badge>
+                )}
+              </HStack>
             </VStack>
-
-            {hasNotification && (
-              <Badge
-                variant="solid"
-                className="h-6 w-6 items-center justify-center rounded-full bg-orange-600"
-              >
-                <BadgeText className="text-center font-bold text-white">
-                  {notificationLabel}
-                </BadgeText>
-              </Badge>
-            )}
           </Card>
         )}
       </Pressable>
     </Link>
   );
 }
+

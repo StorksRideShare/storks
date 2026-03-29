@@ -9,8 +9,8 @@ dependencies:
     specifier: '3'
     version: 3.0.1(@solana/web3.js@1.98.4)(@types/react@19.2.14)(bs58@6.0.0)(expo-constants@55.0.7)(expo-modules-core@55.0.14)(expo-secure-store@55.0.8)(expo-web-browser@55.0.9)(expo@55.0.5)(fastestsmallesttextencoderdecoder@1.0.22)(react-dom@19.2.0)(react-native@0.83.2)(react@19.2.0)(typescript@5.9.3)
   '@expo/html-elements':
-    specifier: 0.10.1
-    version: 0.10.1
+    specifier: 0.12.5
+    version: 0.12.5
   '@expo/metro-runtime':
     specifier: ^55.0.6
     version: 55.0.6(@expo/dom-webview@55.0.3)(expo@55.0.5)(react-dom@19.2.0)(react-native@0.83.2)(react@19.2.0)
@@ -26,6 +26,9 @@ dependencies:
   '@react-navigation/native':
     specifier: ^7.1.28
     version: 7.1.33(react-native@0.83.2)(react@19.2.0)
+  '@stomp/stompjs':
+    specifier: ^7.3.0
+    version: 7.3.0
   buffer:
     specifier: ^6.0.3
     version: 6.0.3
@@ -104,6 +107,9 @@ dependencies:
   tailwind-variants:
     specifier: 0.1.20
     version: 0.1.20(tailwindcss@3.4.17)
+  text-encoding:
+    specifier: ^0.7.0
+    version: 0.7.0
 
 devDependencies:
   '@types/react':
@@ -1576,8 +1582,8 @@ packages:
       - supports-color
     dev: false
 
-  /@expo/html-elements@0.10.1:
-    resolution: {integrity: sha512-3PTmtkV15D7+lykXVtvkH1jQ5Y6JE+e3zCaoMMux7z2cSLGQUNwDEUwG37gew3OEB1/E4/SEWgjvg8m7E6/e2Q==}
+  /@expo/html-elements@0.12.5:
+    resolution: {integrity: sha512-28KWO88YKykKU7ke5sEQs5TivFRMs1Aktz13xxgqAf5rTgb+lka0VKVt3W2fG7ksbUQ407rtUqz7SEAq298NvQ==}
     dev: false
 
   /@expo/image-utils@0.8.12:
@@ -4636,6 +4642,10 @@ packages:
       - encoding
       - typescript
       - utf-8-validate
+    dev: false
+
+  /@stomp/stompjs@7.3.0:
+    resolution: {integrity: sha512-nKMLoFfJhrQAqkvvKd1vLq/cVBGCMwPRCD0LqW7UT1fecRx9C3GoKEIR2CYwVuErGeZu8w0kFkl2rlhPlqHVgQ==}
     dev: false
 
   /@stripe/stripe-js@5.6.0:
@@ -9148,6 +9158,11 @@ packages:
 
   /text-encoding-utf-8@1.0.2:
     resolution: {integrity: sha512-8bw4MY9WjdsD2aMtO0OzOCY3pXGYNx2d2FfHRVUKkiCPDWjKuOlhLVASS+pD7VkLTVjW268LYJHwsnPFlBpbAg==}
+    dev: false
+
+  /text-encoding@0.7.0:
+    resolution: {integrity: sha512-oJQ3f1hrOnbRLOcwKz0Liq2IcrvDeZRHXhd9RgLrsT+DjWY/nty1Hi7v3dtkaEYbPYe0mUoOfzRrMwfXXwgPUA==}
+    deprecated: no longer maintained
     dev: false
 
   /thenify-all@1.6.0:
