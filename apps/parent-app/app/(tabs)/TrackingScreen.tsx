@@ -29,7 +29,7 @@ const TrackingScreen = () => {
   // fallback
   if (!tripData) return <Text style={{ color: "white" }}>Loading...</Text>;
 
-  const state = tripData.status;
+ const state = tripData?.status || "ARRIVING";
 
   // 🔥 Dynamic UI text
   const getMessage = () => {
@@ -45,16 +45,16 @@ const TrackingScreen = () => {
     <View style={styles.container}>
 
       {/* MAP */}
-      <MapView
-        style={styles.map}
-        initialRegion={{
-          latitude: tripData.latitude,
-          longitude: tripData.longitude,
-          latitudeDelta: 0.01,
-          longitudeDelta: 0.01,
-        }}
-      >
-        {/* Driver */}
+<MapView
+  style={styles.map}
+  initialRegion={{
+    latitude: tripData?.latitude,
+    longitude: tripData?.longitude,
+    latitudeDelta: 0.01,
+    longitudeDelta: 0.01,
+  }}
+>
+  {/* Driver */}
         <Marker
           coordinate={{
             latitude: tripData.latitude,
