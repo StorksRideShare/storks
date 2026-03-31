@@ -1,4 +1,4 @@
-import { useAuth } from "@clerk/clerk-expo";
+import { useAuth } from "@clerk/expo";
 import { Link, Redirect, Tabs } from "expo-router";
 import { SymbolView } from "expo-symbols";
 import { Home, MessageCircle } from "lucide-react-native";
@@ -9,15 +9,20 @@ import { useClientOnlyValue } from "@/components/useClientOnlyValue";
 import { useColorScheme } from "@/components/useColorScheme";
 import Colors from "@/constants/Colors";
 import LoadingScreen from "@/components/LoadingScreen";
-import { getAuthStatus } from "@/utils/api";
+import { API_BASE_URL } from "@/middleware/apiClient";
+import type { AuthStatus } from "@/utils/api";
 
 export default function TabLayout() {
+  // ── All hooks at the top ──────────────────────────────────────
   const colorScheme = useColorScheme();
+  const headerShown = useClientOnlyValue(false, true);
+
+  // useAuth is safe here — ClerkProvider wraps the entire app
   const { isSignedIn, getToken } = useAuth();
 
-  const [checking, setChecking] = useState(true);
+  const [checking, setChecking]       = useState(true);
   const [isOnboarded, setIsOnboarded] = useState(false);
-  const [isBanned, setIsBanned] = useState(false);
+  const [isBanned, setIsBanned]       = useState(false);
 
   useEffect(() => {
     if (!isSignedIn) {
@@ -30,11 +35,17 @@ export default function TabLayout() {
         const token = await getToken();
         if (!token) { setChecking(false); return; }
 
-        const status = await getAuthStatus(token);
+        // Plain fetch with the Clerk token — avoids useSession ordering issues
+        const res = await fetch(`${API_BASE_URL}/api/auth/status`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (!res.ok) throw new Error(`${res.status}`);
+
+        const status: AuthStatus = await res.json();
         setIsOnboarded(status.isOnboarded);
         setIsBanned(status.isBanned);
       } catch {
-        // If check fails, send to onboarding as safe fallback
         setIsOnboarded(false);
       } finally {
         setChecking(false);
@@ -44,24 +55,18 @@ export default function TabLayout() {
     check();
   }, [isSignedIn]);
 
-  // Show loading screen while checking — prevents any flash of home
-  if (checking) return <LoadingScreen message="Loading..." />;
+  // ── Conditional returns AFTER all hooks ───────────────────────
 
-  // Not signed in
-  if (!isSignedIn) return <Redirect href="/(auth)/signin" />;
-
-  // Banned
-  if (isBanned) return <Redirect href="/banned" />;
-
-  // Not onboarded
+  if (checking)     return <LoadingScreen message="Loading..." />;
+  if (!isSignedIn)  return <Redirect href="/(auth)/signin" />;
+  if (isBanned)     return <Redirect href="/banned" />;
   if (!isOnboarded) return <Redirect href="/onboarding" />;
 
-  // All good — render tabs
   return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: Colors[colorScheme].tint,
-        headerShown: useClientOnlyValue(false, true),
+        headerShown,
       }}
     >
       <Tabs.Screen

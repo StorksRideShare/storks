@@ -1,5 +1,5 @@
-import { ClerkProvider, ClerkLoaded, ClerkLoading } from "@clerk/clerk-expo";
-import { tokenCache } from "@clerk/clerk-expo/token-cache";
+import { ClerkProvider } from "@clerk/expo";
+import { tokenCache } from "@clerk/expo/token-cache";
 import {
   DarkTheme,
   DefaultTheme,
@@ -34,6 +34,7 @@ export const unstable_settings = {
 };
 
 SplashScreen.preventAutoHideAsync();
+const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
@@ -67,26 +68,14 @@ function RootLayoutNav() {
   return (
     <GluestackUIProvider mode="dark">
       <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-        <ClerkProvider tokenCache={tokenCache}>
-
-          {/* Show loading screen while Clerk initializes */}
-          <ClerkLoading>
-            <LoadingScreen message="Initializing..." />
-          </ClerkLoading>
-
-          {/* Render app only when Clerk is fully ready */}
-          <ClerkLoaded>
-            <Stack>
-              <Stack.Screen name="(home)"       options={{ headerShown: false }} />
-              <Stack.Screen name="(auth)"       options={{ headerShown: false }} />
-              <Stack.Screen name="(tabs)"       options={{ headerShown: false }} />
-              <Stack.Screen name="onboarding"   options={{ headerShown: false }} />
-              <Stack.Screen name="banned"       options={{ headerShown: false }} />
-              <Stack.Screen name="modal"        options={{ presentation: "modal" }} />
-              <Stack.Screen name="chats"        options={{ headerShown: false }} />
-            </Stack>
-          </ClerkLoaded>
-
+        <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
+          <Stack>
+            <Stack.Screen name="(home)" options={{ headerShown: false }} />
+            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="modal" options={{ presentation: "modal" }} />
+            <Stack.Screen name="chats" options={{ headerShown: false }} />
+          </Stack>
         </ClerkProvider>
       </ThemeProvider>
     </GluestackUIProvider>

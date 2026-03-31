@@ -1,12 +1,28 @@
 import { SignOutButton } from "@/components/SignOutButton";
 import { MonoText } from "@/components/StyledText";
 import { Text, View } from "@/components/Themed";
-import { SignedIn, SignedOut, useSession, useUser } from "@clerk/clerk-expo";
+import { Show, useSession, useUser } from "@clerk/expo";
 import { Link } from "expo-router";
-import { StyleSheet } from "react-native";
+import {
+  StyleSheet,
+  SafeAreaView,
+  TouchableOpacity,
+} from "react-native";
+import {
+  Syne_400Regular,
+  Syne_600SemiBold,
+  Syne_700Bold,
+} from "@expo-google-fonts/syne";
+import { useFonts } from "expo-font";
 
 export default function Page() {
   const { user } = useUser();
+
+  const [fontsLoaded] = useFonts({
+    Syne_400Regular,
+    Syne_600SemiBold,
+    Syne_700Bold,
+  });
 
   // If your user isn't appearing as signed in,
   // it's possible they have session tasks to complete.
@@ -14,38 +30,100 @@ export default function Page() {
   const { session } = useSession();
   console.log(session?.currentTask);
 
+  if (!fontsLoaded) return null;
+
   return (
-    <View style={styles.container}>
-      <MonoText>Welcome!</MonoText>
-      {/* Show the sign-in and sign-up buttons when the user is signed out */}
-      <SignedOut>
-        <Link href="/(auth)/signin">
-          <MonoText>Sign in</MonoText>
-        </Link>
-        <Link href="/(auth)/signup">
-          <MonoText>Sign up</MonoText>
-        </Link>
-      </SignedOut>
-      {/* Show the sign-out button when the user is signed in */}
-      <SignedIn>
-        <MonoText>Hello {user?.emailAddresses[0].emailAddress}</MonoText>
-        <Link
-          href={{
-            pathname: "/(tabs)",
-          }}
-        >
-          <Text>Home</Text>
-        </Link>
-        <SignOutButton />
-      </SignedIn>
-    </View>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <Text style={styles.welcomeText}>Welcome!</Text>
+
+        {/* Show the sign-in and sign-up buttons when the user is signed out */}
+        <Show when="signed-out">
+          <Link href="/(auth)/signin" asChild>
+            <TouchableOpacity style={styles.primaryButton} activeOpacity={0.8}>
+              <Text style={styles.primaryButtonText}>Sign in</Text>
+            </TouchableOpacity>
+          </Link>
+          <Link href="/(auth)/signup" asChild>
+            <TouchableOpacity style={styles.outlineButton} activeOpacity={0.8}>
+              <Text style={styles.outlineButtonText}>Sign up</Text>
+            </TouchableOpacity>
+          </Link>
+        </Show>
+
+        {/* Show the sign-out button when the user is signed in */}
+        <Show when="signed-in">
+          <Text style={styles.emailText}>
+            {user?.emailAddresses[0].emailAddress}
+          </Text>
+          <Link
+            href={{
+              pathname: "/(tabs)",
+            }}
+            asChild
+          >
+            <TouchableOpacity style={styles.primaryButton} activeOpacity={0.8}>
+              <Text style={styles.primaryButtonText}>Go Home</Text>
+            </TouchableOpacity>
+          </Link>
+          <SignOutButton />
+        </Show>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#171412",
+  },
   container: {
     flex: 1,
-    padding: 20,
+    paddingHorizontal: 32,
+    paddingTop: 80,
+    paddingBottom: 40,
+    backgroundColor: "transparent",
     gap: 16,
+  },
+  welcomeText: {
+    fontFamily: "Syne_400Regular",
+    fontSize: 18,
+    color: "#FFFFFF",
+    textAlign: "center",
+    marginBottom: 32,
+  },
+  emailText: {
+    fontFamily: "Syne_400Regular",
+    fontSize: 14,
+    color: "#7A726E",
+    textAlign: "center",
+    marginBottom: 8,
+  },
+  primaryButton: {
+    height: 60,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 30,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  primaryButtonText: {
+    fontFamily: "Syne_700Bold",
+    color: "#000000",
+    fontSize: 16,
+  },
+  outlineButton: {
+    height: 60,
+    backgroundColor: "transparent",
+    borderRadius: 30,
+    borderWidth: 1,
+    borderColor: "#E66B00",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  outlineButtonText: {
+    fontFamily: "Syne_600SemiBold",
+    color: "#E66B00",
+    fontSize: 16,
   },
 });

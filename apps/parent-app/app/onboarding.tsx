@@ -1,4 +1,4 @@
-import { useAuth } from "@clerk/clerk-expo";
+import { useAuth } from "@clerk/expo";
 import { useRouter } from "expo-router";
 import { useFonts } from "expo-font";
 import {
