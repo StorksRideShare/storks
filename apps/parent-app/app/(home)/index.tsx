@@ -1,19 +1,18 @@
 import { SignOutButton } from "@/components/SignOutButton";
-import { MonoText } from "@/components/StyledText";
+import { Image } from "expo-image";
 import { Text, View } from "@/components/Themed";
 import { Show, useSession, useUser } from "@clerk/expo";
 import { Link } from "expo-router";
-import {
-  StyleSheet,
-  SafeAreaView,
-  TouchableOpacity,
-} from "react-native";
+import { StyleSheet, TouchableOpacity } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import {
   Syne_400Regular,
   Syne_600SemiBold,
   Syne_700Bold,
 } from "@expo-google-fonts/syne";
 import { useFonts } from "expo-font";
+import { Box } from "@/components/ui/box";
+import { VStack } from "@/components/ui/vstack";
 
 export default function Page() {
   const { user } = useUser();
@@ -33,8 +32,8 @@ export default function Page() {
   if (!fontsLoaded) return null;
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
+    <Box style={styles.safeArea}>
+      <VStack style={styles.container} className="mt-40">
         <Text style={styles.welcomeText}>Welcome!</Text>
 
         {/* Show the sign-in and sign-up buttons when the user is signed out */}
@@ -68,8 +67,21 @@ export default function Page() {
           </Link>
           <SignOutButton />
         </Show>
-      </View>
-    </SafeAreaView>
+        <Image
+          source={require("../../assets/images/the_stork.svg")}
+          contentFit="contain"
+          transition={1000}
+          style={{
+            position: "absolute",
+            bottom: 16,
+            right: 0,
+            width: 300,
+            height: 300,
+            opacity: 0.5,
+          }}
+        />
+      </VStack>
+    </Box>
   );
 }
 

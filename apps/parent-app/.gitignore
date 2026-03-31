@@ -6,6 +6,8 @@ node_modules/
 .idea/
 .env 
 pnpm-lock.yaml
+pnpm-workspace.yaml
+pnpm-workspace.yaml.bak
 # Expo
 .expo/
 dist/
