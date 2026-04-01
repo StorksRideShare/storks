@@ -1,0 +1,27 @@
+openapi: "3.0.3"
+
+info:
+  title: Storks Security and Verification Microservice
+  version: "1.0"
+
+servers:
+  - url: http:localhost:8085/api/v1/
+    description: >
+      Handles all security and verification related requests and responses.
+
+paths:
+  /health:
+    get:
+      responses:
+        "200":
+          description: "I'm Alive"
+  /otp/request:
+    post:
+      description: ""
+      parameters:
+        - name: type
+          in: body
+
+      responses:
+        "200":
+          description: OK

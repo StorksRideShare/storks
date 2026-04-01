@@ -1,0 +1,13 @@
+*.zip
+*.log
+*.env
+*.sql
+*.pnpm-store
+*node_modules
+*pnpm-lock.yaml
+*bun-lock.yaml
+*yarn.lock
+*.DS_Store
+*dist
+*package-lock.json
+*.cache

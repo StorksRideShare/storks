@@ -2,7 +2,12 @@
 
 # dependencies
 node_modules/
-
+.vscode/
+.idea/
+.env 
+pnpm-lock.yaml
+pnpm-workspace.yaml
+pnpm-workspace.yaml.bak
 # Expo
 .expo/
 dist/
@@ -35,8 +40,6 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
-
-app-example
 
 # generated native folders
 /ios
