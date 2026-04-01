@@ -24,7 +24,6 @@ public class PrivacyService {
     public Map<String, Object> getSettings(UUID userId) {
         Optional<PrivacySettings> opt = repository.findByUserId(userId);
         if (opt.isEmpty()) {
-            // Default safe settings
             Map<String, Object> defaults = new HashMap<>();
             defaults.put("shareLocationOnlyActiveRide", true);
             defaults.put("maskFullAddress", true);

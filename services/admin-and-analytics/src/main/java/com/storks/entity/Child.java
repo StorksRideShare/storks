@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonView;
+import com.storks.model.User;
 import com.storks.views.UserViews;
 
 import jakarta.persistence.CollectionTable;
@@ -32,9 +33,12 @@ public class Child {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    // Visible to everyone (driver, parent, admin)
+    // Parent relationship – which parent's child is this
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_id")
+    private User parent;
     @JsonView({UserViews.DriverView.class, UserViews.ParentView.class, UserViews.AdminView.class})
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String name;
 
     // Visible even to driver (preferred calling name)
@@ -54,7 +58,7 @@ public class Child {
 
     // School name – visible to parent, arguably also to driver (practical need)
     @JsonView({UserViews.ParentView.class, UserViews.DriverView.class, UserViews.AdminView.class})
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String school;
 
     // Very sensitive medical & disability information – ONLY admin
@@ -85,5 +89,8 @@ public class Child {
     @JoinColumn(name = "current_pickup_location_id")
     private Location currentPickupLocation;
 
-    // You can add more fields later (photo, emergency contact, etc.)
+    // Group/ride group membership – for organizing children into ride groups/carpools
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "group_id")
+    private Group group;
 }

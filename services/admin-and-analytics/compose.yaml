@@ -1,0 +1,23 @@
+services:
+  admin-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: admin-service-app
+    ports:
+      - "8081:8081"
+    volumes:
+      - .:/home/gradle/app
+      - gradle-cache:/home/gradle/.gradle
+    working_dir: /home/gradle/app
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      GRADLE_OPTS: "-Dorg.gradle.native=false"
+      SERVER_PORT: 8081
+    depends_on:
+      - kafka
+      - postgres
+      - redis
+
+volumes:
+  gradle-cache:

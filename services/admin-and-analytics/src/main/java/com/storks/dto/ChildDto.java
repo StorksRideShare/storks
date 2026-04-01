@@ -1,13 +1,12 @@
 package com.storks.dto;
 
-import java.util.UUID;
-
 import com.fasterxml.jackson.annotation.JsonView;
 import com.storks.entity.Child;
 import com.storks.service.PrivacyMaskingService;
 import com.storks.views.UserViews;
-
 import lombok.Data;
+
+import java.util.UUID;
 
 @Data
 public class ChildDto {
@@ -24,20 +23,18 @@ public class ChildDto {
     @JsonView(UserViews.AdminView.class)
     private String pronouns;
 
-    // ... add more fields with appropriate views
+    // Add more fields here as needed...
 
-    // Constructor / mapper from entity → dto
     public static ChildDto fromEntity(Child child) {
         ChildDto dto = new ChildDto();
         dto.setId(child.getId());
         dto.setName(child.getName());
         dto.setPreferredName(child.getPreferredName());
-        // conditionally set more based on logic if needed
+        // conditionally set more fields if needed
         return dto;
     }
 
-    // Add inside ChildDto class
-public ChildDto applyPrivacyMask(PrivacyMaskingService maskingService, UUID parentUserId) {
-    return maskingService.maskObject(this, parentUserId);
-}
+    public ChildDto applyPrivacyMask(PrivacyMaskingService maskingService, UUID parentUserId) {
+        return maskingService.maskObject(this, parentUserId);
+    }
 }

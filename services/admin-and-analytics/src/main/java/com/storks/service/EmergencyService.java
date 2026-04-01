@@ -31,7 +31,6 @@ public class EmergencyService {
         alert.setAlertType(event.getAlertType());
         alert.setMessage(event.getMessage());
 
-        // Calculate distance
         if (event.getParentLat() != null && event.getDriverLat() != null) {
             double distance = DistanceCalculator.calculateDistanceKm(
                     event.getParentLat(), event.getParentLon(),

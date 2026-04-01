@@ -20,6 +20,7 @@ public class Location {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(nullable = true)
     private UUID id;
 
     // Full detailed address – ONLY admin sees this
@@ -30,7 +31,7 @@ public class Location {
     // Short / masked version – area, city district, landmark
     // This is what driver and parent usually see
     @JsonView({UserViews.DriverView.class, UserViews.ParentView.class, UserViews.AdminView.class})
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String shortName;           // e.g. "Colombo 03", "Battaramulla"
 
     // Optional – more coarse location for driver matching / privacy

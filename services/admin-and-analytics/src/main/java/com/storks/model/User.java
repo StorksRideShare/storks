@@ -22,12 +22,13 @@ import jakarta.persistence.Table;
 public class User implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(nullable = true)
     private UUID id;
 
     @Column(unique = true, nullable = false)
     private String email;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String passwordHash;
 
     @Enumerated(EnumType.STRING)

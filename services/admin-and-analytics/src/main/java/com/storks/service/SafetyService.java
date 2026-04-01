@@ -22,7 +22,6 @@ public class SafetyService {
         this.vehicleMaintenanceRepo = vehicleMaintenanceRepo;
     }
 
-    // Calculate safety score (called after every ride or manually)
     public void updateDriverScore(UUID driverId, int newPositiveFeedback, boolean hadIncident) {
         DriverScore score = driverScoreRepo.findByDriverId(driverId)
                 .orElse(new DriverScore());
@@ -40,12 +39,10 @@ public class SafetyService {
         driverScoreRepo.save(score);
     }
 
-    // Daily scheduled task for expiry alerts
-    @Scheduled(cron = "0 0 8 * * *")   // runs every day at 8 AM
+    @Scheduled(cron = "0 0 8 * * *")
     public void checkExpiringDocuments() {
         List<VehicleMaintenance> expiring = vehicleMaintenanceRepo.findByExpiryDateBefore(LocalDate.now().plusDays(30));
         System.out.println("🚨 SAFETY ALERT: " + expiring.size() + " documents expiring soon!");
-        // TODO: Later send real email/SMS or Kafka event
         expiring.forEach(doc -> {
             System.out.println("   → Vehicle " + doc.getVehicleId() + " - " + doc.getMaintenanceType() + " expires " + doc.getExpiryDate());
         });
