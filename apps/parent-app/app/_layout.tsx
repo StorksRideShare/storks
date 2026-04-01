@@ -25,16 +25,21 @@ import {
   Syne_700Bold,
 } from "@expo-google-fonts/syne";
 
-export {
-  ErrorBoundary,
-} from "expo-router";
+export { ErrorBoundary } from "expo-router";
 
 export const unstable_settings = {
-  initialRouteName: "(tabs)",
+  // Ensure that reloading on `/modal` keeps a back button present.
+  initialRouteName: "(home)",
 };
 
 SplashScreen.preventAutoHideAsync();
-const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
+const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
+
+if (!publishableKey) {
+  throw new Error(
+    "Missing Publishable Key. Please set EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY in your .env",
+  );
+}
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
@@ -66,19 +71,17 @@ function RootLayoutNav() {
   const colorScheme = useColorScheme();
 
   return (
-    <GluestackUIProvider mode="dark">
-      <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-        <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
-          <Stack>
-            <Stack.Screen name="(home)" options={{ headerShown: false }} />
-            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="onboarding" options={{ headerShown: false }} />
-            <Stack.Screen name="modal" options={{ presentation: "modal" }} />
-            <Stack.Screen name="chats" options={{ headerShown: false }} />
-          </Stack>
-        </ClerkProvider>
-      </ThemeProvider>
-    </GluestackUIProvider>
+    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+      <ClerkProvider publishableKey={publishableKey!} tokenCache={tokenCache}>
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="(home)" />
+          <Stack.Screen name="(auth)" />
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+          <Stack.Screen name="modal" options={{ presentation: "modal" }} />
+          <Stack.Screen name="chats" />
+        </Stack>
+      </ClerkProvider>
+    </ThemeProvider>
   );
 }

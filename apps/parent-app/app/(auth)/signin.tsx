@@ -1,36 +1,29 @@
-import { useSignIn } from "@clerk/expo/legacy";
+import { useSignIn } from "@clerk/expo";
 import { Link, useRouter } from "expo-router";
 import * as React from "react";
+import { KeyboardAvoidingView, Platform, View } from "react-native";
+import { Box } from "@/components/ui/box";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
-  Syne_400Regular,
-  Syne_600SemiBold,
-  Syne_700Bold,
-} from "@expo-google-fonts/syne";
-import { useFonts } from "expo-font";
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  SafeAreaView,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  ActivityIndicator,
-} from "react-native";
+  AuthContainer,
+  AuthLogo,
+  AuthTitle,
+  AuthDescription,
+  AuthInput,
+  AuthButton,
+  AuthError,
+} from "@/components/auth/AuthComponents";
 
 export default function SignInPage() {
   const { isLoaded, signIn, setActive } = useSignIn();
   const router = useRouter();
-
+  const insets = useSafeAreaInsets();
   const [fontsLoaded] = useFonts({
     Syne_400Regular,
     Syne_600SemiBold,
     Syne_700Bold,
   });
 
-  // Form States
   const [emailAddress, setEmailAddress] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [secondFactorCode, setSecondFactorCode] = React.useState("");
@@ -53,31 +46,35 @@ export default function SignInPage() {
         password,
       });
 
-      if (result.status === "complete") {
-        await setActive({
-          session: result.createdSessionId,
-          navigate: async ({ session }) => {
-            if (session?.currentTask) {
-              console.log("Session task required:", session.currentTask);
-              return;
-            }
-            router.replace("/");
-          },
-        });
-      } else if (result.status === "needs_second_factor") {
-        await signIn.prepareSecondFactor({ strategy: "email_code" });
-        setPendingSecondFactor(true);
+      if (signInAttempt.status === "complete") {
+        await setActive({ session: signInAttempt.createdSessionId });
+        router.replace("/");
+      } else if (signInAttempt.status === "needs_second_factor") {
+        const emailCodeFactor = signInAttempt.supportedSecondFactors?.find(
+          (factor: any) => factor.strategy === "email_code",
+        );
+
+        if (emailCodeFactor) {
+          await signIn.prepareSecondFactor({
+            strategy: "email_code",
+            emailAddressId: emailCodeFactor.emailAddressId,
+          });
+          setShowEmailCode(true);
+        }
       } else {
-        console.error("Sign in status:", result.status, JSON.stringify(result, null, 2));
+        console.error(
+          "Sign in status:",
+          result.status,
+          JSON.stringify(result, null, 2),
+        );
         setError("Sign in failed. Please try again.");
       }
     } catch (err: any) {
-      console.error(JSON.stringify(err, null, 2));
-      const message =
+      setError(
         err?.errors?.[0]?.longMessage ??
-        err?.errors?.[0]?.message ??
-        "Something went wrong. Please try again.";
-      setError(message);
+          err?.errors?.[0]?.message ??
+          "Something went wrong.",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -94,273 +91,99 @@ export default function SignInPage() {
         code: secondFactorCode,
       });
 
-      if (result.status === "complete") {
-        await setActive({
-          session: result.createdSessionId,
-          navigate: async ({ session }) => {
-            if (session?.currentTask) {
-              console.log("Session task required:", session.currentTask);
-              return;
-            }
-            router.replace("/");
-          },
-        });
+      if (signInAttempt.status === "complete") {
+        await setActive({ session: signInAttempt.createdSessionId });
+        router.replace("/");
       } else {
-        console.error("Second factor status:", result.status, JSON.stringify(result, null, 2));
+        console.error(
+          "Second factor status:",
+          result.status,
+          JSON.stringify(result, null, 2),
+        );
         setError("Verification failed. Please try again.");
       }
     } catch (err: any) {
-      console.error(JSON.stringify(err, null, 2));
-      const message =
+      setError(
         err?.errors?.[0]?.longMessage ??
-        err?.errors?.[0]?.message ??
-        "Invalid code. Please try again.";
-      setError(message);
+          err?.errors?.[0]?.message ??
+          "Something went wrong.",
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
-  if (!fontsLoaded) return null;
-
-  // ------------------------------------------------------------------
-  // UI: SECOND FACTOR — EMAIL VERIFICATION
-  // ------------------------------------------------------------------
-  if (pendingSecondFactor) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={styles.keyboardView}
-        >
-          <View style={styles.logoContainer}>
-            <Text style={styles.logoText}>
-              <Text style={styles.logoHighlight}>S</Text>torks
-            </Text>
-          </View>
-
-          <View style={styles.verificationContainer}>
-            <Text style={styles.title}>Check your email</Text>
-            <Text style={styles.description}>
-              We sent a verification code to{"\n"}{emailAddress}
-            </Text>
-
-            {error ? <Text style={styles.errorText}>{error}</Text> : null}
-
-            <TextInput
-              style={styles.input}
-              value={secondFactorCode}
-              placeholder="Enter verification code"
-              placeholderTextColor="#7A726E"
-              onChangeText={(val) => {
-                setSecondFactorCode(val);
-                setError(null);
-              }}
-              keyboardType="numeric"
-              autoFocus
-            />
-
-            <TouchableOpacity
-              style={[
-                styles.primaryButton,
-                (!secondFactorCode || isLoading) && styles.buttonDisabled,
-              ]}
-              activeOpacity={0.8}
-              onPress={onVerifySecondFactor}
-              disabled={!secondFactorCode || isLoading}
-            >
-              {isLoading ? (
-                <ActivityIndicator color="#000000" />
-              ) : (
-                <Text style={styles.primaryButtonText}>Verify</Text>
-              )}
-            </TouchableOpacity>
-          </View>
-        </KeyboardAvoidingView>
-      </SafeAreaView>
-    );
-  }
-
-  // ------------------------------------------------------------------
-  // UI: MAIN SIGN IN
-  // ------------------------------------------------------------------
   return (
-    <SafeAreaView style={styles.container}>
+    <AuthContainer
+      style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}
+    >
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.keyboardView}
+        style={{ flex: 1 }}
       >
-        <ScrollView
-          contentContainerStyle={styles.scrollContainer}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
+        <AuthLogo />
+
+        <View
+          style={{ flex: 1, justifyContent: "center", paddingHorizontal: 32 }}
         >
-          {/* Brand Logo */}
-          <View style={styles.logoContainer}>
-            <Text style={styles.logoText}>
-              <Text style={styles.logoHighlight}>S</Text>torks
-            </Text>
-          </View>
-
-          {/* Main Form Content */}
-          <View style={styles.formContainer}>
-            <Text style={styles.title}>Welcome Back</Text>
-
-            {error ? <Text style={styles.errorText}>{error}</Text> : null}
-
-            <TextInput
-              style={styles.input}
-              placeholder="Email"
-              placeholderTextColor="#7A726E"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-              value={emailAddress}
-              onChangeText={(val) => {
-                setEmailAddress(val);
-                setError(null);
-              }}
-            />
-
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              placeholderTextColor="#7A726E"
-              secureTextEntry
-              value={password}
-              onChangeText={(val) => {
-                setPassword(val);
-                setError(null);
-              }}
-            />
-
-            <TouchableOpacity
-              style={[
-                styles.primaryButton,
-                (!emailAddress || !password || isLoading) &&
-                  styles.buttonDisabled,
-              ]}
-              activeOpacity={0.8}
-              onPress={onSignInPress}
-              disabled={!emailAddress || !password || isLoading}
-            >
-              {isLoading ? (
-                <ActivityIndicator color="#000000" />
-              ) : (
-                <Text style={styles.primaryButtonText}>Sign In</Text>
-              )}
-            </TouchableOpacity>
-
-            {/* Footer Link */}
-            <Link href="/signup" asChild>
-              <TouchableOpacity
-                style={styles.footerContainer}
-                activeOpacity={0.6}
-              >
-                <Text style={styles.footerText}>Don't have an account?</Text>
-              </TouchableOpacity>
-            </Link>
-          </View>
-        </ScrollView>
+          {showEmailCode ? (
+            <>
+              <AuthTitle>Verify your email</AuthTitle>
+              <AuthDescription>
+                A verification code has been sent to your email.
+              </AuthDescription>
+              <AuthError message={error} />
+              <AuthInput
+                value={code}
+                placeholder="Enter verification code"
+                onChangeText={setCode}
+                keyboardType="numeric"
+              />
+              <AuthButton
+                title="Verify"
+                onPress={onVerifyPress}
+                isLoading={isLoading}
+                disabled={!code}
+              />
+              <AuthButton
+                title="Go back"
+                onPress={() => setShowEmailCode(false)}
+                variant="secondary"
+              />
+            </>
+          ) : (
+            <>
+              <AuthTitle>Welcome Back!</AuthTitle>
+              <AuthError message={error} />
+              <AuthInput
+                placeholder="Email"
+                keyboardType="email-address"
+                value={emailAddress}
+                onChangeText={setEmailAddress}
+              />
+              <AuthInput
+                placeholder="Password"
+                secureTextEntry
+                value={password}
+                onChangeText={setPassword}
+              />
+              <AuthButton
+                title="Log In"
+                onPress={onSignInPress}
+                isLoading={isLoading}
+                disabled={!emailAddress || !password}
+              />
+              <Link href="/signup" asChild>
+                <AuthButton
+                  title="Don't have an account yet?"
+                  onPress={() => {}}
+                  variant="secondary"
+                />
+              </Link>
+            </>
+          )}
+        </View>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </AuthContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#171412",
-  },
-  keyboardView: {
-    flex: 1,
-  },
-  scrollContainer: {
-    flexGrow: 1,
-  },
-  logoContainer: {
-    paddingTop: Platform.OS === "android" ? 50 : 20,
-    paddingLeft: 24,
-  },
-  logoText: {
-    fontFamily: "Syne_700Bold",
-    fontSize: 24,
-    color: "#FFFFFF",
-    letterSpacing: 0.5,
-  },
-  logoHighlight: {
-    fontFamily: "Syne_700Bold",
-    color: "#E66B00",
-  },
-  formContainer: {
-    flex: 1,
-    paddingHorizontal: 32,
-    paddingTop: 80,
-    paddingBottom: 40,
-  },
-  verificationContainer: {
-    flex: 1,
-    justifyContent: "center",
-    paddingHorizontal: 32,
-  },
-  title: {
-    fontFamily: "Syne_400Regular",
-    fontSize: 18,
-    color: "#FFFFFF",
-    textAlign: "center",
-    marginBottom: 48,
-  },
-  description: {
-    fontFamily: "Syne_400Regular",
-    fontSize: 14,
-    color: "#7A726E",
-    textAlign: "center",
-    marginBottom: 32,
-    lineHeight: 20,
-  },
-  errorText: {
-    fontFamily: "Syne_400Regular",
-    color: "#FF6B6B",
-    fontSize: 13,
-    textAlign: "center",
-    marginBottom: 16,
-  },
-  input: {
-    height: 60,
-    borderWidth: 1,
-    borderColor: "#E66B00",
-    borderRadius: 30,
-    paddingHorizontal: 24,
-    color: "#FFFFFF",
-    fontFamily: "Syne_400Regular",
-    fontSize: 16,
-    marginBottom: 20,
-    backgroundColor: "transparent",
-  },
-  primaryButton: {
-    height: 60,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 30,
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: 8,
-    marginBottom: 40,
-  },
-  buttonDisabled: {
-    opacity: 0.5,
-  },
-  primaryButtonText: {
-    fontFamily: "Syne_700Bold",
-    color: "#000000",
-    fontSize: 16,
-  },
-  footerContainer: {
-    marginTop: 32,
-    alignItems: "center",
-  },
-  footerText: {
-    fontFamily: "Syne_600SemiBold",
-    color: "#E66B00",
-    fontSize: 15,
-  },
-});

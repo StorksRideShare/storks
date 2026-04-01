@@ -20,9 +20,9 @@ export default function TabLayout() {
   // useAuth is safe here — ClerkProvider wraps the entire app
   const { isSignedIn, getToken } = useAuth();
 
-  const [checking, setChecking]       = useState(true);
+  const [checking, setChecking] = useState(true);
   const [isOnboarded, setIsOnboarded] = useState(false);
-  const [isBanned, setIsBanned]       = useState(false);
+  const [isBanned, setIsBanned] = useState(false);
 
   useEffect(() => {
     if (!isSignedIn) {
@@ -33,7 +33,10 @@ export default function TabLayout() {
     const check = async () => {
       try {
         const token = await getToken();
-        if (!token) { setChecking(false); return; }
+        if (!token) {
+          setChecking(false);
+          return;
+        }
 
         // Plain fetch with the Clerk token — avoids useSession ordering issues
         const res = await fetch(`${API_BASE_URL}/api/auth/status`, {
@@ -57,9 +60,9 @@ export default function TabLayout() {
 
   // ── Conditional returns AFTER all hooks ───────────────────────
 
-  if (checking)     return <LoadingScreen message="Loading..." />;
-  if (!isSignedIn)  return <Redirect href="/(auth)/signin" />;
-  if (isBanned)     return <Redirect href="/banned" />;
+  if (checking) return <LoadingScreen message="Loading..." />;
+  if (!isSignedIn) return <Redirect href="/(auth)/signin" />;
+  if (isBanned) return <Redirect href="/banned" />;
   if (!isOnboarded) return <Redirect href="/onboarding" />;
 
   return (
@@ -95,6 +98,20 @@ export default function TabLayout() {
         options={{
           title: "Messages",
           tabBarIcon: ({ color }) => <MessageCircle color={color} size={24} />,
+        }}
+      />
+      <Tabs.Screen
+        name="verify"
+        options={{
+          title: "Verify",
+          tabBarIcon: ({ color }) => <ShieldCheck color={color} size={24} />,
+        }}
+      />
+      <Tabs.Screen
+        name="events"
+        options={{
+          title: "Events",
+          tabBarIcon: ({ color }) => <CalendarRange color={color} size={24} />,
         }}
       />
     </Tabs>

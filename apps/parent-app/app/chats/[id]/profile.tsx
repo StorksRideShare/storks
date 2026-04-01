@@ -10,7 +10,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { useLocalSearchParams, router } from "expo-router";
 import { useEffect, useState } from "react";
 import { useApiClient } from "@/middleware/apiClient";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ArrowLeft, Mail, Shield, User as UserIcon } from "lucide-react-native";
 import { Pressable, ScrollView } from "react-native";
 
@@ -34,6 +34,7 @@ export default function ParticipantProfile() {
   const api = useApiClient();
   const [room, setRoom] = useState<RoomDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -66,7 +67,7 @@ export default function ParticipantProfile() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#000" }}>
+    <Box style={{ flex: 1, backgroundColor: "#000", paddingTop: insets.top, paddingBottom: insets.bottom }}>
       <HStack className="p-4 items-center" space="md">
         <Pressable onPress={() => router.back()}>
           <ArrowLeft size={24} color="#fff" />
@@ -136,6 +137,6 @@ export default function ParticipantProfile() {
           <ButtonText className="text-red-500">Delete Conversation</ButtonText>
         </Button>
       </Box>
-    </SafeAreaView>
+    </Box>
   );
 }

@@ -31,21 +31,29 @@ const DEFAULTS: PrivacySettings = {
 export default function PrivacySettingsScreen() {
   const api = useApiClient(); // token injected automatically from active Clerk session
 
-  const [settings, setSettings]   = useState<PrivacySettings>(DEFAULTS);
+  const [settings, setSettings] = useState<PrivacySettings>(DEFAULTS);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving]   = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
-  useEffect(() => { loadSettings(); }, []);
+  const apiClient = useApiClient("booking-and-payment");
+
+  // --- Load Settings ---
+  useEffect(() => {
+    loadSettings();
+  }, []);
 
   const loadSettings = async () => {
     try {
       setIsLoading(true);
       const data = await api.get<PrivacySettings>("/api/privacy/settings");
       setSettings({
-        shareLocationOnlyActiveRide: data.shareLocationOnlyActiveRide ?? DEFAULTS.shareLocationOnlyActiveRide,
-        maskFullAddress:             data.maskFullAddress             ?? DEFAULTS.maskFullAddress,
-        allowSilentPresence:         data.allowSilentPresence         ?? DEFAULTS.allowSilentPresence,
-        allowAudioStream:            data.allowAudioStream            ?? DEFAULTS.allowAudioStream,
+        shareLocationOnlyActiveRide:
+          data.shareLocationOnlyActiveRide ??
+          DEFAULTS.shareLocationOnlyActiveRide,
+        maskFullAddress: data.maskFullAddress ?? DEFAULTS.maskFullAddress,
+        allowSilentPresence:
+          data.allowSilentPresence ?? DEFAULTS.allowSilentPresence,
+        allowAudioStream: data.allowAudioStream ?? DEFAULTS.allowAudioStream,
       });
     } catch {
       Alert.alert("Error", "Failed to load privacy settings. Using defaults.");
@@ -57,10 +65,19 @@ export default function PrivacySettingsScreen() {
   const handleSave = async () => {
     try {
       setIsSaving(true);
-      await api.post<void>("/api/privacy/settings", settings);
-      Alert.alert("Saved", "Your privacy settings have been saved.");
-    } catch {
-      Alert.alert("Error", "Failed to save privacy settings. Please try again.");
+      await apiClient.post("/api/privacy/settings", payload);
+
+      Alert.alert(
+        "Success",
+        "Your privacy settings have been saved successfully!",
+        [{ text: "OK" }],
+      );
+    } catch (error) {
+      console.error("Failed to save settings:", error);
+      Alert.alert(
+        "Error",
+        "Failed to save privacy settings. Please try again.",
+      );
     } finally {
       setIsSaving(false);
     }
@@ -84,7 +101,9 @@ export default function PrivacySettingsScreen() {
     <HStack style={styles.settingRow}>
       <VStack style={styles.labelContainer}>
         <Text style={styles.rowLabel}>{label}</Text>
-        {description && <Text style={styles.rowDescription}>{description}</Text>}
+        {description && (
+          <Text style={styles.rowDescription}>{description}</Text>
+        )}
       </VStack>
       <Switch
         value={value}
@@ -110,10 +129,14 @@ export default function PrivacySettingsScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         <Text style={styles.header}>Privacy Settings</Text>
         <Text style={styles.description}>
-          Control what information is shared and how your data is handled during rides.
+          Control what information is shared and how your data is handled during
+          rides.
         </Text>
 
         <Collapsible title="Location Sharing">
@@ -155,9 +178,13 @@ export default function PrivacySettingsScreen() {
             onPress={handleSave}
             isDisabled={isSaving}
           >
-            {isSaving
-              ? <ButtonSpinner color="#FFFFFF" />
-              : <ButtonText style={styles.saveButtonText}>Save All Changes</ButtonText>}
+            {isSaving ? (
+              <ButtonSpinner color="#FFFFFF" />
+            ) : (
+              <ButtonText style={styles.saveButtonText}>
+                Save All Changes
+              </ButtonText>
+            )}
           </Button>
 
           <Button variant="link" onPress={loadSettings} isDisabled={isSaving}>
@@ -165,27 +192,72 @@ export default function PrivacySettingsScreen() {
           </Button>
         </VStack>
 
-        <Text style={styles.footerNote}>Changes are applied immediately after saving</Text>
+        <Text style={styles.footerNote}>
+          Changes are applied immediately after saving
+        </Text>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container:        { flex: 1, backgroundColor: "#171412" },
-  scrollContent:    { padding: 24 },
+  container: { flex: 1, backgroundColor: "#171412" },
+  scrollContent: { padding: 24 },
   loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
-  loadingText:      { fontFamily: "Syne_400Regular", marginTop: 12, fontSize: 16, color: "#7A726E" },
-  header:           { fontFamily: "Syne_700Bold", fontSize: 24, color: "#FFFFFF", marginBottom: 8 },
-  description:      { fontFamily: "Syne_400Regular", fontSize: 14, color: "#7A726E", marginBottom: 24, lineHeight: 20 },
-  settingRow:       { justifyContent: "space-between", alignItems: "center", paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: "rgba(150,150,150,0.1)" },
-  labelContainer:   { flex: 1, marginRight: 16 },
-  rowLabel:         { fontFamily: "Syne_600SemiBold", fontSize: 15, color: "#FFFFFF" },
-  rowDescription:   { fontFamily: "Syne_400Regular", fontSize: 13, color: "#7A726E", marginTop: 2 },
-  footer:           { marginTop: 40, alignItems: "center", gap: 16 },
-  saveButton:       { height: 56, backgroundColor: "#E66B00", borderRadius: 28, paddingHorizontal: 32 },
-  saveButtonText:   { fontFamily: "Syne_700Bold", color: "#FFFFFF", fontSize: 16 },
-  disabledButton:   { opacity: 0.5 },
-  resetText:        { fontFamily: "Syne_400Regular", color: "#7A726E", fontSize: 14 },
-  footerNote:       { fontFamily: "Syne_400Regular", marginTop: 24, textAlign: "center", fontSize: 12, color: "#3E3834", paddingBottom: 20 },
+  loadingText: {
+    fontFamily: "Syne_400Regular",
+    marginTop: 12,
+    fontSize: 16,
+    color: "#7A726E",
+  },
+  header: {
+    fontFamily: "Syne_700Bold",
+    fontSize: 24,
+    color: "#FFFFFF",
+    marginBottom: 8,
+  },
+  description: {
+    fontFamily: "Syne_400Regular",
+    fontSize: 14,
+    color: "#7A726E",
+    marginBottom: 24,
+    lineHeight: 20,
+  },
+  settingRow: {
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(150,150,150,0.1)",
+  },
+  labelContainer: { flex: 1, marginRight: 16 },
+  rowLabel: { fontFamily: "Syne_600SemiBold", fontSize: 15, color: "#FFFFFF" },
+  rowDescription: {
+    fontFamily: "Syne_400Regular",
+    fontSize: 13,
+    color: "#7A726E",
+    marginTop: 2,
+  },
+  footer: { marginTop: 40, alignItems: "center", gap: 16 },
+  saveButton: {
+    height: 56,
+    backgroundColor: "#E66B00",
+    borderRadius: 28,
+    paddingHorizontal: 32,
+  },
+  saveButtonText: {
+    fontFamily: "Syne_700Bold",
+    color: "#FFFFFF",
+    fontSize: 16,
+  },
+  disabledButton: { opacity: 0.5 },
+  resetText: { fontFamily: "Syne_400Regular", color: "#7A726E", fontSize: 14 },
+  footerNote: {
+    fontFamily: "Syne_400Regular",
+    marginTop: 24,
+    textAlign: "center",
+    fontSize: 12,
+    color: "#3E3834",
+    paddingBottom: 20,
+  },
 });

@@ -25,7 +25,7 @@ import {
   Pressable,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // Check if the sent messages are supposed to be in the same group.
 function sameGroup(a: ChatMessage, b: ChatMessage): boolean {
@@ -40,6 +40,7 @@ export default function ChatRoom() {
   const { session } = useSession();
   const api = useApiClient();
   const notify = useNotify();
+  const insets = useSafeAreaInsets();
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [room, setRoom] = useState<any>(null);
@@ -326,7 +327,7 @@ export default function ChatRoom() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+    <Box style={{ flex: 1, backgroundColor: colors.background, paddingTop: insets.top, paddingBottom: insets.bottom }}>
       {/* Header */}
       <HStack className="px-4 py-3 items-center border-b border-gray-800 bg-black" space="md">
         <Pressable onPress={() => router.back()}>
@@ -395,6 +396,6 @@ export default function ChatRoom() {
           </Pressable>
         </HStack>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </Box>
   );
 }

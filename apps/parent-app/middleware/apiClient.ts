@@ -2,45 +2,40 @@ import { useSession } from "@clerk/expo";
 import { useMemo } from "react";
 import { Platform } from "react-native";
 
-// ------------------------------------------------------------------
-// Environment-aware URLs
-// Port 8081 = user-service (auth, onboarding, profile)
-// iOS simulator / Expo web: set EXPO_PUBLIC_API_BASE_URL=http://localhost:8081
-// Android emulator:         set EXPO_PUBLIC_API_BASE_URL=http://10.0.2.2:8081
-//   (or remove the env var to let the platform fallback below take effect)
-// ------------------------------------------------------------------
-const CONFIG = {
-  development: {
-    apiUrl:
-      process.env.EXPO_PUBLIC_API_BASE_URL ??
-      (Platform.OS === "android" ? "http://10.0.2.2:8081" : "http://localhost:8081"),
-    wsUrl:
-      Platform.OS === "android"
-        ? "ws://10.0.2.2:8081/ws"
-        : "ws://localhost:8081/ws",
-    verificationUrl:
-      Platform.OS === "android"
-        ? "http://10.0.2.2:8085"
-        : "http://localhost:8085",
-  },
-  production: {
-    apiUrl: process.env.EXPO_PUBLIC_API_BASE_URL ?? "https://api.storks.app",
-    wsUrl: "wss://api.storks.app/ws",
-    verificationUrl: "https://verify.storks.app",
-  },
+export type ServiceName =
+  | "admin-and-analytics"
+  | "booking-and-payment"
+  | "location-and-navigation"
+  | "user-service"
+  | "matching-searching"
+  | "live-messaging"
+  | "safty-and-verification"
+  | "available-8086"
+  | "available-8087"
+  | "available-8088";
+
+const SERVICE_PORTS: Record<ServiceName, number> = {
+  "admin-and-analytics": 8080,
+  "booking-and-payment": 8081,
+  "location-and-navigation": 8082,
+  "user-service": 8083,
+  "matching-searching": 8084,
+  "live-messaging": 8085,
+  "available-8086": 8086,
+  "available-8087": 8087,
+  "available-8088": 8088,
+  "safty-and-verification": 8089,
 };
 
-const ENV = __DEV__ ? "development" : "production";
-export const API_BASE_URL = CONFIG[ENV].apiUrl;
-export const WS_BASE_URL = CONFIG[ENV].wsUrl;
-export const VERIFICATION_API_BASE_URL = CONFIG[ENV].verificationUrl;
+const getBaseUrl = (port: number) => {
+  if (!__DEV__) {
+    return `https://example.com:${port}`;
+  }
+  return Platform.OS === "android"
+    ? `http://10.0.2.2:${port}`
+    : `http://localhost:${port}`;
+};
 
-// ------------------------------------------------------------------
-// Core API client — equivalent to an Axios instance with interceptors:
-//   • Injects Clerk JWT on every request
-//   • Logs requests and responses
-//   • Normalises errors into thrown Error objects
-// ------------------------------------------------------------------
 export type ApiClient = {
   get: <T>(path: string) => Promise<T>;
   post: <T>(path: string, body?: unknown) => Promise<T>;
@@ -50,21 +45,36 @@ export type ApiClient = {
 
 export function createApiClient(
   getToken: () => Promise<string | null>,
-  baseUrl: string
+  baseUrl: string,
 ): ApiClient {
   const request = async <T>(
     path: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
   ): Promise<T> => {
-    const token = await getToken();
-    const headers: Record<string, string> = {
+    let token: string | null = null;
+    try {
+      token = await getToken();
+    } catch (e: any) {
+      if (e.name === "ClerkOfflineError" || e.message?.includes("offline")) {
+        console.warn(
+          "Clerk: Device is offline, proceeding without token or failing if required",
+        );
+        // For our services, most require auth. We can either throw here or let the backend throw 401.
+        // But throwing a clear error here is better for UI handling.
+        throw new Error(
+          "OFFLINE: Your session could not be verified because the device is offline.",
+        );
+      }
+      throw e;
+    }
+    const headers = {
       "Content-Type": "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...((options.headers as Record<string, string>) || {}),
     };
 
     const url = path.startsWith("http") ? path : `${baseUrl}${path}`;
-    if (__DEV__) console.log(`[API] ${options.method ?? "GET"} ${url}`);
+    console.log(`API REQUEST: ${options.method || "GET"} ${url}`);
 
     try {
       const response = await fetch(url, { ...options, headers });
@@ -72,8 +82,11 @@ export function createApiClient(
 
       if (!response.ok) {
         const errorText = await response.text();
-        if (__DEV__) console.error(`[API] Error ${response.status}: ${errorText}`);
-        throw new Error(`API Error ${response.status}: ${errorText || response.statusText}`);
+        if (__DEV__)
+          console.error(`[API] Error ${response.status}: ${errorText}`);
+        throw new Error(
+          `API Error ${response.status}: ${errorText || response.statusText}`,
+        );
       }
 
       if (response.status === 204) return {} as T;
@@ -85,22 +98,26 @@ export function createApiClient(
   };
 
   return {
-    get:    (path)       => request(path, { method: "GET" }),
-    post:   (path, body) => request(path, { method: "POST",   body: JSON.stringify(body) }),
-    put:    (path, body) => request(path, { method: "PUT",    body: JSON.stringify(body) }),
-    delete: (path)       => request(path, { method: "DELETE" }),
+    get: (path) => request(path, { method: "GET" }),
+    post: (path, body) =>
+      request(path, { method: "POST", body: JSON.stringify(body) }),
+    put: (path, body) =>
+      request(path, { method: "PUT", body: JSON.stringify(body) }),
+    delete: (path) => request(path, { method: "DELETE" }),
   };
 }
 
-// ------------------------------------------------------------------
-// React hook — call inside any component to get an API client
-// whose token is automatically sourced from the active Clerk session.
-// ------------------------------------------------------------------
-export function useApiClient(isVerification = false): ApiClient {
+export function useApiClient(service: ServiceName = "safty-and-verification") {
   const { session } = useSession();
-  const baseUrl = isVerification ? VERIFICATION_API_BASE_URL : API_BASE_URL;
+  const port = SERVICE_PORTS[service];
+  const baseUrl = getBaseUrl(port);
+
   return useMemo(
-    () => createApiClient(() => session?.getToken() ?? Promise.resolve(null), baseUrl),
-    [session, isVerification]
+    () =>
+      createApiClient(
+        () => session?.getToken() ?? Promise.resolve(null),
+        baseUrl,
+      ),
+    [session, service, baseUrl],
   );
 }
