@@ -50,18 +50,19 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
-    if (error) throw error;
+    if (error) {
+      console.error("Font loading error:", error);
+    }
   }, [error]);
 
   useEffect(() => {
     if (loaded) {
-      SplashScreen.hideAsync();
+      SplashScreen.hideAsync().catch(() => {});
     }
   }, [loaded]);
 
-  // Show loading screen while fonts are loading
-  if (!loaded) {
-    return <LoadingScreen message="Initializing..." />;
+  if (!loaded && !error) {
+    return <LoadingScreen message="Initializing Storks..." />;
   }
 
   return <RootLayoutNav />;
@@ -71,17 +72,25 @@ function RootLayoutNav() {
   const colorScheme = useColorScheme();
 
   return (
-    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      <ClerkProvider publishableKey={publishableKey!} tokenCache={tokenCache}>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(home)" />
-          <Stack.Screen name="(auth)" />
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="onboarding" options={{ headerShown: false }} />
-          <Stack.Screen name="modal" options={{ presentation: "modal" }} />
-          <Stack.Screen name="chats" />
-        </Stack>
-      </ClerkProvider>
-    </ThemeProvider>
+    <GluestackUIProvider mode={colorScheme === "dark" ? "dark" : "light"}>
+      <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+        <ClerkProvider publishableKey={publishableKey!} tokenCache={tokenCache}>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="(home)" />
+            <Stack.Screen name="(auth)" />
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="(verify)" />
+            <Stack.Screen name="(driver)" />
+            <Stack.Screen name="(groups)" />
+            <Stack.Screen name="(offer)" />
+            <Stack.Screen name="(track)" />
+            <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+            <Stack.Screen name="modal" options={{ presentation: "modal" }} />
+            <Stack.Screen name="chats" />
+            <Stack.Screen name="banned" />
+          </Stack>
+        </ClerkProvider>
+      </ThemeProvider>
+    </GluestackUIProvider>
   );
 }

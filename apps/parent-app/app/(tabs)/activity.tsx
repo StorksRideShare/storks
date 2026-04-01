@@ -10,9 +10,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { LoggedParentID } from "../../logged_parent";
 import { useToast, Toast, ToastTitle } from "@/components/ui/toast";
 import { CheckCircle2, XCircle } from "lucide-react-native";
+import { useAuth } from "@clerk/expo";
 
-const SERVER_IP = process.env.EXPO_PUBLIC_SERVER_IP || (Platform.OS === "android" ? "10.0.2.2" : "localhost");
-const API_BASE_URL = `http://${SERVER_IP}:8080`;
+import { API_BASE_URL } from "../../middleware/apiClient";
 
 const EventCard = ({ id, groupName, driverName, vehicle, plate, title, description, status, onCancel }: any) => {
   const isRequested = status === "Requested";
@@ -93,14 +93,18 @@ const EventCard = ({ id, groupName, driverName, vehicle, plate, title, descripti
   );
 };
 
-export default function EventsScreen() {
+export default function ActivityScreen() {
+  const { getToken } = useAuth();
   const [events, setEvents] = useState<any[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const toast = useToast();
 
   const fetchEvents = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/bookings/parent?parentId=${LoggedParentID}`);
+      const token = await getToken();
+      const response = await fetch(`${API_BASE_URL}/api/bookings/parent?parentId=${LoggedParentID}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       if (!response.ok) throw new Error("Failed to fetch events");
       const data = await response.json();
       setEvents(data);
@@ -111,8 +115,10 @@ export default function EventsScreen() {
 
   const handleCancel = async (id: string) => {
     try {
+      const token = await getToken();
       const response = await fetch(`${API_BASE_URL}/api/bookings/${id}/cancel`, {
-        method: "PUT"
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` }
       });
       if (response.ok) {
         toast.show({
@@ -147,7 +153,7 @@ export default function EventsScreen() {
     <SafeAreaView className="flex-1 bg-[#0F0E0E] px-5">
       <HStack className="justify-between items-center py-4 mb-4">
         <Text className="text-white font-bold text-2xl">Storks</Text>
-        <Text className="text-orange-500 font-bold text-3xl">Events</Text>
+        <Text className="text-orange-500 font-bold text-3xl">Activity</Text>
       </HStack>
 
       <ScrollView 

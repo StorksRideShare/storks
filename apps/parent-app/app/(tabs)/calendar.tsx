@@ -12,7 +12,7 @@ import {
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-export default function ChildScheduleScreen() {
+export default function CalendarScreen() {
   const days = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
   const dates = [
     { d: 29, m: "prev" }, { d: 30, m: "prev" }, { d: 1, m: "curr" }, { d: 2, m: "curr", dot: true }, { d: 3, m: "curr" }, { d: 4, m: "curr", dot: true }, { d: 5, m: "curr" },
@@ -26,11 +26,9 @@ export default function ChildScheduleScreen() {
     <StyledSafeAreaView className="flex-1 bg-[#0F0E0E]">
       {/* Header */}
       <HStack className="px-5 py-4 items-center justify-between">
-        <Pressable onPress={() => router.back()}>
-          <ChevronLeft color="#F97316" size={28} />
-        </Pressable>
+        <Box className="w-7" />
         <Text size="2xl" bold className="text-orange-500 font-bold">
-          Schedule
+          Calendar
         </Text>
         <Box className="w-7" />
       </HStack>

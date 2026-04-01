@@ -1,7 +1,9 @@
 import { useAuth } from "@clerk/expo";
 import { useRouter } from "expo-router";
-import { API_BASE_URL } from "@/middleware/apiClient";
 import { useFonts } from "expo-font";
+import { parentApi } from "@/src/services/api";
+import { StorkIllustration } from "@/components/common/StorkIllustration";
+import { StepDots } from "@/components/common/StepDots";
 import {
   Syne_400Regular,
   Syne_600SemiBold,
@@ -28,38 +30,6 @@ import type { SecondaryPhone, OnboardingPayload } from "@/utils/api";
 
 const { width } = Dimensions.get("window");
 
-// ------------------------------------------------------------------
-// Stork SVG illustration (matches loading screen style)
-// ------------------------------------------------------------------
-function StorkIllustration() {
-  return (
-    <Svg width={200} height={220} viewBox="0 0 220 260" fill="none">
-      <Path d="M10 42 L68 42" stroke="#C97A3A" strokeWidth="4" strokeLinecap="round" />
-      <Path d="M68 42 Q90 42 96 56" stroke="#D4C5B5" strokeWidth="3" strokeLinecap="round" fill="none" />
-      <Path d="M96 56 Q110 90 100 130 Q92 155 105 175" stroke="#D4C5B5" strokeWidth="3" strokeLinecap="round" fill="none" />
-      <Path d="M105 175 Q130 160 155 175 Q175 188 165 215 Q155 238 130 242 Q108 245 100 228 Q88 208 105 175 Z" stroke="#D4C5B5" strokeWidth="3" fill="none" />
-      <Path d="M115 242 L112 260" stroke="#D4C5B5" strokeWidth="3" strokeLinecap="round" />
-      <Path d="M138 242 L140 260" stroke="#D4C5B5" strokeWidth="3" strokeLinecap="round" />
-      <Path d="M150 185 Q185 172 210 180 Q195 195 165 195" stroke="#D4C5B5" strokeWidth="2.5" strokeLinecap="round" fill="none" />
-    </Svg>
-  );
-}
-
-// ------------------------------------------------------------------
-// Step dot indicator
-// ------------------------------------------------------------------
-function StepDots({ total, current }: { total: number; current: number }) {
-  return (
-    <View style={styles.dotsRow}>
-      {Array.from({ length: total }).map((_, i) => (
-        <View
-          key={i}
-          style={[styles.dot, i === current ? styles.dotActive : styles.dotInactive]}
-        />
-      ))}
-    </View>
-  );
-}
 
 // ------------------------------------------------------------------
 // Validation helpers
@@ -160,27 +130,15 @@ export default function OnboardingPage() {
     const token = await getToken();
     if (!token) throw new Error("Not authenticated");
 
-    const res = await fetch(`${API_BASE_URL}/api/onboarding/complete`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        firstName:         firstName.trim(),
-        lastName:          lastName.trim(),
+    await parentApi.completeOnboarding({
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
         dateOfBirth,
         primaryCountryCode,
-        primaryNumber:     primaryNumber.trim(),
-        secondaryNumbers:  secondaryNumbers.filter(s => s.number.trim().length > 0),
+        primaryNumber: primaryNumber.trim(),
+        secondaryNumbers: secondaryNumbers.filter((s) => s.number.trim().length > 0),
         profilePictureUrl: profilePictureUri ?? null,
-      } satisfies OnboardingPayload),
-    });
-
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(`${res.status}: ${text}`);
-    }
+      }, token);
 
     setStep(3);
   } catch (err: any) {

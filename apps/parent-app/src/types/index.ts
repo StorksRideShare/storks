@@ -132,15 +132,15 @@ export interface ParentState {
   setGroups: (groups: DriverGroup[]) => void;
   selectGroup: (groupId: string) => void;
   setTrackingData: (data: TrackingData | null) => void;
-  markChildAbsent: (childId: string, routeType: 'pickup' | 'dropoff', reason?: string) => Promise<void>;
-  cancelAbsence: (childId: string) => Promise<void>;
+  markChildAbsent: (childId: string, routeType: 'pickup' | 'dropoff' | 'both', reason?: string, token?: string) => Promise<void>;
+  cancelAbsence: (childId: string, token?: string) => Promise<void>;
   updateDriverLocation: (groupId: string, location: Location) => void;
   updateStopStatus: (childId: string, status: StopStatusUpdate) => void;
   updateEta: (childId: string, eta: EtaUpdate) => void;
   addNotification: (notification: Notification) => void;
   markNotificationRead: (notificationId: string) => void;
-  refreshDashboard: () => Promise<void>;
-  startTracking: (groupId: string, childId?: string) => Promise<void>;
+  refreshDashboard: (token?: string) => Promise<void>;
+  startTracking: (groupId: string, childId?: string, token?: string) => Promise<void>;
   stopTracking: () => void;
 }
 

@@ -1,189 +1,82 @@
-import { DriverGroup, ChildWithStatus, TrackingData, Parent, AbsenceReport, Location } from '../types';
+import { API_BASE_URL } from '../../middleware/apiClient';
+import {
+  AbsenceReport,
+  DriverGroup,
+  Location,
+  Parent,
+  TrackingData
+} from '../types';
 
-// Mock parent data
-const MOCK_PARENT: Parent = {
-  id: 'parent-1',
-  fullName: 'Janaka Perera',
-  email: 'janaka@example.com',
-  phone: '+94771234567',
-};
+async function apiRequest<T>(
+  path: string,
+  method: string = 'GET',
+  body?: any,
+  token?: string
+): Promise<T> {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
 
-// Mock groups with children (matching UI designs)
-const MOCK_GROUPS: DriverGroup[] = [
-  {
-    id: 'group-1',
-    groupName: 'Vhooti putha',
-    groupCode: 'ABC 1223',
-    parentId: 'parent-1',
-    driver: {
-      id: 'driver-1',
-      fullName: 'Ranidu Sampath',
-      phone: '+94771234567',
-      vehicleNumber: 'ABC-1223',
-      vehicleModel: 'Honda Caravan',
-      currentLocation: { latitude: 6.9271, longitude: 79.8612 },
-      lastLocationUpdate: new Date(),
-    },
-    children: [
-      {
-        id: 'child-1',
-        firstName: 'Vihanga',
-        lastName: 'Janaka',
-        grade: 'Grade 5',
-        schoolName: 'Ananda College',
-        pickupAddress: 'Ananda College - Colombo',
-        pickupLocation: { latitude: 6.9271, longitude: 79.8612 },
-        dropoffAddress: '12/B, Maple Road, Maharagama',
-        dropoffLocation: { latitude: 6.9067, longitude: 79.8707 },
-        verificationPin: '123456',
-        isActive: true,
-        isAbsent: false,
-        todayPickup: {
-          status: 'en_route',
-          estimatedTime: '07:15',
-          etaMinutes: 8,
-        },
-        todayDropoff: {
-          status: 'pending',
-          estimatedTime: '15:30',
-        },
-      },
-    ],
-  },
-  {
-    id: 'group-2',
-    groupName: 'Loku',
-    groupCode: 'VB 1223',
-    parentId: 'parent-1',
-    driver: {
-      id: 'driver-2',
-      fullName: 'Malith Vihanga',
-      phone: '+94772345678',
-      vehicleNumber: 'VB-1223',
-      vehicleModel: 'Toyota HiAce',
-      currentLocation: { latitude: 6.8728, longitude: 79.8912 },
-      lastLocationUpdate: new Date(),
-    },
-    children: [
-      {
-        id: 'child-2',
-        firstName: 'Sadun',
-        lastName: 'Janaka',
-        grade: 'Grade 8',
-        schoolName: "President's College",
-        pickupAddress: "President's college - Maharagama",
-        pickupLocation: { latitude: 6.8456, longitude: 79.9242 },
-        dropoffAddress: '25/A, Lake Road, Nugegoda',
-        dropoffLocation: { latitude: 6.8728, longitude: 79.8912 },
-        verificationPin: '654321',
-        isActive: true,
-        isAbsent: false,
-        todayPickup: {
-          status: 'completed',
-          estimatedTime: '07:15',
-          actualTime: new Date('2026-03-31T07:15:00'),
-        },
-        todayDropoff: {
-          status: 'pending',
-          estimatedTime: '15:30',
-        },
-      },
-      {
-        id: 'child-3',
-        firstName: 'Kanchana',
-        lastName: 'Janaka',
-        grade: 'Grade 3',
-        schoolName: 'Vidyakara Balika',
-        pickupAddress: 'Vidyakara Balika - Maharagama',
-        pickupLocation: { latitude: 6.8500, longitude: 79.9200 },
-        dropoffAddress: '25/A, Lake Road, Nugegoda',
-        dropoffLocation: { latitude: 6.8728, longitude: 79.8912 },
-        verificationPin: '789012',
-        isActive: true,
-        isAbsent: true,
-        todayPickup: {
-          status: 'absent',
-          estimatedTime: '07:15',
-        },
-        todayDropoff: {
-          status: 'absent',
-          estimatedTime: '15:30',
-        },
-      },
-    ],
-  },
-];
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
 
-// Simulate network delay
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method,
+    headers,
+    body: body ? JSON.stringify(body) : undefined,
+  });
 
-// Mock API functions
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`API Error ${response.status}: ${errorText}`);
+  }
+
+  if (response.status === 204) return {} as T;
+  return response.json();
+}
+
 export const parentApi = {
-  async getParent(): Promise<Parent> {
-    await delay(300);
-    return MOCK_PARENT;
+  async getParent(token: string): Promise<Parent> {
+    return apiRequest<Parent>('/status', 'GET', undefined, token);
   },
 
-  async getDashboard(): Promise<DriverGroup[]> {
-    await delay(600);
-    return MOCK_GROUPS;
+  async getDashboard(token: string): Promise<DriverGroup[]> {
+    return apiRequest<DriverGroup[]>('/dashboard', 'GET', undefined, token);
   },
 
-  async getGroup(groupId: string): Promise<DriverGroup | null> {
-    await delay(400);
-    return MOCK_GROUPS.find(g => g.id === groupId) || null;
+  async getGroup(groupId: string, token: string): Promise<DriverGroup | null> {
+    return apiRequest<DriverGroup>(`/groups/${groupId}`, 'GET', undefined, token);
   },
 
-  async getTrackingData(groupId: string, childId?: string): Promise<TrackingData | null> {
-    await delay(500);
-    
-    const group = MOCK_GROUPS.find(g => g.id === groupId);
-    if (!group) return null;
-
-    const currentChild = childId 
-      ? group.children.find(c => c.id === childId)
-      : group.children.find(c => c.todayPickup.status === 'en_route' || c.todayPickup.status === 'arrived');
-
-    // Mock route polyline
-    const mockPolyline = 'w{ayA_xrzMnA~@fApAfBrBhCtCdDhDfEjE';
-
-    return {
-      group,
-      driverLocation: group.driver.currentLocation || { latitude: 0, longitude: 0 },
-      routePolyline: mockPolyline,
-      etaMinutes: currentChild?.todayPickup.etaMinutes || 5,
-      estimatedArrival: new Date(Date.now() + (currentChild?.todayPickup.etaMinutes || 5) * 60 * 1000),
-      currentChild,
-    };
+  async getTrackingData(groupId: string, childId?: string, token?: string): Promise<TrackingData | null> {
+    const query = childId ? `?childId=${childId}` : '';
+    return apiRequest<TrackingData>(`/tracking/${groupId}${query}`, 'GET', undefined, token);
   },
 
   async markChildAbsent(
     childId: string,
-    routeType: 'pickup' | 'dropoff',
-    reason?: string
+    routeType: 'pickup' | 'dropoff' | 'both',
+    reason?: string,
+    token?: string
   ): Promise<AbsenceReport> {
-    await delay(400);
-    
-    return {
-      id: `absence-${Date.now()}`,
+    return apiRequest<AbsenceReport>('/absences', 'POST', {
       childId,
-      absenceDate: new Date().toISOString().split('T')[0],
       routeType,
       reason,
-      reportedAt: new Date(),
-    };
+      absenceDate: new Date().toISOString().split('T')[0],
+    }, token);
   },
 
-  async cancelAbsence(childId: string): Promise<void> {
-    await delay(300);
-    console.log(`Absence cancelled for child: ${childId}`);
+  async cancelAbsence(childId: string, token?: string): Promise<void> {
+    return apiRequest<void>(`/absences/${childId}/cancel`, 'POST', undefined, token);
   },
 
-  async updateDriverLocation(groupId: string, location: Location): Promise<void> {
-    await delay(100);
-    // Mock update
+  async completeOnboarding(payload: any, token: string): Promise<any> {
+    return apiRequest<any>('/onboarding/complete', 'POST', payload, token);
+  },
+
+  async updateDriverLocation(groupId: string, location: Location, token?: string): Promise<void> {
+    return apiRequest<void>(`/groups/${groupId}/location`, 'POST', location, token);
   },
 };
-
-// Export mock data for use in stores
-export { MOCK_PARENT, MOCK_GROUPS };

@@ -8,11 +8,13 @@ import { Avatar, AvatarFallbackText } from "@/components/ui/avatar";
 import { Button, ButtonText } from "@/components/ui/button";
 import default_vehicle_1 from "../../assets/images/default_vehicle/1.jpg";
 import default_vehicle_2 from "../../assets/images/default_vehicle/2.jpg";
+import { useAuth } from "@clerk/expo";
+import { useToast, Toast, ToastTitle } from "@/components/ui/toast";
+import { API_BASE_URL } from "../../middleware/apiClient";
 import { LoggedParentID } from "@/logged_parent";
 import { ChevronLeft, ChevronDown, Star, MapPin, CheckCircle2, Bookmark, X } from "lucide-react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useToast, Toast, ToastTitle } from "@/components/ui/toast";
 
 interface StatBoxProps {
   title: string;
@@ -20,8 +22,6 @@ interface StatBoxProps {
   icon?: any;
 }
 
-const SERVER_IP = process.env.EXPO_PUBLIC_SERVER_IP || (Platform.OS === "android" ? "10.0.2.2" : "localhost");
-const API_BASE_URL = `http://${SERVER_IP}:8080`;
 
 const StatBox = ({ title, subTitle, icon: IconComponent }: StatBoxProps) => (
   <Box className="flex-1 border border-dashed border-gray-500 rounded-[28px] p-4 items-center justify-center min-h-[120px] bg-[#1A1919]">
@@ -32,6 +32,7 @@ const StatBox = ({ title, subTitle, icon: IconComponent }: StatBoxProps) => (
 );
 
 export default function DriverDetailsScreen() {
+  const { getToken } = useAuth();
   const { offerId, groupId } = useLocalSearchParams() as any;
   const [offer, setOffer] = useState<any>(null);
   const [childGroups, setChildGroups] = useState<any[]>([]);
@@ -76,7 +77,10 @@ export default function DriverDetailsScreen() {
 
   const checkBookingStatus = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/bookings/check?groupId=${selectedGroup.groupId}&offerId=${offerId}`);
+      const token = await getToken();
+      const response = await fetch(`${API_BASE_URL}/api/bookings/check?groupId=${selectedGroup.groupId}&offerId=${offerId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       if (response.ok) {
         const data = await response.json();
         setIsAlreadyBooked(data.exists);
@@ -89,8 +93,11 @@ export default function DriverDetailsScreen() {
 
   const fetchChildGroups = async () => {
     try {
+      const token = await getToken();
       const parentId = LoggedParentID;
-      const response = await fetch(`${API_BASE_URL}/api/child-groups?parentId=${parentId}`);
+      const response = await fetch(`${API_BASE_URL}/api/child-groups?parentId=${parentId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       if (response.ok) {
         const data = await response.json();
         setChildGroups(data);
@@ -107,7 +114,10 @@ export default function DriverDetailsScreen() {
   const fetchOfferDetails = async (initial = false) => {
     try {
       if (initial) setLoading(true);
-      const response = await fetch(`${API_BASE_URL}/api/offers/${offerId}`);
+      const token = await getToken();
+      const response = await fetch(`${API_BASE_URL}/api/offers/${offerId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       if (!response.ok) throw new Error("Offer not found");
       const data = await response.json();
       if (data.vehicleImageUrls.length === 0) {
@@ -130,10 +140,12 @@ export default function DriverDetailsScreen() {
     if (!hasMatch) return;
     
     try {
+      const token = await getToken();
       const response = await fetch(`${API_BASE_URL}/api/bookings/request`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           groupId: selectedGroup.groupId,
@@ -166,7 +178,7 @@ export default function DriverDetailsScreen() {
       });
 
       setTimeout(() => {
-        router.push("/(tabs)/events");
+        router.push("/activity");
       }, 2000);
     } catch (err) {
       console.error("Booking Request Error:", err);

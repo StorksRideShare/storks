@@ -22,7 +22,7 @@ export const useParentStore = create<ParentState>((set, get) => ({
 
   setTrackingData: (data) => set({ trackingData: data }),
 
-  markChildAbsent: async (childId, routeType, reason) => {
+  markChildAbsent: async (childId, routeType, reason, token) => {
     const { groups } = get();
     
     // Update local state immediately for optimistic UI
@@ -48,7 +48,7 @@ export const useParentStore = create<ParentState>((set, get) => ({
 
     // Make API call
     try {
-      await parentApi.markChildAbsent(childId, routeType, reason);
+      await parentApi.markChildAbsent(childId, routeType, reason, token);
     } catch (error) {
       console.error('Failed to mark child absent:', error);
       // Revert on error
@@ -56,7 +56,7 @@ export const useParentStore = create<ParentState>((set, get) => ({
     }
   },
 
-  cancelAbsence: async (childId) => {
+  cancelAbsence: async (childId, token) => {
     const { groups } = get();
     
     // Update local state immediately
@@ -78,7 +78,7 @@ export const useParentStore = create<ParentState>((set, get) => ({
 
     // Make API call
     try {
-      await parentApi.cancelAbsence(childId);
+      await parentApi.cancelAbsence(childId, token);
     } catch (error) {
       console.error('Failed to cancel absence:', error);
       // Revert on error
@@ -181,12 +181,16 @@ export const useParentStore = create<ParentState>((set, get) => ({
     set({ notifications: updatedNotifications });
   },
 
-  refreshDashboard: async () => {
+  refreshDashboard: async (token) => {
+    if (!token) {
+      console.warn('refreshDashboard: No token provided');
+      return;
+    }
     set({ isLoadingGroups: true });
     try {
       const [parent, groups] = await Promise.all([
-        parentApi.getParent(),
-        parentApi.getDashboard(),
+        parentApi.getParent(token),
+        parentApi.getDashboard(token),
       ]);
       set({ parent, groups, isLoadingGroups: false });
     } catch (error) {
@@ -195,10 +199,10 @@ export const useParentStore = create<ParentState>((set, get) => ({
     }
   },
 
-  startTracking: async (groupId, childId) => {
+  startTracking: async (groupId, childId, token) => {
     set({ isLoadingTracking: true });
     try {
-      const trackingData = await parentApi.getTrackingData(groupId, childId);
+      const trackingData = await parentApi.getTrackingData(groupId, childId, token);
       set({ trackingData, isLoadingTracking: false });
     } catch (error) {
       console.error('Failed to start tracking:', error);

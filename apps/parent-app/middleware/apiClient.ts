@@ -2,6 +2,12 @@ import { useSession } from "@clerk/expo";
 import { useMemo } from "react";
 import { Platform } from "react-native";
 
+const SERVER_IP =
+  process.env.EXPO_PUBLIC_SERVER_IP ||
+  (Platform.OS === "android" ? "10.0.2.2" : "localhost");
+
+export const API_BASE_URL = `http://${SERVER_IP}:8080`; // Standard base URL for bookings/auth
+
 export type ServiceName =
   | "admin-and-analytics"
   | "booking-and-payment"
@@ -31,9 +37,7 @@ const getBaseUrl = (port: number) => {
   if (!__DEV__) {
     return `https://example.com:${port}`;
   }
-  return Platform.OS === "android"
-    ? `http://10.0.2.2:${port}`
-    : `http://localhost:${port}`;
+  return `http://${SERVER_IP}:${port}`;
 };
 
 export type ApiClient = {

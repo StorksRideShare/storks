@@ -13,6 +13,7 @@ import {
   Syne_400Regular,
 } from "@expo-google-fonts/syne";
 import { useFonts } from "expo-font";
+import { StorkIllustration } from "./common/StorkIllustration";
 
 const { width, height } = Dimensions.get("window");
 
@@ -61,70 +62,6 @@ function Spinner() {
   );
 }
 
-// Stork line-art SVG matching the illustration in the bottom-right
-function StorkIllustration() {
-  return (
-    <Svg
-      width={width * 0.55}
-      height={height * 0.32}
-      viewBox="0 0 220 260"
-      fill="none"
-    >
-      {/* Beak — orange/brown horizontal line */}
-      <Path
-        d="M 10 42 L 68 42"
-        stroke="#B85C20"
-        strokeWidth="4"
-        strokeLinecap="round"
-      />
-      {/* Head curve */}
-      <Path
-        d="M 68 42 Q 90 42 96 56"
-        stroke="#B0A99A"
-        strokeWidth="3"
-        strokeLinecap="round"
-        fill="none"
-      />
-      {/* Long neck sweeping down */}
-      <Path
-        d="M 96 56 Q 110 90 100 130 Q 92 155 105 175"
-        stroke="#B0A99A"
-        strokeWidth="3"
-        strokeLinecap="round"
-        fill="none"
-      />
-      {/* Body / chest oval */}
-      <Path
-        d="M 105 175 Q 130 160 155 175 Q 175 188 165 215 Q 155 238 130 242 Q 108 245 100 228 Q 88 208 105 175 Z"
-        stroke="#B0A99A"
-        strokeWidth="3"
-        fill="none"
-      />
-      {/* Left leg */}
-      <Path
-        d="M 115 242 L 112 260"
-        stroke="#B0A99A"
-        strokeWidth="3"
-        strokeLinecap="round"
-      />
-      {/* Right leg */}
-      <Path
-        d="M 138 242 L 140 260"
-        stroke="#B0A99A"
-        strokeWidth="3"
-        strokeLinecap="round"
-      />
-      {/* Wing hint */}
-      <Path
-        d="M 150 185 Q 185 172 210 180 Q 195 195 165 195"
-        stroke="#B0A99A"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        fill="none"
-      />
-    </Svg>
-  );
-}
 
 interface LoadingScreenProps {
   message?: string;
@@ -180,7 +117,7 @@ export default function LoadingScreen({
 
       {/* Stork illustration — bottom right */}
       <View style={styles.storkContainer} pointerEvents="none">
-        <StorkIllustration />
+        <StorkIllustration width={width * 0.55} height={height * 0.32} />
       </View>
 
       {/* Initializing text — bottom center */}
