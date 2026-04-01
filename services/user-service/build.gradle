@@ -10,13 +10,7 @@ description = 'user-service'
 
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(25)
-	}
-}
-
-configurations {
-	compileOnly {
-		extendsFrom annotationProcessor
+		languageVersion = JavaLanguageVersion.of(17)
 	}
 }
 
