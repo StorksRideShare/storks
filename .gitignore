@@ -1,9 +1,6 @@
-services/live-messaging/database_schema/schema.sql
-/services/live-messaging/database_schema
-shared/models.zip
-services/live-messaging/database_schema/schema.sql
+*.zip
 *.log
-services/safty-and-verification/.env
 *.env
-services/safty-and-verification/database_setup.sql
-services/safty-and-verification/.env
+*.sql
+*.pnpm-store
+*node_modules

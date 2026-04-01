@@ -14,15 +14,18 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
+
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
 } from "react-native";
+import { Box } from "@/components/ui/box";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function Page() {
   const { signIn, setActive, isLoaded } = useSignIn();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const [fontsLoaded] = useFonts({
     Syne_400Regular,
@@ -133,7 +136,7 @@ export default function Page() {
   // ------------------------------------------------------------------
   if (showEmailCode) {
     return (
-      <SafeAreaView style={styles.container}>
+      <Box style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.keyboardView}
@@ -193,7 +196,7 @@ export default function Page() {
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
-      </SafeAreaView>
+      </Box>
     );
   }
 
@@ -201,7 +204,7 @@ export default function Page() {
   // UI: MAIN SIGN IN STEP
   // ------------------------------------------------------------------
   return (
-    <SafeAreaView style={styles.container}>
+    <Box style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardView}
@@ -270,7 +273,7 @@ export default function Page() {
           </Link>
         </View>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </Box>
   );
 }
 
