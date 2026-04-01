@@ -14,7 +14,16 @@ import "react-native-reanimated";
 global.Buffer = Buffer;
 
 import { useColorScheme } from "@/components/useColorScheme";
-import "../global.css";
+import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider";
+import "@/global.css";
+
+import LoadingScreen from "@/components/LoadingScreen";
+
+import {
+  Syne_400Regular,
+  Syne_600SemiBold,
+  Syne_700Bold,
+} from "@expo-google-fonts/syne";
 
 export { ErrorBoundary } from "expo-router";
 
@@ -28,13 +37,16 @@ const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
 if (!publishableKey) {
   throw new Error(
-    "Missing Publishable Key. Please set EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY in your .env"
+    "Missing Publishable Key. Please set EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY in your .env",
   );
 }
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
+    Syne_400Regular,
+    Syne_600SemiBold,
+    Syne_700Bold,
   });
 
   useEffect(() => {
@@ -47,8 +59,9 @@ export default function RootLayout() {
     }
   }, [loaded]);
 
+  // Show loading screen while fonts are loading
   if (!loaded) {
-    return null;
+    return <LoadingScreen message="Initializing..." />;
   }
 
   return <RootLayoutNav />;
@@ -64,6 +77,7 @@ function RootLayoutNav() {
           <Stack.Screen name="(home)" />
           <Stack.Screen name="(auth)" />
           <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="onboarding" options={{ headerShown: false }} />
           <Stack.Screen name="modal" options={{ presentation: "modal" }} />
           <Stack.Screen name="chats" />
         </Stack>

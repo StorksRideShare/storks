@@ -2,7 +2,7 @@ import { useSession } from "@clerk/expo";
 import { useMemo } from "react";
 import { Platform } from "react-native";
 
-export type ServiceName = 
+export type ServiceName =
   | "admin-and-analytics"
   | "booking-and-payment"
   | "location-and-navigation"
@@ -31,34 +31,46 @@ const getBaseUrl = (port: number) => {
   if (!__DEV__) {
     return `https://example.com:${port}`;
   }
-  return Platform.OS === "android" ? `http://10.0.2.2:${port}` : `http://localhost:${port}`;
+  return Platform.OS === "android"
+    ? `http://10.0.2.2:${port}`
+    : `http://localhost:${port}`;
 };
 
 export type ApiClient = {
   get: <T>(path: string) => Promise<T>;
-  post: <T>(path: string, body?: any) => Promise<T>;
-  put: <T>(path: string, body?: any) => Promise<T>;
+  post: <T>(path: string, body?: unknown) => Promise<T>;
+  put: <T>(path: string, body?: unknown) => Promise<T>;
   delete: <T>(path: string) => Promise<T>;
 };
 
-export function createApiClient(getToken: () => Promise<string | null>, baseUrl: string): ApiClient {
-  const request = async <T>(path: string, options: RequestInit = {}): Promise<T> => {
+export function createApiClient(
+  getToken: () => Promise<string | null>,
+  baseUrl: string,
+): ApiClient {
+  const request = async <T>(
+    path: string,
+    options: RequestInit = {},
+  ): Promise<T> => {
     let token: string | null = null;
     try {
       token = await getToken();
     } catch (e: any) {
       if (e.name === "ClerkOfflineError" || e.message?.includes("offline")) {
-        console.warn("Clerk: Device is offline, proceeding without token or failing if required");
+        console.warn(
+          "Clerk: Device is offline, proceeding without token or failing if required",
+        );
         // For our services, most require auth. We can either throw here or let the backend throw 401.
         // But throwing a clear error here is better for UI handling.
-        throw new Error("OFFLINE: Your session could not be verified because the device is offline.");
+        throw new Error(
+          "OFFLINE: Your session could not be verified because the device is offline.",
+        );
       }
       throw e;
     }
     const headers = {
       "Content-Type": "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(options.headers || {}),
+      ...((options.headers as Record<string, string>) || {}),
     };
 
     const url = path.startsWith("http") ? path : `${baseUrl}${path}`;
@@ -66,26 +78,31 @@ export function createApiClient(getToken: () => Promise<string | null>, baseUrl:
 
     try {
       const response = await fetch(url, { ...options, headers });
-      console.log(`API RESPONSE: ${response.status} ${url}`);
+      if (__DEV__) console.log(`[API] ${response.status} ${url}`);
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`API ERROR: ${response.status} - ${errorText}`);
-        throw new Error(`API Error ${response.status}: ${errorText || response.statusText}`);
+        if (__DEV__)
+          console.error(`[API] Error ${response.status}: ${errorText}`);
+        throw new Error(
+          `API Error ${response.status}: ${errorText || response.statusText}`,
+        );
       }
 
       if (response.status === 204) return {} as T;
-      return response.json();
+      return response.json() as Promise<T>;
     } catch (error) {
-      console.error(`API FETCH FAILED: ${url}`, error);
+      if (__DEV__) console.error(`[API] Fetch failed: ${url}`, error);
       throw error;
     }
   };
 
   return {
     get: (path) => request(path, { method: "GET" }),
-    post: (path, body) => request(path, { method: "POST", body: JSON.stringify(body) }),
-    put: (path, body) => request(path, { method: "PUT", body: JSON.stringify(body) }),
+    post: (path, body) =>
+      request(path, { method: "POST", body: JSON.stringify(body) }),
+    put: (path, body) =>
+      request(path, { method: "PUT", body: JSON.stringify(body) }),
     delete: (path) => request(path, { method: "DELETE" }),
   };
 }
@@ -94,7 +111,13 @@ export function useApiClient(service: ServiceName = "safty-and-verification") {
   const { session } = useSession();
   const port = SERVICE_PORTS[service];
   const baseUrl = getBaseUrl(port);
-  
-  return useMemo(() => createApiClient(() => session?.getToken() ?? Promise.resolve(null), baseUrl), [session, service, baseUrl]);
-}
 
+  return useMemo(
+    () =>
+      createApiClient(
+        () => session?.getToken() ?? Promise.resolve(null),
+        baseUrl,
+      ),
+    [session, service, baseUrl],
+  );
+}

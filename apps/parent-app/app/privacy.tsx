@@ -1,12 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { View, Switch, ScrollView, Alert, StyleSheet, ActivityIndicator } from 'react-native';
-import { ThemedView } from '@/components/themed-view';
-import { ThemedText } from '@/components/themed-text';
-import { Collapsible } from '@/components/ui/collapsible';
-import { useApiClient } from '../middleware/apiClient';
+import React, { useState, useEffect } from "react";
+import { Switch, StyleSheet, Alert } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-// You can replace this with your actual auth hook
-// import { useAuth } from '@/hooks/useAuth';
+import { Box } from "@/components/ui/box";
+import { Text } from "@/components/ui/text";
+import { Button, ButtonText, ButtonSpinner } from "@/components/ui/button";
+import { VStack } from "@/components/ui/vstack";
+import { HStack } from "@/components/ui/hstack";
+import { ScrollView } from "@/components/ui/scroll-view";
+import { Spinner } from "@/components/ui/spinner";
+import { Collapsible } from "@/components/ui/collapsible";
+
+// useApiClient replaces axios — auto-injects Clerk JWT, logs, handles errors
+import { useApiClient } from "@/middleware/apiClient";
 
 interface PrivacySettings {
   shareLocationOnlyActiveRide: boolean;
@@ -15,12 +21,17 @@ interface PrivacySettings {
   allowAudioStream: boolean;
 }
 
+const DEFAULTS: PrivacySettings = {
+  shareLocationOnlyActiveRide: true,
+  maskFullAddress: true,
+  allowSilentPresence: false,
+  allowAudioStream: false,
+};
+
 export default function PrivacySettingsScreen() {
-  // --- State Management ---
-  const [shareLocationOnlyActive, setShareLocationOnlyActive] = useState(true);
-  const [maskFullAddress, setMaskFullAddress] = useState(true);
-  const [allowSilentPresence, setAllowSilentPresence] = useState(false);
-  const [allowAudioStream, setAllowAudioStream] = useState(false);
+  const api = useApiClient(); // token injected automatically from active Clerk session
+
+  const [settings, setSettings] = useState<PrivacySettings>(DEFAULTS);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -34,237 +45,219 @@ export default function PrivacySettingsScreen() {
   const loadSettings = async () => {
     try {
       setIsLoading(true);
-      const settings = await apiClient.get<Partial<PrivacySettings>>('/api/privacy/settings');
-
-      setShareLocationOnlyActive(settings.shareLocationOnlyActiveRide ?? true);
-      setMaskFullAddress(settings.maskFullAddress ?? true);
-      setAllowSilentPresence(settings.allowSilentPresence ?? false);
-      setAllowAudioStream(settings.allowAudioStream ?? false);
-    } catch (error) {
-      console.error('Failed to load settings:', error);
-      Alert.alert(
-        'Error',
-        'Failed to load privacy settings. Using default values.'
-      );
+      const data = await api.get<PrivacySettings>("/api/privacy/settings");
+      setSettings({
+        shareLocationOnlyActiveRide:
+          data.shareLocationOnlyActiveRide ??
+          DEFAULTS.shareLocationOnlyActiveRide,
+        maskFullAddress: data.maskFullAddress ?? DEFAULTS.maskFullAddress,
+        allowSilentPresence:
+          data.allowSilentPresence ?? DEFAULTS.allowSilentPresence,
+        allowAudioStream: data.allowAudioStream ?? DEFAULTS.allowAudioStream,
+      });
+    } catch {
+      Alert.alert("Error", "Failed to load privacy settings. Using defaults.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  // --- Save Settings ---
   const handleSave = async () => {
-    const payload: PrivacySettings = {
-      shareLocationOnlyActiveRide: shareLocationOnlyActive,
-      maskFullAddress: maskFullAddress,
-      allowSilentPresence: allowSilentPresence,
-      allowAudioStream: allowAudioStream,
-    };
-
     try {
       setIsSaving(true);
-      await apiClient.post('/api/privacy/settings', payload);
+      await apiClient.post("/api/privacy/settings", payload);
 
       Alert.alert(
-        'Success',
-        'Your privacy settings have been saved successfully!',
-        [{ text: 'OK' }]
+        "Success",
+        "Your privacy settings have been saved successfully!",
+        [{ text: "OK" }],
       );
     } catch (error) {
-      console.error('Failed to save settings:', error);
+      console.error("Failed to save settings:", error);
       Alert.alert(
-        'Error',
-        'Failed to save privacy settings. Please try again.'
+        "Error",
+        "Failed to save privacy settings. Please try again.",
       );
     } finally {
       setIsSaving(false);
     }
   };
 
-  // --- Helper Component for Setting Rows ---
+  const update = (key: keyof PrivacySettings) => (value: boolean) =>
+    setSettings((prev) => ({ ...prev, [key]: value }));
+
+  // ── Setting row ────────────────────────────────────────────────
   const SettingRow = ({
     label,
+    description,
     value,
     onValueChange,
-    disabled = false,
-    description
   }: {
     label: string;
-    value: boolean;
-    onValueChange: (value: boolean) => void;
-    disabled?: boolean;
     description?: string;
+    value: boolean;
+    onValueChange: (v: boolean) => void;
   }) => (
-    <View style={styles.settingRow}>
-      <View style={styles.labelContainer}>
-        <ThemedText style={styles.rowLabel}>{label}</ThemedText>
+    <HStack style={styles.settingRow}>
+      <VStack style={styles.labelContainer}>
+        <Text style={styles.rowLabel}>{label}</Text>
         {description && (
-          <ThemedText style={styles.rowDescription}>{description}</ThemedText>
+          <Text style={styles.rowDescription}>{description}</Text>
         )}
-      </View>
+      </VStack>
       <Switch
         value={value}
         onValueChange={onValueChange}
-        disabled={disabled || isLoading}
-        trackColor={{ false: '#767577', true: '#81b0ff' }}
-        thumbColor={value ? '#f5dd4b' : '#f4f3f4'}
-        ios_backgroundColor="#3e3e3e"
+        disabled={isLoading || isSaving}
+        trackColor={{ false: "#3E3834", true: "#E66B00" }}
+        thumbColor="#FFFFFF"
+        ios_backgroundColor="#3E3834"
       />
-    </View>
+    </HStack>
   );
 
   if (isLoading) {
     return (
-      <ThemedView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#81b0ff" />
-        <ThemedText style={styles.loadingText}>Loading settings...</ThemedText>
-      </ThemedView>
+      <SafeAreaView style={styles.container}>
+        <VStack style={styles.loadingContainer}>
+          <Spinner size="large" color="#E66B00" />
+          <Text style={styles.loadingText}>Loading settings…</Text>
+        </VStack>
+      </SafeAreaView>
     );
   }
 
   return (
-    <ThemedView style={{ flex: 1 }}>
+    <SafeAreaView style={styles.container}>
       <ScrollView
-        contentContainerStyle={styles.container}
+        contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <ThemedText type="title" style={styles.header}>
-          Privacy Settings
-        </ThemedText>
+        <Text style={styles.header}>Privacy Settings</Text>
+        <Text style={styles.description}>
+          Control what information is shared and how your data is handled during
+          rides.
+        </Text>
 
-        <ThemedText type="subtitle" style={styles.description}>
-          Control what information is shared and how your data is handled during rides.
-        </ThemedText>
-
-        {/* Location Section */}
         <Collapsible title="Location Sharing">
           <SettingRow
             label="Share live location only during active ride"
-            description="Your location will only be shared when you're on an active ride"
-            value={shareLocationOnlyActive}
-            onValueChange={setShareLocationOnlyActive}
+            description="Your location is shared only when you're on an active ride"
+            value={settings.shareLocationOnlyActiveRide}
+            onValueChange={update("shareLocationOnlyActiveRide")}
           />
         </Collapsible>
 
-        {/* Data Masking Section */}
         <Collapsible title="Data Masking">
           <SettingRow
             label="Mask full address"
-            description="Show only neighborhood to drivers, not your exact address"
-            value={maskFullAddress}
-            onValueChange={setMaskFullAddress}
+            description="Show only neighbourhood to drivers, not your exact address"
+            value={settings.maskFullAddress}
+            onValueChange={update("maskFullAddress")}
           />
         </Collapsible>
 
-        {/* Monitoring Section */}
         <Collapsible title="Monitoring Requests">
           <SettingRow
             label="Allow silent presence requests"
-            description="Allow requests for photo verification during rides"
-            value={allowSilentPresence}
-            onValueChange={setAllowSilentPresence}
+            description="Allow photo verification requests during rides"
+            value={settings.allowSilentPresence}
+            onValueChange={update("allowSilentPresence")}
           />
           <SettingRow
             label="Allow audio stream requests"
-            description="Allow requests for audio monitoring during rides"
-            value={allowAudioStream}
-            onValueChange={setAllowAudioStream}
+            description="Allow audio monitoring requests during rides"
+            value={settings.allowAudioStream}
+            onValueChange={update("allowAudioStream")}
           />
         </Collapsible>
 
-        {/* Action Buttons */}
-        <View style={styles.footer}>
-          <ThemedText
-            type="link"
-            onPress={handleSave}
+        <VStack style={styles.footer}>
+          <Button
             style={[styles.saveButton, isSaving && styles.disabledButton]}
-            disabled={isSaving}
+            onPress={handleSave}
+            isDisabled={isSaving}
           >
-            {isSaving ? 'Saving...' : 'Save All Changes'}
-          </ThemedText>
+            {isSaving ? (
+              <ButtonSpinner color="#FFFFFF" />
+            ) : (
+              <ButtonText style={styles.saveButtonText}>
+                Save All Changes
+              </ButtonText>
+            )}
+          </Button>
 
-          <ThemedText
-            type="link"
-            onPress={loadSettings}
-            style={styles.resetButton}
-            disabled={isSaving}
-          >
-            Reset to Saved
-          </ThemedText>
-        </View>
+          <Button variant="link" onPress={loadSettings} isDisabled={isSaving}>
+            <ButtonText style={styles.resetText}>Reset to Saved</ButtonText>
+          </Button>
+        </VStack>
 
-        {/* Last Updated Info */}
-        <ThemedText style={styles.footerNote}>
+        <Text style={styles.footerNote}>
           Changes are applied immediately after saving
-        </ThemedText>
+        </Text>
       </ScrollView>
-    </ThemedView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 24,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  container: { flex: 1, backgroundColor: "#171412" },
+  scrollContent: { padding: 24 },
+  loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
   loadingText: {
+    fontFamily: "Syne_400Regular",
     marginTop: 12,
     fontSize: 16,
-    opacity: 0.7,
+    color: "#7A726E",
   },
   header: {
+    fontFamily: "Syne_700Bold",
+    fontSize: 24,
+    color: "#FFFFFF",
     marginBottom: 8,
   },
   description: {
+    fontFamily: "Syne_400Regular",
+    fontSize: 14,
+    color: "#7A726E",
     marginBottom: 24,
-    opacity: 0.7,
+    lineHeight: 20,
   },
   settingRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(150, 150, 150, 0.1)',
+    borderBottomColor: "rgba(150,150,150,0.1)",
   },
-  labelContainer: {
-    flex: 1,
-    marginRight: 16,
-  },
-  rowLabel: {
-    fontSize: 16,
-    fontWeight: '500',
-  },
+  labelContainer: { flex: 1, marginRight: 16 },
+  rowLabel: { fontFamily: "Syne_600SemiBold", fontSize: 15, color: "#FFFFFF" },
   rowDescription: {
+    fontFamily: "Syne_400Regular",
     fontSize: 13,
-    opacity: 0.6,
+    color: "#7A726E",
     marginTop: 2,
   },
-  footer: {
-    marginTop: 40,
-    alignItems: 'center',
-    gap: 16,
-  },
+  footer: { marginTop: 40, alignItems: "center", gap: 16 },
   saveButton: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#81b0ff',
+    height: 56,
+    backgroundColor: "#E66B00",
+    borderRadius: 28,
+    paddingHorizontal: 32,
   },
-  resetButton: {
-    fontSize: 14,
-    opacity: 0.6,
+  saveButtonText: {
+    fontFamily: "Syne_700Bold",
+    color: "#FFFFFF",
+    fontSize: 16,
   },
-  disabledButton: {
-    opacity: 0.5,
-  },
+  disabledButton: { opacity: 0.5 },
+  resetText: { fontFamily: "Syne_400Regular", color: "#7A726E", fontSize: 14 },
   footerNote: {
+    fontFamily: "Syne_400Regular",
     marginTop: 24,
-    textAlign: 'center',
+    textAlign: "center",
     fontSize: 12,
-    opacity: 0.4,
+    color: "#3E3834",
     paddingBottom: 20,
   },
 });
