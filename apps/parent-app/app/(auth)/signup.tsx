@@ -13,7 +13,7 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
+
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -21,10 +21,13 @@ import {
   NativeSyntheticEvent,
   NativeScrollEvent,
 } from "react-native";
+import { Box } from "@/components/ui/box";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function Page() {
   const { isLoaded, signUp, setActive } = useSignUp();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const [fontsLoaded] = useFonts({
     Syne_400Regular,
@@ -146,7 +149,7 @@ export default function Page() {
   // ------------------------------------------------------------------
   if (showTOS) {
     return (
-      <SafeAreaView style={styles.container}>
+    <Box style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
         <View style={styles.logoContainer}>
           <Text style={styles.logoText}>
             <Text style={styles.logoHighlight}>S</Text>torks
@@ -231,7 +234,7 @@ export default function Page() {
             )}
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+      </Box>
     );
   }
 
@@ -240,7 +243,7 @@ export default function Page() {
   // ------------------------------------------------------------------
   if (pendingVerification) {
     return (
-      <SafeAreaView style={styles.container}>
+    <Box style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.keyboardView}
@@ -288,7 +291,7 @@ export default function Page() {
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
-      </SafeAreaView>
+      </Box>
     );
   }
 
@@ -296,7 +299,7 @@ export default function Page() {
   // UI: STEP 1 - MAIN SIGN UP
   // ------------------------------------------------------------------
   return (
-    <SafeAreaView style={styles.container}>
+    <Box style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardView}
@@ -374,7 +377,7 @@ export default function Page() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </Box>
   );
 }
 
