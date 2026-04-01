@@ -29,7 +29,11 @@ public class ChatWebSocketController {
                 UUID senderId = claim.userId();
                 chatMessage.setSenderId(senderId);
                 
-                // Publish to Kafka queue
+                if (chatMessage.getType() == com.storks.livemessaging.model.types.MessageType.READ_RECEIPT) {
+                    messageService.markMessageAsRead(chatMessage.getMessageId(), senderId);
+                }
+                
+                // Publish to Kafka queue (Kafka consumer will broadcast it)
                 messageService.publishMessageToKafka(chatMessage);
                 return;
             }

@@ -4,6 +4,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'r
 import axios from 'axios';
 import logo from './logo.svg';
 import './App.css';
+import EmergencyReport from './components/EmergencyReport';
 
 // Type for metrics response from backend
 interface MetricsResponse {
@@ -33,7 +34,7 @@ const Dashboard: React.FC = () => {
 
   const fetchMetrics = async () => {
     try {
-      const token = localStorage.getItem('token'); // set this after login
+      const token = localStorage.getItem('token');
       if (!token) {
         console.warn('No auth token found - metrics may fail');
       }
@@ -56,7 +57,7 @@ const Dashboard: React.FC = () => {
           activeRides: newData.activeRides,
           cpu: newData.cpuUsage,
         };
-        const updated = [...prev, newPoint].slice(-10); // keep last 10
+        const updated = [...prev, newPoint].slice(-10);
         return updated;
       });
     } catch (error) {
@@ -65,14 +66,14 @@ const Dashboard: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchMetrics(); // initial fetch
-    const interval = setInterval(fetchMetrics, 8000); // every 8 seconds
+    fetchMetrics();
+    const interval = setInterval(fetchMetrics, 8000);
     return () => clearInterval(interval);
   }, []);
 
   return (
     <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
-      <h1>Admin Dashboard</h1>
+      <h1>Admin Dashboard - Picksy</h1>
 
       {/* Real-time summary cards */}
       <div style={{ 
@@ -125,6 +126,9 @@ const Dashboard: React.FC = () => {
         </div>
       </section>
 
+      {/* Emergency Report Component */}
+      <EmergencyReport />
+
       <section>
         <h2>Alert Logs (mock for demo)</h2>
         <ul style={{ textAlign: 'left', maxWidth: '600px', margin: '0 auto' }}>
@@ -141,12 +145,12 @@ const Dashboard: React.FC = () => {
 };
 
 const PrivacySettings: React.FC = () => {
-  // ... keep your existing PrivacySettings component ...
-  // (you can leave it as is or improve later)
   return (
     <div style={{ padding: '20px', maxWidth: '600px', margin: '0 auto' }}>
       <h1>Privacy Settings</h1>
-      {/* your existing content */}
+      <p>Share location only during ride: <input type="checkbox" checked readOnly /></p>
+      <p>Data retention period: 30 days</p>
+      <p>Opt out of analytics: <input type="checkbox" /></p>
     </div>
   );
 };

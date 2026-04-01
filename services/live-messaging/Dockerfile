@@ -26,7 +26,11 @@ RUN wget -q https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-b
     && mv gradle-${GRADLE_VERSION} ${GRADLE_HOME} \
     && ln -s ${GRADLE_HOME}/bin/gradle /usr/bin/gradle
 
+RUN chown -R gradle:gradle /home/gradle/app
 USER gradle
+
+COPY --chown=gradle:gradle build.gradle settings.gradle ./
+RUN gradle dependencies --no-daemon
 
 COPY --chown=gradle:gradle . .
 

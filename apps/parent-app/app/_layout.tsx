@@ -19,7 +19,8 @@ import "../global.css";
 export { ErrorBoundary } from "expo-router";
 
 export const unstable_settings = {
-  initialRouteName: "(tabs)",
+  // Ensure that reloading on `/modal` keeps a back button present.
+  initialRouteName: "(home)",
 };
 
 SplashScreen.preventAutoHideAsync();

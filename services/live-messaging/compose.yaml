@@ -14,7 +14,7 @@ services:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       GRADLE_OPTS: "-Dorg.gradle.native=false"
       SERVER_PORT: 8089
-      SPRING_DATASOURCE_URL: jdbc:postgresql://ep-holy-credit-a118kh6w-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channelBinding=require
+      SPRING_DATASOURCE_URL: jdbc:postgresql://ep-holy-credit-a118kh6w-pooler.ap-southeast-1.aws.neon.tech/storks?sslmode=require&channelBinding=require
       SPRING_DATASOURCE_USERNAME: neondb_owner
       SPRING_DATASOURCE_PASSWORD: npg_CPy4FrjaeO9l
     depends_on:
