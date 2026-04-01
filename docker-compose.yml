@@ -46,7 +46,7 @@ services:
     working_dir: /app
     volumes:
       - ./apps/website:/app
-    command: npm run dev -- --port 3000
+    command: sh -c "npx pnpm install && npx pnpm dev --port 3000"
     ports:
       - "3000:3000"
     networks:
@@ -89,15 +89,20 @@ services:
   # ==========================================
   # BACKEND SERVICES
   # ==========================================
-  admin-and-analytics:
-    image: alpine
-    command: tail -f /dev/null
+  admin-service:
+    build: ./services/admin-and-analytics
     ports:
-      - "8084:8084"
+      - "8085:8085"
+    environment:
+      - PORT=8085
     networks:
       - microservices-network
+    depends_on:
+      - postgres
+      - redis
+      - kafka
 
-  booking-and-payment:
+  booking-service:
     build: ./services/booking-and-payment
     ports:
       - "8081:8081"
@@ -110,7 +115,7 @@ services:
       - redis
       - kafka
 
-  live-tracking:
+  location-service:
     build: ./services/location-and-navigation
     ports:
       - "8082:8082"
@@ -136,20 +141,12 @@ services:
       - redis
       - kafka
 
-  matching-searching:
-    image: alpine
-    command: tail -f /dev/null
+  matching-intelligence:
+    build: ./services/matching-intelligence
     ports:
       - "8084:8084"
-    networks:
-      - microservices-network
-
-  live-messaging:
-    build: ./services/live-messaging
-    ports:
-      - "8085:8085"
     environment:
-      - PORT=8085
+      - PORT=8084
     networks:
       - microservices-network
     depends_on:
@@ -157,31 +154,20 @@ services:
       - redis
       - kafka
 
-  available-1:
-    image: alpine
-    command: tail -f /dev/null
+  live-messaging:
+    build: ./services/live-messaging
     ports:
       - "8086:8086"
+    environment:
+      - PORT=8086
     networks:
       - microservices-network
+    depends_on:
+      - postgres
+      - redis
+      - kafka
 
-  available-2:
-    image: alpine
-    command: tail -f /dev/null
-    ports:
-      - "8087:8087"
-    networks:
-      - microservices-network
-
-  available-3:
-    image: alpine
-    command: tail -f /dev/null
-    ports:
-      - "8088:8088"
-    networks:
-      - microservices-network
-
-  safety-and-verification:
+  safety-service:
     build: ./services/safty-and-verification
     ports:
       - "8089:8089"

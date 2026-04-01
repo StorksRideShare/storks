@@ -1,0 +1,42 @@
+package com.storks.matching.controller;
+
+import com.storks.matching.dto.*;
+import com.storks.matching.service.SearchDriverService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/v1/drivers")
+@RequiredArgsConstructor
+@CrossOrigin
+public class SearchDriverController {
+
+    private final SearchDriverService driverService;
+
+    // 🔍 Search drivers
+    @GetMapping("/search")
+    public List<SearchDriverResponse> searchDrivers(
+            @RequestParam(required = false) Integer seats,
+            @RequestParam(required = false) Boolean ac,
+            @RequestParam(required = false) Boolean nfc
+    ) {
+        return driverService.searchDrivers(seats, ac, nfc);
+    }
+
+    // 👤 Get driver profile
+    @GetMapping("/{id}")
+    public SearchDriverResponse getDriverById(@PathVariable Long id) {
+        return driverService.getDriverById(id);
+    }
+
+    // 📌 Book driver
+    @PostMapping("/{id}/book")
+    public String bookDriver(
+            @PathVariable Long id,
+            @RequestParam Long groupId
+    ) {
+        return driverService.bookDriver(id, groupId);
+    }
+}

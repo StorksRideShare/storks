@@ -11,7 +11,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/onboarding")
+@RequestMapping("/api/v1/onboarding")
 @RequiredArgsConstructor
 public class OnboardingController {
 

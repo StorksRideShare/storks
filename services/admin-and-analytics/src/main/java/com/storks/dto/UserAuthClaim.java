@@ -1,6 +1,0 @@
-package com.storks.dto;
-
-import java.io.Serializable;
-import java.util.UUID;
-
-public record UserAuthClaim(String providerUserId, String email, boolean isDeleted, UUID userId) implements Serializable {}

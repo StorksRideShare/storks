@@ -72,7 +72,7 @@ func main() {
 	r := gin.Default()
 
 	// Health Check
-	r.GET("/api/location/health", func(c *gin.Context) {
+	r.GET("/api/v1/location/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok", "service": "location-and-navigation"})
 	})
 
@@ -89,7 +89,7 @@ func main() {
 		})
 	}
 	
-	r.GET("/api/navigation/route", getRoute)
+	r.GET("/api/v1/navigation/route", getRoute)
 	r.Run(":8080")
 
 	log.Printf("Starting location-and-navigation service on port %s...", cfg.Port)
