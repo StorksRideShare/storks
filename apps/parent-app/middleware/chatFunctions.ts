@@ -36,7 +36,20 @@ export class StompChatClient {
         if (__DEV__) console.log("STOMP:", str);
       },
       beforeConnect: async () => {
-        const token = await this.getToken();
+        let token: string | null = null;
+        try {
+          token = await this.getToken();
+        } catch (e: any) {
+          if (e.name === "ClerkOfflineError" || e.message?.includes("offline")) {
+            console.warn("STOMP: Device is offline, skipping token fetch");
+            this.client?.deactivate();
+            return;
+          }
+          console.error("STOMP: Failed to get token", e);
+          this.client?.deactivate();
+          return;
+        }
+
         if (!token) {
           console.error("STOMP: No auth token, aborting connect");
           this.client?.deactivate();

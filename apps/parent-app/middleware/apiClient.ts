@@ -43,7 +43,18 @@ export type ApiClient = {
 
 export function createApiClient(getToken: () => Promise<string | null>, baseUrl: string): ApiClient {
   const request = async <T>(path: string, options: RequestInit = {}): Promise<T> => {
-    const token = await getToken();
+    let token: string | null = null;
+    try {
+      token = await getToken();
+    } catch (e: any) {
+      if (e.name === "ClerkOfflineError" || e.message?.includes("offline")) {
+        console.warn("Clerk: Device is offline, proceeding without token or failing if required");
+        // For our services, most require auth. We can either throw here or let the backend throw 401.
+        // But throwing a clear error here is better for UI handling.
+        throw new Error("OFFLINE: Your session could not be verified because the device is offline.");
+      }
+      throw e;
+    }
     const headers = {
       "Content-Type": "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
