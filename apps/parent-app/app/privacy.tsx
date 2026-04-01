@@ -3,7 +3,7 @@ import { View, Switch, ScrollView, Alert, StyleSheet, ActivityIndicator } from '
 import { ThemedView } from '@/components/themed-view';
 import { ThemedText } from '@/components/themed-text';
 import { Collapsible } from '@/components/ui/collapsible';
-import axios from 'axios';
+import { useApiClient } from '../middleware/apiClient';
 
 // You can replace this with your actual auth hook
 // import { useAuth } from '@/hooks/useAuth';
@@ -24,9 +24,7 @@ export default function PrivacySettingsScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Get token from your auth system
-  // const { token } = useAuth();
-  const token = "YOUR_JWT_TOKEN_HERE"; // ← replace with your auth hook
+  const apiClient = useApiClient("booking-and-payment");
 
   // --- Load Settings ---
   useEffect(() => {
@@ -36,11 +34,8 @@ export default function PrivacySettingsScreen() {
   const loadSettings = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get('http://localhost:8081/api/privacy/settings', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const settings = await apiClient.get<Partial<PrivacySettings>>('/api/privacy/settings');
 
-      const settings = response.data;
       setShareLocationOnlyActive(settings.shareLocationOnlyActiveRide ?? true);
       setMaskFullAddress(settings.maskFullAddress ?? true);
       setAllowSilentPresence(settings.allowSilentPresence ?? false);
@@ -67,9 +62,7 @@ export default function PrivacySettingsScreen() {
 
     try {
       setIsSaving(true);
-      await axios.post('http://localhost:8081/api/privacy/settings', payload, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await apiClient.post('/api/privacy/settings', payload);
 
       Alert.alert(
         'Success',

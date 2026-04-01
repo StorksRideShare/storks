@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
-import axios from 'axios';
+import { getApiClient } from './apiClient';
 import logo from './logo.svg';
 import './App.css';
 import EmergencyReport from './components/EmergencyReport';
@@ -39,13 +39,8 @@ const Dashboard: React.FC = () => {
         console.warn('No auth token found - metrics may fail');
       }
 
-      const response = await axios.get('http://localhost:8081/api/admin/metrics', {
-        headers: {
-          Authorization: token ? `Bearer ${token}` : undefined,
-        },
-      });
-
-      const newData = response.data;
+      const apiClient = getApiClient("booking-and-payment");
+      const newData = await apiClient.get<MetricsResponse>('/api/admin/metrics');
 
       setMetrics(newData);
 
