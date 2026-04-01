@@ -11,6 +11,7 @@ import { ThemedView } from "@/components/themed-view";
 import { WebBadge } from "@/components/web-badge";
 import { BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
 import { useEffect, useState } from "react";
+import { useApiClient } from "@/middleware/apiClient";
 
 function getDevMenuHint() {
   if (Platform.OS === "web") {
@@ -34,13 +35,13 @@ function getDevMenuHint() {
 export default function HomeScreen() {
   const [coords, setCoords] = useState<any>([]);
   const [eta, setEta] = useState('');
+  const apiClient = useApiClient("location-and-navigation");
 
   const fetchRoute = async () => {
     try {
-      const response = await fetch(
-        'http://10.0.2.2:8080/api/navigation/route?origin=6.9271,79.8612&destination=6.9067,79.8707'
+      const data = await apiClient.get<any>(
+        '/navigation/route?origin=6.9271,79.8612&destination=6.9067,79.8707'
       );
-      const data = await response.json();
 
       const points = polyline.decode(data.polyline);
       const coordsArray = points.map(point => ({

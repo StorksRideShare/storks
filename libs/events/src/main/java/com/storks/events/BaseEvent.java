@@ -1,6 +1,7 @@
 package com.storks.events;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
@@ -13,9 +14,9 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public abstract class BaseEvent {
-    @SuperBuilder.Default
+    @Builder.Default
     private String eventId = UUID.randomUUID().toString();
-    @SuperBuilder.Default
+    @Builder.Default
     private LocalDateTime timestamp = LocalDateTime.now();
     private String eventType;
 }

@@ -35,7 +35,7 @@ public class DataInitializer implements CommandLineRunner {
         // Only using Booking table as per requirements
         if (bookingRepository.count() == 0) {
             var offer = offerRepository.findAll().stream()
-                    .filter(o -> o.getDriver().getUser().getFirstName().equalsIgnoreCase("Ranidu"))
+                    .filter(o -> o.getDriver().getFirstName().equalsIgnoreCase("Ranidu"))
                     .findFirst()
                     .orElse(null);
 

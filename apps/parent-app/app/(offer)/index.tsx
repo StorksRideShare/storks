@@ -15,12 +15,13 @@ import { router, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LoggedParentID } from "@/logged_parent";
 import { Platform } from "react-native";
+import { useApiClient } from "@/middleware/apiClient";
 
-const SERVER_IP = process.env.EXPO_PUBLIC_SERVER_IP || (Platform.OS === "android" ? "10.0.2.2" : "localhost");
-const API_BASE_URL = `http://${SERVER_IP}:8080`;
+// API_BASE_URL is now handled by apiClient
 
 export default function BookingRequestScreen() {
   const { offerId, groupId } = useLocalSearchParams() as any;
+  const apiClient = useApiClient("booking-and-payment");
   const [bookingType, setBookingType] = useState("Monthly");
   const [acknowledged, setAcknowledged] = useState(false);
   const [isStorksPricing, setIsStorksPricing] = useState(true);
@@ -40,11 +41,8 @@ export default function BookingRequestScreen() {
   const fetchOfferDetails = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE_URL}/api/offers/${offerId}`);
-      if (response.ok) {
-        const data = await response.json();
-        setOffer(data);
-      }
+      const data = await apiClient.get<any>(`/offers/${offerId}`);
+      setOffer(data);
     } catch (err) {
       console.error(err);
     } finally {
@@ -55,13 +53,10 @@ export default function BookingRequestScreen() {
   const fetchGroupDetails = async () => {
     try {
       const parentId = LoggedParentID;
-      const response = await fetch(`${API_BASE_URL}/api/child-groups?parentId=${parentId}`);
-      if (response.ok) {
-        const data = await response.json();
-        const group = data.find((g: any) => g.groupId === groupId);
-        if (group) {
-          setSelectedGroup(group);
-        }
+      const data = await apiClient.get<any[]>(`/child-groups?parentId=${parentId}`);
+      const group = data.find((g: any) => g.groupId === groupId);
+      if (group) {
+        setSelectedGroup(group);
       }
     } catch (err) {
       console.error(err);

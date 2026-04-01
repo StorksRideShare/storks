@@ -21,7 +21,13 @@ async function apiRequest<T>(
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  // Standardizing on /api/v1 prefix and user-service port (8083) for these legacy-style calls
+  const prefix = "/api/v1";
+  const baseUrl = API_BASE_URL.replace(":8080", ":8083"); 
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  const url = `${baseUrl}${prefix}${normalizedPath}`;
+
+  const response = await fetch(url, {
     method,
     headers,
     body: body ? JSON.stringify(body) : undefined,

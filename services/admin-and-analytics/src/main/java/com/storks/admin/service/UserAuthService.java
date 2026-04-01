@@ -26,6 +26,6 @@ public class UserAuthService {
     }
 
     private UserAuthClaim toUserAuthClaim(User user) {
-        return new UserAuthClaim(user.getProviderUserId(), user.getEmail(), user.isDeleted(), user.getId());
+        return new UserAuthClaim(user.getProviderUserId(), user.getEmail(), Boolean.TRUE.equals(user.getIsDeleted()), user.getUserId());
     }
 }

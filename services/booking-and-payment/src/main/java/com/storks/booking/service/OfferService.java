@@ -32,8 +32,8 @@ public class OfferService {
 
     @org.springframework.transaction.annotation.Transactional(readOnly = true)
     private OfferDTO mapToDTO(Offer offer) {
-        String driverName = offer.getDriver().getUser().getFirstName() + " "
-                + offer.getDriver().getUser().getLastName();
+        String driverName = offer.getDriver().getFirstName() + " "
+                + offer.getDriver().getLastName();
 
         List<String> imageUrls = offer.getVehicle().getAssets().stream()
                 .map(Asset::getAssetUrl)
@@ -64,7 +64,7 @@ public class OfferService {
                 .rating("4.8 Rated")
                 .experience("5 Years")
                 .trips("+500")
-                .bookedGroupName(offer.getDriver().getUser().getFirstName().equals("Ranidu") ? "Loku" : null)
+                .bookedGroupName(offer.getDriver().getFirstName().equals("Ranidu") ? "Loku" : null)
                 .destinations(destNames)
                 .build();
     }

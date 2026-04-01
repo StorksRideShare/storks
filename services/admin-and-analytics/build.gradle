@@ -12,9 +12,17 @@ springBoot {
     mainClass = 'com.storks.adminandanalytics.AdminAndAnalyticsApplication'
 }
 
+bootJar {
+    archiveFileName = 'app.jar'
+}
+
+jar {
+    enabled = false
+}
+
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
+        languageVersion = JavaLanguageVersion.of(21)
     }
 }
 
@@ -29,9 +37,9 @@ repositories {
 }
 
 dependencies {
-    implementation "com.storks:common:0.0.1-SNAPSHOT"
-    implementation "com.storks:configs:0.0.1-SNAPSHOT"
-    implementation "com.storks:events:0.0.1-SNAPSHOT"
+    implementation project(':libs:common')
+    implementation project(':libs:configs')
+    implementation project(':libs:events')
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'

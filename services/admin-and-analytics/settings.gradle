@@ -1,1 +1,2 @@
-rootProject.name = 'admin-and-analytics'includeBuild '../../libs'
+rootProject.name = 'admin-and-analytics'
+includeBuild '../../libs'

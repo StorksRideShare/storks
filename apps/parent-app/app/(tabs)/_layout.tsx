@@ -9,7 +9,7 @@ import { useClientOnlyValue } from "@/components/useClientOnlyValue";
 import { useColorScheme } from "@/components/useColorScheme";
 import Colors from "@/constants/Colors";
 import LoadingScreen from "@/components/LoadingScreen";
-import { API_BASE_URL } from "@/middleware/apiClient";
+import { useApiClient } from "@/middleware/apiClient";
 import type { AuthStatus } from "@/utils/api";
 
 export default function TabLayout() {
@@ -24,6 +24,8 @@ export default function TabLayout() {
   const [isOnboarded, setIsOnboarded] = useState(false);
   const [isBanned, setIsBanned] = useState(false);
 
+  const apiClient = useApiClient("user-service");
+
   useEffect(() => {
     if (!isSignedIn) {
       setChecking(false);
@@ -32,20 +34,7 @@ export default function TabLayout() {
 
     const check = async () => {
       try {
-        const token = await getToken();
-        if (!token) {
-          setChecking(false);
-          return;
-        }
-
-        // Plain fetch with the Clerk token — avoids useSession ordering issues
-        const res = await fetch(`${API_BASE_URL}/api/auth/status`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (!res.ok) throw new Error(`${res.status}`);
-
-        const status: AuthStatus = await res.json();
+        const status = await apiClient.get<AuthStatus>("/auth/status");
         setIsOnboarded(status.isOnboarded);
         setIsBanned(status.isBanned);
       } catch {

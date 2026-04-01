@@ -12,7 +12,7 @@ import { useToast, Toast, ToastTitle } from "@/components/ui/toast";
 import { CheckCircle2, XCircle } from "lucide-react-native";
 import { useAuth } from "@clerk/expo";
 
-import { API_BASE_URL } from "../../middleware/apiClient";
+import { useApiClient } from "../../middleware/apiClient";
 
 const EventCard = ({ id, groupName, driverName, vehicle, plate, title, description, status, onCancel }: any) => {
   const isRequested = status === "Requested";
@@ -94,19 +94,14 @@ const EventCard = ({ id, groupName, driverName, vehicle, plate, title, descripti
 };
 
 export default function ActivityScreen() {
-  const { getToken } = useAuth();
+  const apiClient = useApiClient("booking-and-payment");
   const [events, setEvents] = useState<any[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const toast = useToast();
 
   const fetchEvents = async () => {
     try {
-      const token = await getToken();
-      const response = await fetch(`${API_BASE_URL}/api/bookings/parent?parentId=${LoggedParentID}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (!response.ok) throw new Error("Failed to fetch events");
-      const data = await response.json();
+      const data = await apiClient.get<any[]>(`/bookings/parent?parentId=${LoggedParentID}`);
       setEvents(data);
     } catch (err) {
       console.error("Fetch Events Error:", err);
@@ -115,25 +110,19 @@ export default function ActivityScreen() {
 
   const handleCancel = async (id: string) => {
     try {
-      const token = await getToken();
-      const response = await fetch(`${API_BASE_URL}/api/bookings/${id}/cancel`, {
-        method: "PUT",
-        headers: { Authorization: `Bearer ${token}` }
+      await apiClient.put(`/bookings/${id}/cancel`);
+      toast.show({
+        placement: "top",
+        render: ({ id: tId }) => (
+          <Toast nativeID={"toast-" + tId} action="success" variant="solid" className="bg-red-600 rounded-3xl p-6 mt-12 shadow-2xl">
+              <HStack space="sm" className="items-center">
+                <XCircle color="white" size={20} />
+                <ToastTitle className="text-white font-bold text-xl">Booking Cancelled</ToastTitle>
+              </HStack>
+          </Toast>
+        ),
       });
-      if (response.ok) {
-        toast.show({
-          placement: "top",
-          render: ({ id: tId }) => (
-            <Toast nativeID={"toast-" + tId} action="success" variant="solid" className="bg-red-600 rounded-3xl p-6 mt-12 shadow-2xl">
-               <HStack space="sm" className="items-center">
-                  <XCircle color="white" size={20} />
-                  <ToastTitle className="text-white font-bold text-xl">Booking Cancelled</ToastTitle>
-                </HStack>
-            </Toast>
-          ),
-        });
-        fetchEvents();
-      }
+      fetchEvents();
     } catch (err) {
       console.error("Cancel Error:", err);
     }

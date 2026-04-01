@@ -1,5 +1,4 @@
-*.zip
-*.log
+
 *.env
 *.sql
 *.pnpm-store
@@ -13,3 +12,5 @@
 *.cache
 *.vscode
 *.idea
+*.gradle
+*build

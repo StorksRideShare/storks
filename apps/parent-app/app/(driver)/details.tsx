@@ -10,7 +10,7 @@ import default_vehicle_1 from "../../assets/images/default_vehicle/1.jpg";
 import default_vehicle_2 from "../../assets/images/default_vehicle/2.jpg";
 import { useAuth } from "@clerk/expo";
 import { useToast, Toast, ToastTitle } from "@/components/ui/toast";
-import { API_BASE_URL } from "../../middleware/apiClient";
+import { useApiClient } from "../../middleware/apiClient";
 import { LoggedParentID } from "@/logged_parent";
 import { ChevronLeft, ChevronDown, Star, MapPin, CheckCircle2, Bookmark, X } from "lucide-react-native";
 import { router, useLocalSearchParams } from "expo-router";
@@ -32,7 +32,7 @@ const StatBox = ({ title, subTitle, icon: IconComponent }: StatBoxProps) => (
 );
 
 export default function DriverDetailsScreen() {
-  const { getToken } = useAuth();
+  const apiClient = useApiClient("booking-and-payment");
   const { offerId, groupId } = useLocalSearchParams() as any;
   const [offer, setOffer] = useState<any>(null);
   const [childGroups, setChildGroups] = useState<any[]>([]);
@@ -77,15 +77,9 @@ export default function DriverDetailsScreen() {
 
   const checkBookingStatus = async () => {
     try {
-      const token = await getToken();
-      const response = await fetch(`${API_BASE_URL}/api/bookings/check?groupId=${selectedGroup.groupId}&offerId=${offerId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setIsAlreadyBooked(data.exists);
-        setIsActiveBooking(data.isActive);
-      }
+      const data = await apiClient.get<any>(`/bookings/check?groupId=${selectedGroup.groupId}&offerId=${offerId}`);
+      setIsAlreadyBooked(data.exists);
+      setIsActiveBooking(data.isActive);
     } catch (err) {
       console.error("Error checking booking status:", err);
     }
@@ -93,18 +87,12 @@ export default function DriverDetailsScreen() {
 
   const fetchChildGroups = async () => {
     try {
-      const token = await getToken();
       const parentId = LoggedParentID;
-      const response = await fetch(`${API_BASE_URL}/api/child-groups?parentId=${parentId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setChildGroups(data);
-        if (data.length > 0) {
-          const initialGroup = data.find((g: any) => g.groupId === groupId) || data[0];
-          setSelectedGroup(initialGroup);
-        }
+      const data = await apiClient.get<any[]>(`/child-groups?parentId=${parentId}`);
+      setChildGroups(data);
+      if (data.length > 0) {
+        const initialGroup = data.find((g: any) => g.groupId === groupId) || data[0];
+        setSelectedGroup(initialGroup);
       }
     } catch (err) {
       console.error("Error fetching child groups:", err);
@@ -114,12 +102,7 @@ export default function DriverDetailsScreen() {
   const fetchOfferDetails = async (initial = false) => {
     try {
       if (initial) setLoading(true);
-      const token = await getToken();
-      const response = await fetch(`${API_BASE_URL}/api/offers/${offerId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (!response.ok) throw new Error("Offer not found");
-      const data = await response.json();
+      const data = await apiClient.get<any>(`/offers/${offerId}`);
       if (data.vehicleImageUrls.length === 0) {
         data.vehicleImageUrls = [default_vehicle_1, default_vehicle_2];
       }
@@ -140,23 +123,10 @@ export default function DriverDetailsScreen() {
     if (!hasMatch) return;
     
     try {
-      const token = await getToken();
-      const response = await fetch(`${API_BASE_URL}/api/bookings/request`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          groupId: selectedGroup.groupId,
-          offerId: offer.offerId,
-        }),
+      const data = await apiClient.post<any>(`/bookings/request`, {
+        groupId: selectedGroup.groupId,
+        offerId: offer.offerId,
       });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || "Failed to request booking");
-      }
 
       toast.show({
         placement: "top",

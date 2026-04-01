@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useApiClient } from "../../middleware/apiClient";
 import {
   View,
   Text,
@@ -10,13 +11,13 @@ import styles from "../../constants/TrackingScreenstyle";
 
 const TrackingScreen = () => {
   const [tripData, setTripData] = useState<any>(null);
+  const apiClient = useApiClient("matching-searching");
 
   // 🔥 Fetch data every 3 seconds
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
-        const res = await fetch("http://YOUR-IP:8080/api/trip/status");
-        const data = await res.json();
+        const data = await apiClient.get<any>("/trip/status");
         setTripData(data);
       } catch (err) {
         console.log(err);
@@ -24,7 +25,7 @@ const TrackingScreen = () => {
     }, 3000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [apiClient]);
 
   // fallback
   if (!tripData) return <Text style={{ color: "white" }}>Loading...</Text>;

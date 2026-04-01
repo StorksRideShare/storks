@@ -38,7 +38,11 @@ export type ApiClient = {
   delete: <T>(path: string) => Promise<T>;
 };
 
-export function createApiClient(getToken: () => Promise<string | null>, baseUrl: string): ApiClient {
+export function createApiClient(
+  getToken: () => Promise<string | null>, 
+  baseUrl: string,
+  prefix: string = "/api/v1",
+): ApiClient {
   const request = async <T>(path: string, options: RequestInit = {}): Promise<T> => {
     const token = await getToken();
     const headers = {
@@ -47,7 +51,15 @@ export function createApiClient(getToken: () => Promise<string | null>, baseUrl:
       ...(options.headers || {}),
     };
 
-    const url = path.startsWith("http") ? path : `${baseUrl}${path}`;
+    // Construct URL with prefix if path doesn't start with http
+    let url: string;
+    if (path.startsWith("http")) {
+      url = path;
+    } else {
+      const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+      url = `${baseUrl}${prefix}${normalizedPath}`;
+    }
+    
     console.log(`API REQUEST: ${options.method || "GET"} ${url}`);
 
     try {
@@ -76,9 +88,16 @@ export function createApiClient(getToken: () => Promise<string | null>, baseUrl:
   };
 }
 
-export function getApiClient(service: ServiceName = "safty-and-verification") {
+export function getApiClient(
+  service: ServiceName = "safty-and-verification",
+  prefix: string = "/api/v1",
+) {
   const port = SERVICE_PORTS[service];
   const baseUrl = getBaseUrl(port);
   
-  return createApiClient(() => Promise.resolve(localStorage.getItem('token')), baseUrl);
+  return createApiClient(
+    () => Promise.resolve(localStorage.getItem('token')), 
+    baseUrl,
+    prefix,
+  );
 }

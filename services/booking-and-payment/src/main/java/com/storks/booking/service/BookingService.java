@@ -78,7 +78,7 @@ public class BookingService {
     private BookingEventDTO mapToDTO(Booking booking) {
         Offer offer = booking.getOffer();
         ChildGroup group = booking.getChildGroup();
-        String driverName = offer.getDriver().getUser().getFirstName() + " " + offer.getDriver().getUser().getLastName();
+        String driverName = offer.getDriver().getFirstName() + " " + offer.getDriver().getLastName();
         
         String autoGroupName = group.getChildren().stream()
                 .filter(c -> c != null)

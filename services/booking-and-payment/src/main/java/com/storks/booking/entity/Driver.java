@@ -8,18 +8,10 @@ import java.util.UUID;
 @Table(name = "drivers")
 @Getter
 @Setter
+@DiscriminatorValue("DRIVER")
 @NoArgsConstructor
 @AllArgsConstructor
-public class Driver {
-    @Id
-    @Column(name = "user_id")
-    private UUID userId;
-
-    @OneToOne
-    @MapsId
-    @JoinColumn(name = "user_id")
-    private User user;
-
+public class Driver extends User {
     @Column(name = "country_code")
     private String countryCode;
 

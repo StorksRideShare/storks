@@ -50,6 +50,7 @@ export type ApiClient = {
 export function createApiClient(
   getToken: () => Promise<string | null>,
   baseUrl: string,
+  prefix: string = "/api/v1",
 ): ApiClient {
   const request = async <T>(
     path: string,
@@ -63,8 +64,6 @@ export function createApiClient(
         console.warn(
           "Clerk: Device is offline, proceeding without token or failing if required",
         );
-        // For our services, most require auth. We can either throw here or let the backend throw 401.
-        // But throwing a clear error here is better for UI handling.
         throw new Error(
           "OFFLINE: Your session could not be verified because the device is offline.",
         );
@@ -77,7 +76,16 @@ export function createApiClient(
       ...((options.headers as Record<string, string>) || {}),
     };
 
-    const url = path.startsWith("http") ? path : `${baseUrl}${path}`;
+    // Construct URL with prefix if path doesn't start with http
+    let url: string;
+    if (path.startsWith("http")) {
+      url = path;
+    } else {
+      // Ensure path starts with / if it doesn't already
+      const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+      url = `${baseUrl}${prefix}${normalizedPath}`;
+    }
+    
     console.log(`API REQUEST: ${options.method || "GET"} ${url}`);
 
     try {
@@ -111,7 +119,10 @@ export function createApiClient(
   };
 }
 
-export function useApiClient(service: ServiceName = "safty-and-verification") {
+export function useApiClient(
+  service: ServiceName = "safty-and-verification",
+  prefix: string = "/api/v1",
+) {
   const { session } = useSession();
   const port = SERVICE_PORTS[service];
   const baseUrl = getBaseUrl(port);
@@ -121,7 +132,8 @@ export function useApiClient(service: ServiceName = "safty-and-verification") {
       createApiClient(
         () => session?.getToken() ?? Promise.resolve(null),
         baseUrl,
+        prefix,
       ),
-    [session, service, baseUrl],
+    [session, service, baseUrl, prefix],
   );
 }
