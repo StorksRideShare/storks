@@ -38,7 +38,7 @@ export function createApiClient(getToken: () => Promise<string | null>, baseUrl:
 
     const url = path.startsWith("http") ? path : `${baseUrl}${path}`;
     console.log(`API REQUEST: ${options.method || "GET"} ${url}`);
-    
+
     try {
       const response = await fetch(url, { ...options, headers });
       console.log(`API RESPONSE: ${response.status} ${url}`);

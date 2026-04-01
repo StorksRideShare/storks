@@ -1,5 +1,4 @@
-import { useSignIn } from "@clerk/clerk-expo";
-import type { EmailCodeFactor } from "@clerk/types";
+import { useSignIn } from "@clerk/expo";
 import { Link, useRouter } from "expo-router";
 import * as React from "react";
 import {
@@ -49,20 +48,11 @@ export default function Page() {
       });
 
       if (signInAttempt.status === "complete") {
-        await setActive({
-          session: signInAttempt.createdSessionId,
-          navigate: async ({ session }) => {
-            if (session?.currentTask) {
-              console.log(session?.currentTask);
-              return;
-            }
-            router.replace("/");
-          },
-        });
+        await setActive({ session: signInAttempt.createdSessionId });
+        router.replace("/");
       } else if (signInAttempt.status === "needs_second_factor") {
         const emailCodeFactor = signInAttempt.supportedSecondFactors?.find(
-          (factor): factor is EmailCodeFactor =>
-            factor.strategy === "email_code",
+          (factor: any) => factor.strategy === "email_code",
         );
 
         if (emailCodeFactor) {
@@ -100,16 +90,8 @@ export default function Page() {
       });
 
       if (signInAttempt.status === "complete") {
-        await setActive({
-          session: signInAttempt.createdSessionId,
-          navigate: async ({ session }) => {
-            if (session?.currentTask) {
-              console.log(session?.currentTask);
-              return;
-            }
-            router.replace("/");
-          },
-        });
+        await setActive({ session: signInAttempt.createdSessionId });
+        router.replace("/");
       } else {
         console.error(JSON.stringify(signInAttempt, null, 2));
         setError("Invalid code. Please try again.");
@@ -247,7 +229,7 @@ export default function Page() {
             style={[
               styles.loginButton,
               (!emailAddress || !password || isLoading) &&
-                styles.buttonDisabled,
+              styles.buttonDisabled,
             ]}
             activeOpacity={0.8}
             onPress={onSignInPress}
