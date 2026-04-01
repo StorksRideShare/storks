@@ -1,0 +1,22 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: user-service-app
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/home/gradle/app
+      - gradle-cache:/home/gradle/.gradle
+    working_dir: /home/gradle/app
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      GRADLE_OPTS: "-Dorg.gradle.native=false"
+      SERVER_PORT: 8080
+      SPRING_DATASOURCE_URL: jdbc:postgresql://ep-holy-credit-a118kh6w-pooler.ap-southeast-1.aws.neon.tech/storks?sslmode=require&channelBinding=require
+      SPRING_DATASOURCE_USERNAME: neondb_owner
+      SPRING_DATASOURCE_PASSWORD: npg_CPy4FrjaeO9l
+
+volumes:
+  gradle-cache:
