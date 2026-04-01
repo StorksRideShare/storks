@@ -23,7 +23,8 @@ import {
   Dimensions,
 } from "react-native";
 import Svg, { Path, Circle } from "react-native-svg";
-import { completeOnboarding, SecondaryPhone } from "@/utils/api";
+import { useApiClient } from "@/middleware/apiClient";
+import type { SecondaryPhone, OnboardingPayload, OnboardingResponse } from "@/utils/api";
 
 const { width } = Dimensions.get("window");
 
@@ -89,6 +90,7 @@ function formatDateInput(raw: string): string {
 export default function OnboardingPage() {
   const { getToken } = useAuth();
   const router = useRouter();
+  const api = useApiClient();
 
   const [fontsLoaded] = useFonts({ Syne_400Regular, Syne_600SemiBold, Syne_700Bold });
 
@@ -153,30 +155,27 @@ export default function OnboardingPage() {
   // Submit to backend
   // ------------------------------------------------------------------
   const handleSubmit = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const token = await getToken();
-      if (!token) throw new Error("Not authenticated");
+  setIsLoading(true);
+  setError(null);
+  try {
+    await api.post<OnboardingResponse>("/api/onboarding/complete", {
+      firstName:         firstName.trim(),
+      lastName:          lastName.trim(),
+      dateOfBirth,
+      primaryCountryCode,
+      primaryNumber:     primaryNumber.trim(),
+      secondaryNumbers:  secondaryNumbers.filter(s => s.number.trim().length > 0),
+      profilePictureUrl: profilePictureUri ?? null,
+    } satisfies OnboardingPayload);
 
-      await completeOnboarding(token, {
-        firstName:          firstName.trim(),
-        lastName:           lastName.trim(),
-        dateOfBirth,                           // already in DD-MM-YYYY
-        primaryCountryCode,
-        primaryNumber:      primaryNumber.trim(),
-        secondaryNumbers:   secondaryNumbers.filter(s => s.number.trim().length > 0),
-        profilePictureUrl:  profilePictureUri ?? null,
-      });
-
-      setStep(3); // go to completion screen
-    } catch (err: any) {
-      setError("Something went wrong. Please try again.");
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    setStep(3);
+  } catch (err: any) {
+    setError("Something went wrong. Please try again.");
+    console.error(err);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   if (!fontsLoaded) return null;
 
