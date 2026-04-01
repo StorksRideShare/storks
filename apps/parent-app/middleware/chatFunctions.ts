@@ -1,152 +1,132 @@
-type MessageData = {
-  sender_id: string;
+import { Client, Message } from "@stomp/stompjs";
+import "text-encoding"; // Required for STOMP in React Native
+
+/**
+ * Polyfill for TextEncoder/TextDecoder if missing in RN environment
+ */
+if (typeof TextEncoder === "undefined") {
+  const enc = require("text-encoding");
+  (global as any).TextEncoder = enc.TextEncoder;
+  (global as any).TextDecoder = enc.TextDecoder;
+}
+
+export type ChatMessage = {
+  messageId: string;
+  roomId: string;
+  senderId: string;
   content: string;
-  type: string;
-  conversation_id: string;
+  sentAt?: string;
+  type: "CHAT" | "JOIN" | "LEAVE" | "TYPING" | "READ_RECEIPT" | "SYSTEM";
+  status?: "sending" | "sent" | "read";
 };
 
-type MessageHandler = (data: MessageData) => void;
-type StatusHandler = () => void;
-type ErrorHandler = (error: Event) => void;
+export class StompChatClient {
+  private client: Client | null = null;
+  private subscriptions: Map<string, any> = new Map();
 
-export class WebSocketClient {
-  private ws: WebSocket | null = null;
-  private currentUserId: string = "";
-  private currentRoom: string = "";
-  private messageHandler: MessageHandler | null = null;
-  private openHandler: StatusHandler | null = null;
-  private closeHandler: StatusHandler | null = null;
-  private errorHandler: ErrorHandler | null = null;
+  constructor(private wsUrl: string, private getToken: () => Promise<string | null>) {}
 
-  /**
-   * Connect to the WebSocket server.
-   * @param url - The base WebSocket server URL (e.g., ws://example.com/ws)
-   * @param userId - The current user's ID
-   */
-  connect(url: string, userId: string): void {
-    if (this.ws) {
-      console.warn("WebSocket already connected. Disconnect first.");
+  async connect(onConnect: () => void, onError: (err: any) => void) {
+    this.client = new Client({
+      brokerURL: this.wsUrl,
+      forceBinaryWSFrames: true,
+      appendMissingNULLonIncoming: true,
+      reconnectDelay: 5000,
+      debug: (str) => {
+        if (__DEV__) console.log("STOMP:", str);
+      },
+      beforeConnect: async () => {
+        let token: string | null = null;
+        try {
+          token = await this.getToken();
+        } catch (e: any) {
+          if (e.name === "ClerkOfflineError" || e.message?.includes("offline")) {
+            console.warn("STOMP: Device is offline, skipping token fetch");
+            this.client?.deactivate();
+            return;
+          }
+          console.error("STOMP: Failed to get token", e);
+          this.client?.deactivate();
+          return;
+        }
+
+        if (!token) {
+          console.error("STOMP: No auth token, aborting connect");
+          this.client?.deactivate();
+          return;
+        }
+        console.log("STOMP: Setting connect headers with token (first 10 chars):", token.substring(0, 10));
+        if (this.client) {
+          this.client.connectHeaders = {
+            Authorization: `Bearer ${token}`,
+          };
+        }
+      },
+      onConnect: () => {
+        console.log("STOMP: Connected successfully");
+        onConnect();
+      },
+      onStompError: (frame) => {
+        console.error("STOMP error", frame.body);
+        onError(frame.body);
+      },
+      onWebSocketClose: () => {
+        console.log("STOMP Connection closed");
+      },
+    });
+
+    this.client.activate();
+  }
+
+  disconnect() {
+    if (this.client) {
+      this.client.deactivate();
+      this.client = null;
+    }
+  }
+
+  subscribeToRoom(roomId: string, onMessage: (msg: ChatMessage) => void) {
+    if (!this.client || !this.client.connected) {
+      console.warn("STOMP not connected, cannot subscribe");
       return;
     }
-    this.currentUserId = userId;
-    const fullUrl = url + "?user_id=" + encodeURIComponent(userId);
-    this.ws = new WebSocket(fullUrl);
 
-    this.ws.onopen = () => {
-      console.log("WebSocket connected");
-      if (this.openHandler) this.openHandler();
-    };
+    // Unsubscribe from previous if any
+    if (this.subscriptions.has(roomId)) {
+      this.subscriptions.get(roomId).unsubscribe();
+    }
 
-    this.ws.onmessage = (event) => {
+    const sub = this.client.subscribe(`/topic/room/${roomId}`, (message: Message) => {
       try {
-        const data = JSON.parse(event.data) as MessageData;
-        if (this.messageHandler) {
-          this.messageHandler(data);
-        }
+        const payload = JSON.parse(message.body);
+        onMessage(payload);
       } catch (e) {
-        console.warn("Received non-JSON message:", event.data);
-        // Optionally handle raw messages if needed
+        console.error("Failed to parse STOMP message", e);
       }
-    };
+    });
 
-    this.ws.onerror = (error) => {
-      console.error("WebSocket error:", error);
-      if (this.errorHandler) this.errorHandler(error);
-    };
-
-    this.ws.onclose = () => {
-      console.log("WebSocket disconnected");
-      this.ws = null;
-      this.currentRoom = "";
-      if (this.closeHandler) this.closeHandler();
-    };
+    this.subscriptions.set(roomId, sub);
   }
 
-  /**
-   * Disconnect from the WebSocket server.
-   */
-  disconnect(): void {
-    if (this.ws) {
-      this.ws.close();
+  sendMessage(roomId: string, content: string) {
+    if (!this.client || !this.client.connected) {
+      throw new Error("STOMP client is not connected");
     }
+    this.client.publish({
+      destination: "/app/chat.sendMessage",
+      body: JSON.stringify({ roomId, content, type: "CHAT" }),
+    });
   }
 
-  /**
-   * Join a chat room.
-   * @param roomId - The conversation/room ID to join
-   * @throws If not connected or roomId is empty
-   */
-  joinRoom(roomId: string): void {
-    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-      throw new Error("WebSocket not connected");
-    }
-    if (!roomId) {
-      throw new Error("Room ID is required");
-    }
-    this.ws.send(
-      JSON.stringify({
-        type: "join",
-        conversation_id: roomId,
-      }),
-    );
-    this.currentRoom = roomId;
+  sendReadReceipt(roomId: string, messageId: string) {
+    if (!this.client || !this.client.connected) return;
+    this.client.publish({
+      destination: "/app/chat.sendMessage",
+      body: JSON.stringify({ roomId, messageId, type: "READ_RECEIPT" }),
+    });
   }
 
-  /**
-   * Send a chat message to the currently joined room.
-   * @param content - The message text
-   * @throws If not connected, no room joined, or content is empty
-   */
-  sendMessage(content: string): void {
-    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-      throw new Error("WebSocket not connected");
-    }
-    if (!this.currentRoom) {
-      throw new Error("No room joined");
-    }
-    const trimmed = content.trim();
-    if (!trimmed) return;
-
-    this.ws.send(
-      JSON.stringify({
-        type: "chat",
-        conversation_id: this.currentRoom,
-        sender_id: this.currentUserId,
-        content: trimmed,
-      }),
-    );
-  }
-
-  // Event Handlers
-
-  onMessage(handler: MessageHandler): void {
-    this.messageHandler = handler;
-  }
-
-  onOpen(handler: StatusHandler): void {
-    this.openHandler = handler;
-  }
-
-  onClose(handler: StatusHandler): void {
-    this.closeHandler = handler;
-  }
-
-  onError(handler: ErrorHandler): void {
-    this.errorHandler = handler;
-  }
-
-  // Getters
-
-  isConnected(): boolean {
-    return this.ws !== null && this.ws.readyState === WebSocket.OPEN;
-  }
-
-  getCurrentRoom(): string {
-    console.log(this.currentRoom);
-    return this.currentRoom;
-  }
-
-  getCurrentUserId(): string {
-    return this.currentUserId;
+  isConnected() {
+    return this.client?.connected || false;
   }
 }
