@@ -46,7 +46,8 @@ public class BookingController {
         UUID groupId = UUID.fromString(payload.get("groupId"));
         UUID offerId = UUID.fromString(payload.get("offerId"));
         String type = payload.get("type");
-        return bookingService.createBookingRequest(groupId, offerId, type);
+        String startDate = payload.get("startDate");
+        return bookingService.createBookingRequest(groupId, offerId, type, startDate);
     }
 
     @PutMapping("/{id}/cancel")

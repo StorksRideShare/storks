@@ -15,7 +15,7 @@ import { router } from "expo-router";
 const SERVER_IP = process.env.EXPO_PUBLIC_SERVER_IP || (Platform.OS === "android" ? "10.0.2.2" : "localhost");
 const API_BASE_URL = `http://${SERVER_IP}:8080`;
 
-const EventCard = ({ id, groupName, driverName, vehicle, plate, title, description, status, onCancel, offerId, groupId }: any) => {
+const EventCard = ({ id, groupName, driverName, vehicle, plate, title, description, status, onCancel, offerId, groupId, price }: any) => {
   const isRequested = status === "Requested";
   const isConfirmed = status === "Confirmed";
   const isCancelled = status === "Cancelled";
@@ -72,8 +72,8 @@ const EventCard = ({ id, groupName, driverName, vehicle, plate, title, descripti
             <Button 
               className="bg-[#F97316] h-16 rounded-full w-full" 
               onPress={() => router.push({ 
-                pathname: "/(home)/booking-request", 
-                params: { bookingId: id, offerId: offerId, groupId: groupId } 
+                pathname: "/(home)/payment", 
+                params: { bookingId: id, price: price, groupName: groupName, driverName: driverName } 
               })}
             >
               <ButtonText className="text-white font-bold text-xl uppercase">
@@ -177,6 +177,7 @@ export default function EventsScreen() {
             status={event.status}
             offerId={event.offerId}
             groupId={event.groupId}
+            price={event.price}
             onCancel={handleCancel}
           />
         ))}

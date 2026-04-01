@@ -10,7 +10,9 @@ import wdse17.bookingandpayment.repository.BookingRepository;
 import wdse17.bookingandpayment.repository.ChildGroupRepository;
 import wdse17.bookingandpayment.repository.OfferRepository;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -60,11 +62,12 @@ public class BookingService {
         bookingRepository.save(booking);
     }
 
-    public BookingEventDTO createBookingRequest(UUID groupId, UUID offerId, String type) {
+    public BookingEventDTO createBookingRequest(UUID groupId, UUID offerId, String type, String startDateStr) {
         // Validation: Cannot have duplicate active/inactive bookings for same driver and group
-        if (bookingRepository.existsActiveOrPendingBooking(groupId, offerId)) {
-            throw new RuntimeException("You already have a pending or active request with this driver for this group.");
-        }
+        // REMOVED AT USER REQUEST: Allowed to force book multiple times
+        // if (bookingRepository.existsActiveOrPendingBooking(groupId, offerId)) {
+        //    throw new RuntimeException("You already have a pending or active request with this driver for this group.");
+        // }
 
         ChildGroup group = childGroupRepository.findById(groupId)
                 .orElseThrow(() -> new RuntimeException("Group not found"));
@@ -92,6 +95,10 @@ public class BookingService {
             price = rate * childrenCount;
         }
 
+        // Date handling
+        LocalDate startDate = LocalDate.parse(startDateStr);
+        LocalDate endDate = "MONTHLY".equalsIgnoreCase(type) ? startDate.plusDays(30) : startDate;
+
         // Compliance with database_setup.sql - Only use Booking table
         Booking booking = Booking.builder()
                 .id(UUID.randomUUID())
@@ -100,6 +107,8 @@ public class BookingService {
                 .childGroup(group)
                 .type(type)
                 .price(price)
+                .startDate(startDate)
+                .endDate(endDate)
                 .isActive(false)
                 .isCancelled(false)
                 .isAccepted(false)
@@ -152,7 +161,7 @@ public class BookingService {
                 .status(status)
                 .title(title)
                 .description(description)
-                .date("Tomorrow")
+                .date(booking.getStartDate() != null ? booking.getStartDate().toString() : "Tomorrow")
                 .time("07:30 AM")
                 .location(group.getDefaultDropoffLocation() != null ? 
                         (group.getDefaultDropoffLocation().getNickname() != null ? 

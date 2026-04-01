@@ -15,6 +15,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LoggedParentID } from "@/logged_parent";
 import { useToast, Toast, ToastTitle } from "@/components/ui/toast";
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 const SERVER_IP = process.env.EXPO_PUBLIC_SERVER_IP || (Platform.OS === "android" ? "10.0.2.2" : "localhost");
 const API_BASE_URL = `http://${SERVER_IP}:8080`;
@@ -31,7 +32,26 @@ export default function BookingRequestScreen() {
   const [selectedGroup, setSelectedGroup] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [requesting, setRequesting] = useState(false);
+
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  const [dateObj, setDateObj] = useState(tomorrow);
+  const [startDate, setStartDate] = useState(tomorrow.toISOString().split('T')[0]);
+  const [showPicker, setShowPicker] = useState(false);
+
   const toast = useToast();
+
+  const onDateChange = (event: any, selectedDate?: Date) => {
+    setShowPicker(Platform.OS === 'ios'); // Keep picker open on iOS, close on Android
+    if (selectedDate) {
+      setDateObj(selectedDate);
+      // Format as YYYY-MM-DD reliably accounting for local timezone issues
+      const offset = selectedDate.getTimezoneOffset()
+      const effectiveDate = new Date(selectedDate.getTime() - (offset*60*1000))
+      setStartDate(effectiveDate.toISOString().split('T')[0]);
+    }
+  };
 
   React.useEffect(() => {
     if (offerId) {
@@ -93,7 +113,8 @@ export default function BookingRequestScreen() {
       const payload = {
         groupId: groupId,
         offerId: offerId,
-        type: bookingType.toUpperCase() // 'MONTHLY' or 'DAY'
+        type: bookingType.toUpperCase(),
+        startDate: startDate
       };
 
       const response = await fetch(`${API_BASE_URL}/api/bookings/request`, {
@@ -308,14 +329,32 @@ export default function BookingRequestScreen() {
           </>
         )}
 
-        {bookingType === "Day" && (
-          <VStack className="mb-10">
-            <Text className="text-white font-bold text-lg mb-4">Book For</Text>
-            <Box className="border border-orange-500 rounded-3xl h-14 justify-center px-6">
-              <Text className="text-gray-500 text-lg">DD-MM-YYYY</Text>
-            </Box>
-          </VStack>
-        )}
+        <VStack className="mb-10">
+          <Text className="text-white font-bold text-lg mb-4">
+            {bookingType === "Monthly" ? "Select Start Date" : "Book For"}
+          </Text>
+          <Box className="border border-orange-500 rounded-3xl h-16 justify-center px-6 bg-[#1A1919]">
+             <HStack className="items-center justify-between">
+                <Text className="text-white text-lg">{startDate}</Text>
+                <Pressable onPress={() => setShowPicker(true)}>
+                   <Box className="bg-orange-500 p-2 px-4 rounded-xl">
+                      <Text className="text-white text-xs font-bold">CHANGE</Text>
+                   </Box>
+                </Pressable>
+             </HStack>
+          </Box>
+          {showPicker && (
+            <DateTimePicker
+              testID="dateTimePicker"
+              value={dateObj}
+              mode="date"
+              display={Platform.OS === 'ios' ? "spinner" : "default"}
+              minimumDate={tomorrow}
+              onChange={onDateChange}
+              textColor="white"
+            />
+          )}
+        </VStack>
 
         <Box className="h-10" />
       </ScrollView>

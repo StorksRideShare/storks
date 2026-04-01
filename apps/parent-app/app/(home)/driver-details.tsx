@@ -57,7 +57,7 @@ export default function DriverDetailsScreen() {
       setIsAlreadyBooked(false);
       setIsActiveBooking(false);
       checkBookingStatus();
-      fetchOfferDetails(false); 
+      fetchOfferDetails(false);
     }
   }, [selectedGroup, offerId]);
 
@@ -126,60 +126,13 @@ export default function DriverDetailsScreen() {
     }
   };
 
-  const handleBookingRequest = async () => {
+  const handleBookingRequest = () => {
     if (!hasMatch) return;
-    
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/bookings/request`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          groupId: selectedGroup.groupId,
-          offerId: offer.offerId,
-        }),
-      });
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || "Failed to request booking");
-      }
-
-      toast.show({
-        placement: "top",
-        render: ({ id }) => {
-          return (
-            <Toast nativeID={"toast-" + id} action="success" variant="solid" className="bg-green-600 rounded-3xl p-6 mt-12 shadow-2xl">
-              <VStack space="xs">
-                <HStack space="sm" className="items-center">
-                  <CheckCircle2 color="white" size={20} />
-                  <ToastTitle className="text-white font-bold text-xl">Booking Requested!</ToastTitle>
-                </HStack>
-                <Text className="text-white text-base opacity-90">
-                  Your request for {selectedGroup.groupName} has been sent to {offer.driverName}.
-                </Text>
-              </VStack>
-            </Toast>
-          );
-        },
-      });
-
-      setTimeout(() => {
-        router.push("/(tabs)/events");
-      }, 2000);
-    } catch (err) {
-      console.error("Booking Request Error:", err);
-      toast.show({
-        placement: "top",
-        render: ({ id }) => (
-          <Toast nativeID={"toast-err-" + id} action="error" variant="solid" className="bg-red-600 rounded-3xl p-6 mt-12">
-            <ToastTitle className="text-white font-bold">Request Failed</ToastTitle>
-            <Text className="text-white">{(err as any).message || "Could not send request."}</Text>
-          </Toast>
-        ),
-      });
-    }
+    router.push({
+      pathname: "/(home)/booking-request",
+      params: { offerId, groupId: selectedGroup.groupId }
+    });
   };
 
   if (loading) {
@@ -313,24 +266,50 @@ export default function DriverDetailsScreen() {
       </ScrollView>
 
       <Box className="px-5 pb-8">
-        <Button
-          className={
-            (isBooked && !isActiveBooking) || isAlreadyBooked || !hasMatch
-              ? "bg-[#333] h-16 rounded-full w-full border border-gray-700" 
-              : "bg-[#F97316] h-16 rounded-full w-full"
-          }
-          disabled={(isBooked && !isActiveBooking) || isAlreadyBooked || !hasMatch}
-          onPress={handleBookingRequest}
-        >
-          <ButtonText className="text-white font-bold text-xl uppercase">
-            {(() => {
-              if (!hasMatch) return "No Matches";
-              if (isActiveBooking) return `Driving for ${selectedGroup?.groupName}`;
-              if (isAlreadyBooked) return "Already Requested";
-              return "Request Booking";
-            })()}
-          </ButtonText>
-        </Button>
+        <VStack space="md" className="w-full">
+          <Button
+            className={
+              (isBooked && !isActiveBooking) || isAlreadyBooked || !hasMatch
+                ? "bg-[#333] h-16 rounded-full w-full border border-gray-700"
+                : "bg-[#F97316] h-16 rounded-full w-full"
+            }
+            disabled={(isBooked && !isActiveBooking) || isAlreadyBooked || !hasMatch}
+            onPress={handleBookingRequest}
+          >
+            <ButtonText className={
+              (isBooked && !isActiveBooking) || isAlreadyBooked || !hasMatch
+                ? "text-gray-400 font-bold text-xl uppercase"
+                : "text-white font-bold text-xl uppercase"
+            }>
+              {(() => {
+                if (!hasMatch) return "No Matches";
+                if (isActiveBooking) return `Driving for ${selectedGroup?.groupName}`;
+                if (isAlreadyBooked) return "Already Requested";
+                return "Request Booking";
+              })()}
+            </ButtonText>
+          </Button>
+
+          {(hasMatch && (isAlreadyBooked || isActiveBooking || isBooked)) && (
+            <Pressable
+              onPress={() => {
+                router.push({
+                  pathname: "/(home)/booking-request",
+                  params: { offerId, groupId: selectedGroup?.groupId }
+                });
+              }}
+              style={({ pressed }) => [
+                { opacity: pressed ? 0.7 : 1 }
+              ]}
+            >
+              <Box className="border-2 border-orange-500 h-16 rounded-full w-full mt-2 items-center justify-center bg-[#1A1919]">
+                <Text className="text-orange-500 font-bold text-lg uppercase">
+                  Make Another Book
+                </Text>
+              </Box>
+            </Pressable>
+          )}
+        </VStack>
       </Box>
 
       {/* CUSTOM OVERLAY SELECTOR - STABLE ON ANDROID */}
@@ -344,7 +323,7 @@ export default function DriverDetailsScreen() {
                 <X color="#F97316" size={24} />
               </Pressable>
             </HStack>
-            
+
             <VStack space="md">
               {childGroups.map((group) => (
                 <Pressable

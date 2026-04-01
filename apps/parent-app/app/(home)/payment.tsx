@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { ScrollView, Pressable, Platform } from "react-native";
+import { useState, useEffect } from "react";
+import { ScrollView, Pressable, Platform, ActivityIndicator } from "react-native";
 import { Box } from "@/components/ui/box";
 import { HStack } from "@/components/ui/hstack";
 import { VStack } from "@/components/ui/vstack";
@@ -14,21 +14,50 @@ import {
 import { router, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useToast, Toast, ToastTitle } from "@/components/ui/toast";
+import { LoggedParentID } from "../../logged_parent";
 
 const SERVER_IP = process.env.EXPO_PUBLIC_SERVER_IP || (Platform.OS === "android" ? "10.0.2.2" : "localhost");
 const API_BASE_URL = `http://${SERVER_IP}:8080`;
 
 export default function PaymentScreen() {
-  const { bookingId } = useLocalSearchParams();
-  const [paymentMethod, setPaymentMethod] = useState("Cash On Delivery");
+  const { bookingId, price, groupName, driverName } = useLocalSearchParams() as any;
   const [isProcessing, setIsProcessing] = useState(false);
+  const [savedCard, setSavedCard] = useState<any>(null);
+  const [loadingCard, setLoadingCard] = useState(true);
+  const [paymentMethod, setPaymentMethod] = useState("MasterCard");
   const toast = useToast();
 
   const isCOD = paymentMethod === "Cash On Delivery";
 
+  useEffect(() => {
+    fetchCards();
+  }, []);
+
+  const fetchCards = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/cards/parent/${LoggedParentID}`);
+      if (response.ok) {
+        const cards = await response.json();
+        if (cards && cards.length > 0) {
+          setSavedCard(cards[0]);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch cards:", err);
+    } finally {
+      setLoadingCard(false);
+    }
+  };
+
   const handlePayment = async () => {
     if (!bookingId) return;
     
+    // If selecting card and no saved card, force add-card
+    if (!isCOD && !savedCard) {
+      router.push({ pathname: "/(home)/add-card", params: { bookingId } });
+      return;
+    }
+
     try {
       setIsProcessing(true);
       const response = await fetch(`${API_BASE_URL}/api/bookings/${bookingId}/confirm-payment`, {
@@ -62,6 +91,8 @@ export default function PaymentScreen() {
     }
   };
 
+  const displayPrice = price ? parseFloat(price).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : "0";
+
   return (
     <SafeAreaView className="flex-1 bg-[#0F0E0E]">
       <HStack className="px-5 py-4 items-center justify-between">
@@ -73,21 +104,21 @@ export default function PaymentScreen() {
       </HStack>
 
       <ScrollView className="flex-1 px-5">
-        <Text className="text-white text-xl font-bold mt-6 mb-6">Select Payment Method</Text>
+        <Text className="text-white text-xl font-medium mt-6 mb-6">Select Payment Method</Text>
 
         <Pressable
           onPress={() => setPaymentMethod(isCOD ? "MasterCard" : "Cash On Delivery")}
-          className="bg-[#1A1919] p-4 rounded-3xl mb-8"
+          className="mb-8 p-4 rounded-3xl bg-[#1A1919]"
         >
           <HStack className="items-center justify-between">
             <HStack space="md" className="items-center">
-              <Avatar className="bg-purple-200">
-                <AvatarFallbackText>P</AvatarFallbackText>
+              <Avatar className="bg-[#D1C4E9] w-14 h-14">
+                <AvatarFallbackText>{isCOD ? "C" : "M"}</AvatarFallbackText>
               </Avatar>
               <VStack>
-                <Text className="text-white font-bold text-lg">{paymentMethod}</Text>
-                <Text className="text-gray-400 text-xs">
-                  {isCOD ? "No card saved" : "##########5058"}
+                <Text className="text-white font-bold text-[18px]">{paymentMethod}</Text>
+                <Text className="text-gray-400 text-[14px]">
+                  {isCOD ? "Pay driver physically" : loadingCard ? "Checking..." : (savedCard ? savedCard.cardNumber : "No card saved")}
                 </Text>
               </VStack>
             </HStack>
@@ -97,28 +128,14 @@ export default function PaymentScreen() {
 
         <Box className="border border-dashed border-gray-500 rounded-3xl p-6 bg-[#1A1919] mb-12">
           <VStack space="lg">
-            <Text className="text-white font-bold text-lg mb-2">Ranidu Sampath : Group - Loku</Text>
+            <Text className="text-white font-bold text-lg mb-2">
+              {driverName || "Driver"} : Group - {groupName || "Group"}
+            </Text>
 
             <HStack className="justify-between items-center">
-              <Text className="text-gray-400 text-lg">Total</Text>
+              <Text className="text-gray-300 text-lg">Total</Text>
               <HStack className="items-baseline">
-                <Text className="text-white font-bold text-2xl mr-1">21,075</Text>
-                <Text className="text-gray-400 text-sm">Rs</Text>
-              </HStack>
-            </HStack>
-
-            <HStack className="justify-between items-center">
-              <Text className="text-gray-400 text-lg">Discounts</Text>
-              <HStack className="items-baseline">
-                <Text className="text-green-500 font-bold text-2xl mr-1">-2,500</Text>
-                <Text className="text-green-500 text-sm">Rs</Text>
-              </HStack>
-            </HStack>
-
-            <HStack className="justify-between items-center">
-              <Text className="text-gray-400 text-lg">Service charge ({isCOD ? "15%" : "5%"})</Text>
-              <HStack className="items-baseline">
-                <Text className="text-white font-bold text-2xl mr-1">{isCOD ? "3,162" : "1,500"}</Text>
+                <Text className="text-white font-bold text-3xl mr-2">{displayPrice}</Text>
                 <Text className="text-gray-400 text-sm">Rs</Text>
               </HStack>
             </HStack>
@@ -126,9 +143,9 @@ export default function PaymentScreen() {
             <Box className="h-[1px] border-b border-dotted border-gray-600 w-full my-2" />
 
             <HStack className="justify-between items-center">
-              <Text className="text-white font-medium text-xl">Subtotal:</Text>
+              <Text className="text-gray-300 text-lg">Subtotal:</Text>
               <HStack className="items-baseline">
-                <Text className="text-white font-bold text-3xl mr-1">{isCOD ? "21,737" : "20,075"}</Text>
+                <Text className="text-white font-bold text-3xl mr-2">{displayPrice}</Text>
                 <Text className="text-gray-400 text-sm">Rs</Text>
               </HStack>
             </HStack>
@@ -140,16 +157,14 @@ export default function PaymentScreen() {
 
       <Box className="px-5 pb-8">
         <Button
-          className="bg-[#F97316] h-16 rounded-3xl w-full"
+          className="bg-[#F97316] h-[60px] rounded-full w-full"
           onPress={handlePayment}
           disabled={isProcessing}
         >
           {isProcessing ? (
             <ActivityIndicator color="white" />
           ) : (
-            <ButtonText className="text-white font-bold text-xl uppercase">
-              {isCOD ? "Confirm Payment (COD)" : "Pay Now"}
-            </ButtonText>
+            <ButtonText className="text-white font-bold text-xl">{isCOD ? "Confirm Booking" : "Pay Now"}</ButtonText>
           )}
         </Button>
       </Box>
