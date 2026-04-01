@@ -1,10 +1,10 @@
-package wdse17.bookingandpayment;
+package wdse17.matching.discovery;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class BookingAndPaymentApplicationTests {
+class MatchingDiscoveryApplicationTests {
 
 	@Test
 	void contextLoads() {

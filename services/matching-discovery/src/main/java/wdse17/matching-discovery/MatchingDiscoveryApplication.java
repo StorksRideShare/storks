@@ -1,13 +1,13 @@
-package wdse17.bookingandpayment;
+package wdse17.matching.discovery;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class BookingAndPaymentApplication {
+public class MatchingDiscoveryApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(BookingAndPaymentApplication.class, args);
+		SpringApplication.run(MatchingDiscoveryApplication.class, args);
 	}
 
 }
