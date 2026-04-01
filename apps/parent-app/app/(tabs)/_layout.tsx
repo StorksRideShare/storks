@@ -1,6 +1,6 @@
 import { Link, Tabs } from "expo-router";
 import { SymbolView } from "expo-symbols";
-import { Home, MessageCircle, ShieldCheck } from "lucide-react-native";
+import { Home, MessageCircle, ShieldCheck, CalendarRange } from "lucide-react-native";
 import React from "react";
 import { Pressable } from "react-native";
 
@@ -65,6 +65,13 @@ export default function TabLayout() {
         options={{
           title: "Verify",
           tabBarIcon: ({ color }) => <ShieldCheck color={color} size={24} />,
+        }}
+      />
+      <Tabs.Screen
+        name="events"
+        options={{
+          title: "Events",
+          tabBarIcon: ({ color }) => <CalendarRange color={color} size={24} />,
         }}
       />
     </Tabs>

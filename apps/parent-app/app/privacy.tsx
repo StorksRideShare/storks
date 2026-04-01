@@ -39,7 +39,7 @@ export default function PrivacySettingsScreen() {
       const response = await axios.get('http://localhost:8081/api/privacy/settings', {
         headers: { Authorization: `Bearer ${token}` }
       });
-      
+
       const settings = response.data;
       setShareLocationOnlyActive(settings.shareLocationOnlyActiveRide ?? true);
       setMaskFullAddress(settings.maskFullAddress ?? true);
@@ -70,7 +70,7 @@ export default function PrivacySettingsScreen() {
       await axios.post('http://localhost:8081/api/privacy/settings', payload, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      
+
       Alert.alert(
         'Success',
         'Your privacy settings have been saved successfully!',
@@ -88,16 +88,16 @@ export default function PrivacySettingsScreen() {
   };
 
   // --- Helper Component for Setting Rows ---
-  const SettingRow = ({ 
-    label, 
-    value, 
-    onValueChange, 
+  const SettingRow = ({
+    label,
+    value,
+    onValueChange,
     disabled = false,
-    description 
-  }: { 
-    label: string; 
-    value: boolean; 
-    onValueChange: (value: boolean) => void; 
+    description
+  }: {
+    label: string;
+    value: boolean;
+    onValueChange: (value: boolean) => void;
     disabled?: boolean;
     description?: string;
   }) => (
@@ -130,7 +130,7 @@ export default function PrivacySettingsScreen() {
 
   return (
     <ThemedView style={{ flex: 1 }}>
-      <ScrollView 
+      <ScrollView
         contentContainerStyle={styles.container}
         showsVerticalScrollIndicator={false}
       >
@@ -144,54 +144,54 @@ export default function PrivacySettingsScreen() {
 
         {/* Location Section */}
         <Collapsible title="Location Sharing">
-          <SettingRow 
-            label="Share live location only during active ride" 
+          <SettingRow
+            label="Share live location only during active ride"
             description="Your location will only be shared when you're on an active ride"
-            value={shareLocationOnlyActive} 
-            onValueChange={setShareLocationOnlyActive} 
+            value={shareLocationOnlyActive}
+            onValueChange={setShareLocationOnlyActive}
           />
         </Collapsible>
 
         {/* Data Masking Section */}
         <Collapsible title="Data Masking">
-          <SettingRow 
-            label="Mask full address" 
+          <SettingRow
+            label="Mask full address"
             description="Show only neighborhood to drivers, not your exact address"
-            value={maskFullAddress} 
-            onValueChange={setMaskFullAddress} 
+            value={maskFullAddress}
+            onValueChange={setMaskFullAddress}
           />
         </Collapsible>
 
         {/* Monitoring Section */}
         <Collapsible title="Monitoring Requests">
-          <SettingRow 
-            label="Allow silent presence requests" 
+          <SettingRow
+            label="Allow silent presence requests"
             description="Allow requests for photo verification during rides"
-            value={allowSilentPresence} 
-            onValueChange={setAllowSilentPresence} 
+            value={allowSilentPresence}
+            onValueChange={setAllowSilentPresence}
           />
-          <SettingRow 
-            label="Allow audio stream requests" 
+          <SettingRow
+            label="Allow audio stream requests"
             description="Allow requests for audio monitoring during rides"
-            value={allowAudioStream} 
-            onValueChange={setAllowAudioStream} 
+            value={allowAudioStream}
+            onValueChange={setAllowAudioStream}
           />
         </Collapsible>
 
         {/* Action Buttons */}
         <View style={styles.footer}>
-          <ThemedText 
-            type="link" 
-            onPress={handleSave} 
+          <ThemedText
+            type="link"
+            onPress={handleSave}
             style={[styles.saveButton, isSaving && styles.disabledButton]}
             disabled={isSaving}
           >
             {isSaving ? 'Saving...' : 'Save All Changes'}
           </ThemedText>
-          
-          <ThemedText 
-            type="link" 
-            onPress={loadSettings} 
+
+          <ThemedText
+            type="link"
+            onPress={loadSettings}
             style={styles.resetButton}
             disabled={isSaving}
           >

@@ -1,4 +1,4 @@
-import { useSignUp } from "@clerk/clerk-expo";
+import { useSignUp } from "@clerk/expo";
 import { Link, useRouter } from "expo-router";
 import * as React from "react";
 import {
@@ -116,16 +116,8 @@ export default function Page() {
     setError(null);
 
     try {
-      await setActive({
-        session: sessionId,
-        navigate: async ({ session }) => {
-          if (session?.currentTask) {
-            console.log(session?.currentTask);
-            return;
-          }
-          router.replace("/");
-        },
-      });
+      await setActive({ session: sessionId });
+      router.replace("/");
     } catch (err: any) {
       console.error(JSON.stringify(err, null, 2));
       const message =
@@ -360,7 +352,7 @@ export default function Page() {
               style={[
                 styles.primaryButton,
                 (!emailAddress || !password || isLoading) &&
-                  styles.buttonDisabled,
+                styles.buttonDisabled,
               ]}
               activeOpacity={0.8}
               onPress={onSignUpPress}
