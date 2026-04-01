@@ -12,7 +12,6 @@ import wdse17.bookingandpayment.repository.OfferRepository;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -46,33 +45,58 @@ public class BookingService {
     }
 
     public void confirmPayment(UUID id) {
+        // Validation: Verify existence of the booking ID before confirming the payment
         Booking booking = bookingRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Booking not found"));
+                .orElseThrow(
+                        () -> new RuntimeException("Validation Error: Booking reference not found in the system."));
         booking.setIsActive(true);
         booking.setUpdatedAt(LocalDateTime.now());
         bookingRepository.save(booking);
     }
 
     public void cancelBooking(UUID id) {
+        // Validation: Verify the booking exists before attempting cancellation
         Booking booking = bookingRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Booking not found"));
+                .orElseThrow(
+                        () -> new RuntimeException("Validation Error: Cannot cancel a booking that does not exist."));
         booking.setIsCancelled(true);
         booking.setIsActive(false);
         booking.setUpdatedAt(LocalDateTime.now());
+        booking.setCancelledAt(LocalDateTime.now());
         bookingRepository.save(booking);
     }
 
     public BookingEventDTO createBookingRequest(UUID groupId, UUID offerId, String type, String startDateStr) {
-        // Validation: Cannot have duplicate active/inactive bookings for same driver and group
-        // REMOVED AT USER REQUEST: Allowed to force book multiple times
-        // if (bookingRepository.existsActiveOrPendingBooking(groupId, offerId)) {
-        //    throw new RuntimeException("You already have a pending or active request with this driver for this group.");
-        // }
 
+        // check if the child group provided actually exists in the database
         ChildGroup group = childGroupRepository.findById(groupId)
-                .orElseThrow(() -> new RuntimeException("Group not found"));
+                .orElseThrow(() -> new RuntimeException("Validation Error: Selected child group is invalid."));
+
+        // check if the driver offer referenced is still available in the
+        // database
         Offer offer = offerRepository.findById(offerId)
-                .orElseThrow(() -> new RuntimeException("Offer not found"));
+                .orElseThrow(() -> new RuntimeException(
+                        "Validation Error: The selected driver offer is no longer available."));
+
+        // date handling
+        LocalDate startDate = LocalDate.parse(startDateStr);
+        // check if the provided start date is in the past
+        if (startDate.isBefore(LocalDate.now())) {
+            throw new RuntimeException("Validation Error: You cannot book a date that has already passed.");
+        }
+
+        LocalDate endDate = "MONTHLY".equalsIgnoreCase(type) ? startDate.plusDays(30) : startDate;
+
+        // Prevent duplicate bookings for the same child group on the same
+        // day
+        if ("DAY".equalsIgnoreCase(type)) {
+            List<Booking> overlapping = bookingRepository.findActiveOrAcceptedDayBookingForGroupOnDate(groupId,
+                    startDate);
+            if (!overlapping.isEmpty()) {
+                throw new RuntimeException(
+                        "Validation Error: This group already has a ride assigned for the selected day.");
+            }
+        }
 
         // Price calculation
         double price = 0;
@@ -84,7 +108,7 @@ public class BookingService {
                     .findFirst()
                     .map(g -> g.getDistanceKm())
                     .orElse(4.5);
-            
+
             double rate = "MONTHLY".equalsIgnoreCase(type) ? PRICE_PER_KM_MONTHLY : PRICE_PER_KM_DAY;
             price = distanceKm * rate * childrenCount;
             if ("MONTHLY".equalsIgnoreCase(type)) {
@@ -94,10 +118,6 @@ public class BookingService {
             double rate = "MONTHLY".equalsIgnoreCase(type) ? offer.getPricePerMonth() : offer.getPricePerDay();
             price = rate * childrenCount;
         }
-
-        // Date handling
-        LocalDate startDate = LocalDate.parse(startDateStr);
-        LocalDate endDate = "MONTHLY".equalsIgnoreCase(type) ? startDate.plusDays(30) : startDate;
 
         // Compliance with database_setup.sql - Only use Booking table
         Booking booking = Booking.builder()
@@ -115,7 +135,7 @@ public class BookingService {
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
-        
+
         booking = bookingRepository.save(booking);
 
         return mapToDTO(booking);
@@ -124,8 +144,9 @@ public class BookingService {
     private BookingEventDTO mapToDTO(Booking booking) {
         Offer offer = booking.getOffer();
         ChildGroup group = booking.getChildGroup();
-        String driverName = offer.getDriver().getUser().getFirstName() + " " + offer.getDriver().getUser().getLastName();
-        
+        String driverName = offer.getDriver().getUser().getFirstName() + " "
+                + offer.getDriver().getUser().getLastName();
+
         String autoGroupName = group.getChildren().stream()
                 .filter(c -> c != null)
                 .map(child -> child.getPreferredName() != null ? child.getPreferredName() : child.getFirstName())
@@ -143,10 +164,11 @@ public class BookingService {
 
         String title = "Booking Requested";
         String description = "Your request for Group: " + autoGroupName + " has been sent to " + driverName + ".";
-        
+
         if ("Confirmed".equalsIgnoreCase(status)) {
             title = "Payment Confirmed";
-            description = driverName + " will pick up " + autoGroupName + " tomorrow. If their schedule needs to be changed, please adjust it before 9:PM";
+            description = driverName + " will pick up " + autoGroupName
+                    + " tomorrow. If their schedule needs to be changed, please adjust it before 9:PM";
         } else if ("Accepted".equalsIgnoreCase(status)) {
             title = "Request Accepted";
             description = driverName + " has accepted your offer, Pay him to finalize the booking.";
@@ -163,9 +185,12 @@ public class BookingService {
                 .description(description)
                 .date(booking.getStartDate() != null ? booking.getStartDate().toString() : "Tomorrow")
                 .time("07:30 AM")
-                .location(group.getDefaultDropoffLocation() != null ? 
-                        (group.getDefaultDropoffLocation().getNickname() != null ? 
-                         group.getDefaultDropoffLocation().getNickname() : group.getDefaultDropoffLocation().getAddress()) : "Assigned School")
+                .location(
+                        group.getDefaultDropoffLocation() != null
+                                ? (group.getDefaultDropoffLocation().getNickname() != null
+                                        ? group.getDefaultDropoffLocation().getNickname()
+                                        : group.getDefaultDropoffLocation().getAddress())
+                                : "Assigned School")
                 .offerId(offer.getOfferId())
                 .groupId(group.getGroupId())
                 .price(booking.getPrice())

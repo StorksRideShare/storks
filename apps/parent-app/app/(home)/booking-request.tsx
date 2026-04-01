@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { ScrollView, Pressable, ActivityIndicator, Platform } from "react-native";
+import React, { useState, useRef, useEffect } from "react";
+import { ScrollView, Pressable, ActivityIndicator, Platform, Modal } from "react-native";
 import { Box } from "@/components/ui/box";
 import { HStack } from "@/components/ui/hstack";
 import { VStack } from "@/components/ui/vstack";
@@ -10,6 +10,7 @@ import {
   ChevronLeft,
   ChevronDown,
   CheckCircle2,
+  AlertCircle
 } from "lucide-react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -33,6 +34,24 @@ export default function BookingRequestScreen() {
   const [loading, setLoading] = useState(true);
   const [requesting, setRequesting] = useState(false);
 
+  // Ultra-Reliable Center Insight State
+  const [insight, setInsight] = useState<{ visible: boolean; type: 'success' | 'warning' | 'error'; title: string; message: string }>({
+    visible: false,
+    type: 'success',
+    title: '',
+    message: ''
+  });
+
+  const showInsight = (type: 'success' | 'warning' | 'error', title: string, message: string) => {
+    setInsight({ visible: true, type, title, message });
+    // Auto-dismiss warnings after 3 seconds so the user can try again easily
+    if (type === 'warning') {
+      setTimeout(() => {
+        setInsight(prev => ({ ...prev, visible: false }));
+      }, 3000);
+    }
+  };
+
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
 
@@ -40,7 +59,6 @@ export default function BookingRequestScreen() {
   const [startDate, setStartDate] = useState(tomorrow.toISOString().split('T')[0]);
   const [showPicker, setShowPicker] = useState(false);
 
-  const toast = useToast();
 
   const onDateChange = (event: any, selectedDate?: Date) => {
     setShowPicker(Platform.OS === 'ios'); // Keep picker open on iOS, close on Android
@@ -48,7 +66,7 @@ export default function BookingRequestScreen() {
       setDateObj(selectedDate);
       // Format as YYYY-MM-DD reliably accounting for local timezone issues
       const offset = selectedDate.getTimezoneOffset()
-      const effectiveDate = new Date(selectedDate.getTime() - (offset*60*1000))
+      const effectiveDate = new Date(selectedDate.getTime() - (offset * 60 * 1000))
       setStartDate(effectiveDate.toISOString().split('T')[0]);
     }
   };
@@ -95,15 +113,15 @@ export default function BookingRequestScreen() {
 
   const handleAction = async () => {
     if (!acknowledged) {
-      alert("Please acknowledge the terms before proceeding.");
+      showInsight('warning', 'Action Required', 'Please acknowledge the terms before proceeding.');
       return;
     }
 
     if (isFinalizing) {
       // If we are finalizing, we go to payment
-      router.push({ 
-        pathname: "/(home)/payment", 
-        params: { bookingId, type: bookingType } 
+      router.push({
+        pathname: "/(home)/payment",
+        params: { bookingId, type: bookingType }
       });
       return;
     }
@@ -124,31 +142,22 @@ export default function BookingRequestScreen() {
       });
 
       if (response.ok) {
-        toast.show({
-          placement: "top",
-          render: ({ id }) => (
-            <Toast nativeID={"toast-" + id} action="success" variant="solid" className="bg-green-600 rounded-3xl p-6 mt-12 shadow-2xl">
-               <HStack space="sm" className="items-center">
-                  <CheckCircle2 color="white" size={24} />
-                  <VStack>
-                    <ToastTitle className="text-white font-bold text-xl">Request Sent!</ToastTitle>
-                    <Text className="text-white opacity-90">Wait for the driver to accept your request.</Text>
-                  </VStack>
-                </HStack>
-            </Toast>
-          ),
-        });
+        showInsight('success', 'Request Sent!', 'Wait for the driver to accept your request.');
         
         setTimeout(() => {
+          setRequesting(false);
           router.push("/(tabs)/events");
-        }, 1500);
+        }, 2200);
       } else {
-          const errorData = await response.json();
-          alert(errorData.message || "Failed to send request");
+        const errorData = await response.json();
+        const errorMsg = errorData.message || "You already have a booking for this group on this day. Please check your existing bookings.";
+        showInsight('error', 'Booking Conflict', errorMsg);
+        setRequesting(false);
       }
     } catch (err) {
+      setRequesting(false);
       console.error("Booking Error:", err);
-      alert("An error occurred while sending the request.");
+      showInsight('error', 'System Error', 'Could not connect to the server.');
     } finally {
       setRequesting(false);
     }
@@ -157,21 +166,21 @@ export default function BookingRequestScreen() {
   const distance = selectedGroup?.distanceKm || 4.5;
   const childrenCount = selectedGroup?.children?.length || 0;
   const currentPrice = bookingType === "Monthly" ? (offer?.pricePerMonth || 0) : (offer?.pricePerDay || 0);
-  
+
   const intelligentRate = bookingType === "Monthly" ? PRICE_PER_KM_MONTHLY : PRICE_PER_KM_DAY;
   const daysMultiplier = bookingType === "Monthly" ? 30 : 1;
   const intelligentPerChildEstimate = distance * intelligentRate * daysMultiplier;
-  
-  const totalEstimate = offer?.isUsingIntelligentPricing 
-    ? (intelligentPerChildEstimate * childrenCount) 
+
+  const totalEstimate = offer?.isUsingIntelligentPricing
+    ? (intelligentPerChildEstimate * childrenCount)
     : (currentPrice * childrenCount);
 
   if (loading) {
-     return (
-        <SafeAreaView className="flex-1 bg-[#0F0E0E] items-center justify-center">
-            <ActivityIndicator size="large" color="#F97316" />
-        </SafeAreaView>
-     );
+    return (
+      <SafeAreaView className="flex-1 bg-[#0F0E0E] items-center justify-center">
+        <ActivityIndicator size="large" color="#F97316" />
+      </SafeAreaView>
+    );
   }
 
   return (
@@ -334,14 +343,14 @@ export default function BookingRequestScreen() {
             {bookingType === "Monthly" ? "Select Start Date" : "Book For"}
           </Text>
           <Box className="border border-orange-500 rounded-3xl h-16 justify-center px-6 bg-[#1A1919]">
-             <HStack className="items-center justify-between">
-                <Text className="text-white text-lg">{startDate}</Text>
-                <Pressable onPress={() => setShowPicker(true)}>
-                   <Box className="bg-orange-500 p-2 px-4 rounded-xl">
-                      <Text className="text-white text-xs font-bold">CHANGE</Text>
-                   </Box>
-                </Pressable>
-             </HStack>
+            <HStack className="items-center justify-between">
+              <Text className="text-white text-lg">{startDate}</Text>
+              <Pressable onPress={() => setShowPicker(true)}>
+                <Box className="bg-orange-500 p-2 px-4 rounded-xl">
+                  <Text className="text-white text-xs font-bold">CHANGE</Text>
+                </Box>
+              </Pressable>
+            </HStack>
           </Box>
           {showPicker && (
             <DateTimePicker
@@ -366,7 +375,7 @@ export default function BookingRequestScreen() {
           disabled={requesting}
         >
           {requesting ? (
-             <ActivityIndicator color="white" />
+            <ActivityIndicator color="white" />
           ) : (
             <ButtonText className="text-white font-bold text-xl uppercase">
               {isFinalizing ? `Pay ${offer?.driverName?.split(" ")[0] || "Driver"}` : `Book ${offer?.driverName?.split(" ")[0] || "Driver"}`}
@@ -374,6 +383,48 @@ export default function BookingRequestScreen() {
           )}
         </Button>
       </Box>
+
+      <Modal transparent visible={insight.visible} animationType="fade">
+        <Box className="flex-1 justify-center items-center bg-black/80 px-6">
+          <VStack space="xl" className="w-full bg-[#1A1919] border border-gray-800 rounded-[40px] p-8 items-center shadow-2xl">
+            <Box className={`p-6 rounded-full ${
+              insight.type === 'success' ? 'bg-green-500/10' : 
+              insight.type === 'warning' ? 'bg-yellow-500/10' : 'bg-red-500/10'
+            }`}>
+              {insight.type === 'success' ? (
+                <CheckCircle2 color="#22C55E" size={64} />
+              ) : (
+                <AlertCircle color={insight.type === 'warning' ? "#EAB308" : "#EF4444"} size={64} />
+              )}
+            </Box>
+            
+            <VStack space="sm" className="items-center w-full">
+              <Text className="text-white font-bold text-3xl text-center">{insight.title}</Text>
+              <Text className="text-gray-400 text-center leading-6 text-lg">{insight.message}</Text>
+            </VStack>
+
+            {insight.type !== 'success' && (
+              <Button 
+                className={`mt-4 w-full h-16 rounded-full ${
+                  insight.type === 'warning' ? 'bg-[#EAB308]' : 'bg-[#EF4444]'
+                }`}
+                onPress={() => setInsight(prev => ({ ...prev, visible: false }))}
+              >
+                <ButtonText className="text-[#1A1919] font-bold text-xl uppercase">Got it</ButtonText>
+              </Button>
+            )}
+          </VStack>
+        </Box>
+      </Modal>
+
+      {requesting && (
+        <Box className="absolute inset-0 bg-black/60 justify-center items-center z-[999]" style={{ elevation: 20 }}>
+          <VStack space="lg" className="items-center bg-[#1A1919] p-10 rounded-[40px] border border-gray-800 shadow-2xl">
+            <ActivityIndicator size="large" color="#F97316" />
+            <Text className="text-white font-bold text-xl">Processing...</Text>
+          </VStack>
+        </Box>
+      )}
     </SafeAreaView>
   );
 }

@@ -25,7 +25,8 @@ public class BookingController {
     @GetMapping("/parent")
     public List<BookingEventDTO> getEventsForParent(@RequestParam(required = false) UUID parentId) {
         // Fallback to demo parent ID if not provided
-        UUID effectiveParentId = (parentId != null) ? parentId : UUID.fromString("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a01");
+        UUID effectiveParentId = (parentId != null) ? parentId
+                : UUID.fromString("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a01");
         return bookingService.getEventsForParent(effectiveParentId);
     }
 
@@ -34,11 +35,10 @@ public class BookingController {
         List<Booking> bookings = bookingRepository.findByGroupIdAndOfferIdAndIsCancelledFalse(groupId, offerId);
         boolean exists = !bookings.isEmpty();
         boolean isActive = exists && bookings.stream().anyMatch(Booking::getIsActive);
-        
+
         return Map.of(
-            "exists", exists,
-            "isActive", isActive
-        );
+                "exists", exists,
+                "isActive", isActive);
     }
 
     @PostMapping("/request")

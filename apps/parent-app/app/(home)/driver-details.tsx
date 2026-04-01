@@ -122,7 +122,7 @@ export default function DriverDetailsScreen() {
     } catch (err) {
       console.error(err);
     } finally {
-      if (initial) setLoading(false);
+      setLoading(false);
     }
   };
 
@@ -329,6 +329,7 @@ export default function DriverDetailsScreen() {
                 <Pressable
                   key={group.groupId}
                   onPress={() => {
+                    setLoading(true); // Trigger loading UI
                     setShowSelector(false);
                     setTimeout(() => setSelectedGroup(group), 50);
                   }}

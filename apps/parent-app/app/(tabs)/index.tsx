@@ -76,31 +76,13 @@ const DriverCard = ({ name, vehicle, plate, seats, capacity, features }: DriverC
   );
 };
 
-export default function SearchDriverScreen() {
-  const [drivers, setDrivers] = useState<any[]>([]);
+export default function HomeScreen() {
   const [childGroups, setChildGroups] = useState<any[]>([]);
-  const [selectedGroup, setSelectedGroup] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [showSelector, setShowSelector] = useState(false);
 
   useEffect(() => {
-    fetchDrivers();
     fetchChildGroups();
   }, []);
-
-  // Handle back button to close selector
-  useEffect(() => {
-    const backAction = () => {
-      if (showSelector) {
-        setShowSelector(false);
-        return true;
-      }
-      return false;
-    };
-    const backHandler = BackHandler.addEventListener("hardwareBackPress", backAction);
-    return () => backHandler.remove();
-  }, [showSelector]);
 
   const fetchChildGroups = async () => {
     try {
@@ -109,37 +91,9 @@ export default function SearchDriverScreen() {
       if (response.ok) {
         const data = await response.json();
         setChildGroups(data);
-        if (data.length > 0) {
-          setSelectedGroup(data[0]);
-        }
       }
     } catch (err) {
-      console.error("Error fetching child groups:", err);
-    }
-  };
-
-  const fetchDrivers = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch(`${API_BASE_URL}/api/offers`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch drivers");
-      }
-      const data = await response.json();
-
-      const transformedData = data.map((offer: any) => ({
-        id: offer.offerId,
-        name: offer.driverName,
-        vehicle: offer.vehicleName,
-        plate: offer.licensePlate,
-        seats: offer.seats,
-        capacity: offer.capacity,
-        features: offer.features,
-      }));
-      setDrivers(transformedData);
-    } catch (err: any) {
-      console.error(err);
-      setError(err.message);
+      console.error("Error fetching groups:", err);
     } finally {
       setLoading(false);
     }
@@ -149,122 +103,56 @@ export default function SearchDriverScreen() {
     <SafeAreaView className="flex-1 bg-[#0F0E0E]">
       <HStack className="px-5 py-4 items-center justify-between">
         <Text className="text-white font-bold text-2xl">Storks</Text>
-        <Text className="text-orange-500 font-bold text-2xl">Search a Driver</Text>
-        <Box className="w-7" />
+        <Avatar className="bg-orange-500">
+           <AvatarFallbackText>Parent</AvatarFallbackText>
+        </Avatar>
       </HStack>
 
-      <ScrollView className="flex-1 px-5">
-        <Pressable onPress={() => setShowSelector(true)}>
-          <HStack className="items-center justify-between mb-6">
-            <HStack space="md" className="items-center">
-              <Avatar className="bg-purple-200">
-                <AvatarFallbackText>{selectedGroup?.groupName?.charAt(0) || "G"}</AvatarFallbackText>
-              </Avatar>
-              <VStack>
-                <Text className="text-white font-bold text-lg">
-                  Group: {selectedGroup?.groupName || "No Group Selected"}
-                </Text>
-                <Text className="text-gray-400 text-sm">
-                  {selectedGroup?.children?.map((c: any) => c.preferredName || c.firstName).join(", ") || "No children found"}
-                </Text>
-              </VStack>
-            </HStack>
-            <ChevronDown color="#F97316" size={24} />
-          </HStack>
-        </Pressable>
+      <ScrollView className="flex-1 px-5 pt-4">
+        <VStack space="lg" className="mb-10">
+          <Text className="text-white font-bold text-3xl">Welcome Back!</Text>
+          <Text className="text-gray-400 text-lg">Your children's safety is our priority.</Text>
+        </VStack>
 
-        <HStack space="sm" className="mb-8">
-          <Button
-            variant="outline"
-            className="border-orange-500 rounded-xl px-4 flex-row items-center"
-          >
-            <Filter size={18} color="#F97316" className="mr-2" />
-            <ButtonText className="text-orange-500">Filters</ButtonText>
-          </Button>
-
-          <Box className="border border-white rounded-xl px-4 justify-center">
-            <Text className="text-white">1 Seat</Text>
-          </Box>
-          <Box className="border border-white rounded-xl px-4 justify-center">
-            <Text className="text-white">AC</Text>
-          </Box>
-          <Box className="border border-white rounded-xl px-4 justify-center">
-            <Text className="text-white">+4 More</Text>
-          </Box>
-        </HStack>
-
-        <Box className="h-[1px] bg-gray-700 w-full mb-6" />
-        <Text className="text-white text-center mb-6">
-          {loading ? "Loading drivers..." : `Showing ${drivers.length} results`}
-        </Text>
-
+        <Text className="text-white font-bold text-xl mb-4">Your Child Groups</Text>
         {loading ? (
-          <Box className="py-20">
-            <ActivityIndicator size="large" color="#F97316" />
-          </Box>
-        ) : error ? (
-          <Box className="py-20 items-center">
-            <Text className="text-red-500 mb-4">{error}</Text>
-            <Button onPress={fetchDrivers} className="bg-orange-500 rounded-xl">
-              <ButtonText>Retry</ButtonText>
-            </Button>
-          </Box>
-        ) : drivers.length === 0 ? (
-          <Text className="text-gray-400 text-center py-20">No drivers found matching your criteria.</Text>
-        ) : (
-          drivers.map((driver, index) => (
-            <Pressable key={index} onPress={() => router.push({
-              pathname: "/(home)/driver-details",
-              params: { 
-                offerId: driver.id,
-                groupId: selectedGroup?.groupId 
-              }
-            })}>
-              <DriverCard {...driver} />
-            </Pressable>
-          ))
-        )}
+           <ActivityIndicator color="#F97316" />
+        ) : childGroups.map((group) => (
+           <Box key={group.groupId} className="bg-[#1A1919] p-6 rounded-3xl mb-4 border border-gray-800">
+              <HStack space="md" className="items-center mb-3">
+                 <Box className="bg-orange-500/20 p-3 rounded-2xl">
+                    <Users color="#F97316" size={24} />
+                 </Box>
+                 <VStack>
+                    <Text className="text-white font-bold text-xl">{group.groupName}</Text>
+                    <Text className="text-gray-400 text-sm">
+                       {group.children?.length} Children
+                    </Text>
+                 </VStack>
+              </HStack>
+              <HStack className="flex-wrap gap-2">
+                 {group.children?.map((child: any, idx: number) => (
+                    <Box key={idx} className="bg-[#262626] px-3 py-1.5 rounded-full border border-gray-700">
+                       <Text className="text-white text-xs">{child.preferredName || child.firstName}</Text>
+                    </Box>
+                 ))}
+              </HStack>
+              
+              <Button 
+                variant="outline" 
+                className="mt-6 border-orange-500 rounded-2xl h-12"
+                onPress={() => router.push({
+                   pathname: "/(tabs)/booking",
+                   params: { groupId: group.groupId }
+                })}
+              >
+                 <ButtonText className="text-orange-500 font-bold">New Booking</ButtonText>
+              </Button>
+           </Box>
+        ))}
 
         <Box className="h-20" />
       </ScrollView>
-
-      {/* CUSTOM OVERLAY SELECTOR - STABLE ON ANDROID */}
-      {showSelector && (
-        <Box className="absolute inset-0 bg-black/80 justify-end z-[999]" style={{ elevation: 10 }}>
-          <Pressable className="absolute inset-0" onPress={() => setShowSelector(false)} />
-          <Box className="bg-[#1A1919] border-t border-gray-800 rounded-t-[40px] p-6 pb-12 w-full">
-            <HStack className="justify-between items-center mb-6 px-2">
-              <Text className="text-white font-bold text-2xl">Select a Child Group</Text>
-              <Pressable onPress={() => setShowSelector(false)} className="p-2">
-                <X color="#F97316" size={24} />
-              </Pressable>
-            </HStack>
-            
-            <VStack space="md">
-              {childGroups.map((group) => (
-                <Pressable
-                  key={group.groupId}
-                  onPress={() => {
-                    setShowSelector(false);
-                    setTimeout(() => setSelectedGroup(group), 50);
-                  }}
-                  className="bg-[#262626] active:bg-[#333] p-5 rounded-2xl border border-gray-800"
-                >
-                  <VStack>
-                    <Text className="text-white font-bold text-xl mb-1">{group.groupName}</Text>
-                    <Text className="text-gray-400 text-base">
-                      {group.children?.map((c: any) => c.preferredName || c.firstName).join(", ")}
-                    </Text>
-                  </VStack>
-                </Pressable>
-              ))}
-              {childGroups.length === 0 && (
-                <Text className="text-gray-500 text-center py-10 text-lg italic">No groups available</Text>
-              )}
-            </VStack>
-          </Box>
-        </Box>
-      )}
     </SafeAreaView>
   );
 }

@@ -1,6 +1,6 @@
 import { Link, Tabs } from "expo-router";
 import { SymbolView } from "expo-symbols";
-import { Home, MessageCircle, ShieldCheck, CalendarRange } from "lucide-react-native";
+import { Home, MessageCircle, ShieldCheck, CalendarRange, CarFront } from "lucide-react-native";
 import React from "react";
 import { Pressable } from "react-native";
 
@@ -25,18 +25,7 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "Home",
-          tabBarIcon: ({ color }) => (
-            // <SymbolView
-            //   name={{
-            //     ios: "chevron.left.forwardslash.chevron.right",
-            //     android: "code",
-            //     web: "code",
-            //   }}
-            //   tintColor={color}
-            //   size={28}
-            // />
-            <Home color={color} size={24} />
-          ),
+          tabBarIcon: ({ color }) => <Home color={color} size={24} />,
           headerRight: () => (
             <Link href="/modal" asChild>
               <Pressable style={{ marginRight: 15 }}>
@@ -51,6 +40,13 @@ export default function TabLayout() {
               </Pressable>
             </Link>
           ),
+        }}
+      />
+      <Tabs.Screen
+        name="booking"
+        options={{
+          title: "Booking",
+          tabBarIcon: ({ color }) => <CarFront color={color} size={24} />,
         }}
       />
       <Tabs.Screen

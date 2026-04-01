@@ -26,6 +26,11 @@ public class CardService {
     }
 
     private String hashCardNumber(String cardNumber) {
+        // check card number has at least 12 digits
+        if (cardNumber == null || cardNumber.replaceAll("\\s+", "").length() < 12) {
+            throw new RuntimeException("Validation Error: Card number must be at least 12 digits long.");
+        }
+
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] hash = digest.digest(cardNumber.getBytes());
@@ -36,10 +41,15 @@ public class CardService {
     }
 
     public CardDTO saveCard(UUID parentId, CardDTO request) {
+        // check card holder name
+        if (request.getCardHolderName() == null || request.getCardHolderName().trim().isEmpty()) {
+            throw new RuntimeException("Validation Error: Card holder name is required.");
+        }
+
         String rawNumber = request.getCardNumber().replaceAll("\\s+", "");
         String last4 = rawNumber.length() >= 4 ? rawNumber.substring(rawNumber.length() - 4) : rawNumber;
-        
-        // Store one-way Hash appended with last 4 digits for UI retrieval
+
+        //
         String securedData = hashCardNumber(rawNumber) + ":" + last4;
 
         Card card = Card.builder()
@@ -51,23 +61,23 @@ public class CardService {
                 .parentId(parentId)
                 .build();
         card = cardRepository.save(card);
-        
+
         return mapToDTO(card);
     }
-    
+
     private CardDTO mapToDTO(Card card) {
         String data = card.getCardNumber();
         String last4 = "0000";
-        
+
         if (data != null && data.contains(":")) {
             last4 = data.split(":")[1];
         } else if (data != null) {
             // fallback for any raw legacy data during development
             last4 = data.length() >= 4 ? data.substring(data.length() - 4) : data;
         }
-        
+
         String obfuscated = "**** **** **** " + last4;
-        
+
         return CardDTO.builder()
                 .cardId(card.getCardId())
                 .cardNumber(obfuscated)

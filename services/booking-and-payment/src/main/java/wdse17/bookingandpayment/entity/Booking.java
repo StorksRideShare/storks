@@ -41,6 +41,9 @@ public class Booking {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Column(name = "cancelled_at")
+    private LocalDateTime cancelledAt;
+
     @Column(name = "type")
     private String type; // 'MONTH' or 'DAY'
 
