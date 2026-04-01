@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ScrollView, Pressable } from "react-native";
+import { ScrollView, Pressable, Platform } from "react-native";
 import { Box } from "@/components/ui/box";
 import { HStack } from "@/components/ui/hstack";
 import { VStack } from "@/components/ui/vstack";
@@ -9,32 +9,72 @@ import { Button, ButtonText } from "@/components/ui/button";
 import {
   ChevronLeft,
   ChevronDown,
+  CheckCircle2
 } from "lucide-react-native";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useToast, Toast, ToastTitle } from "@/components/ui/toast";
+
+const SERVER_IP = process.env.EXPO_PUBLIC_SERVER_IP || (Platform.OS === "android" ? "10.0.2.2" : "localhost");
+const API_BASE_URL = `http://${SERVER_IP}:8080`;
 
 export default function PaymentScreen() {
+  const { bookingId } = useLocalSearchParams();
   const [paymentMethod, setPaymentMethod] = useState("Cash On Delivery");
+  const [isProcessing, setIsProcessing] = useState(false);
+  const toast = useToast();
 
   const isCOD = paymentMethod === "Cash On Delivery";
 
+  const handlePayment = async () => {
+    if (!bookingId) return;
+    
+    try {
+      setIsProcessing(true);
+      const response = await fetch(`${API_BASE_URL}/api/bookings/${bookingId}/confirm-payment`, {
+        method: "PUT"
+      });
+
+      if (response.ok) {
+        toast.show({
+          placement: "top",
+          render: ({ id }) => (
+            <Toast nativeID={"toast-" + id} action="success" variant="solid" className="bg-green-600 rounded-3xl p-6 mt-12 shadow-2xl">
+               <HStack space="sm" className="items-center">
+                  <CheckCircle2 color="white" size={24} />
+                  <VStack>
+                    <ToastTitle className="text-white font-bold text-xl">Payment Successful!</ToastTitle>
+                    <Text className="text-white opacity-90">Your booking is now confirmed.</Text>
+                  </VStack>
+                </HStack>
+            </Toast>
+          ),
+        });
+
+        setTimeout(() => {
+          router.push("/(tabs)/events");
+        }, 2000);
+      }
+    } catch (err) {
+      console.error("Payment Error:", err);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-[#0F0E0E]">
-      {/* Header */}
       <HStack className="px-5 py-4 items-center justify-between">
         <Pressable onPress={() => router.back()}>
           <ChevronLeft color="#F97316" size={28} />
         </Pressable>
-        <Text className="text-orange-500 font-bold text-2xl">
-          Storks Secure Pay
-        </Text>
+        <Text className="text-orange-500 font-bold text-2xl">Storks Secure Pay</Text>
         <Box className="w-7" />
       </HStack>
 
       <ScrollView className="flex-1 px-5">
         <Text className="text-white text-xl font-bold mt-6 mb-6">Select Payment Method</Text>
 
-        {/* Payment Method Selector Card */}
         <Pressable
           onPress={() => setPaymentMethod(isCOD ? "MasterCard" : "Cash On Delivery")}
           className="bg-[#1A1919] p-4 rounded-3xl mb-8"
@@ -55,7 +95,6 @@ export default function PaymentScreen() {
           </HStack>
         </Pressable>
 
-        {/* Payment Summary Box */}
         <Box className="border border-dashed border-gray-500 rounded-3xl p-6 bg-[#1A1919] mb-12">
           <VStack space="lg">
             <Text className="text-white font-bold text-lg mb-2">Ranidu Sampath : Group - Loku</Text>
@@ -99,14 +138,19 @@ export default function PaymentScreen() {
         <Box className="h-20" />
       </ScrollView>
 
-      {/* Action Button */}
       <Box className="px-5 pb-8">
         <Button
           className="bg-[#F97316] h-16 rounded-3xl w-full"
+          onPress={handlePayment}
+          disabled={isProcessing}
         >
-          <ButtonText className="text-white font-bold text-xl uppercase">
-            {isCOD ? "Cash on Delivery" : "Pay Now"}
-          </ButtonText>
+          {isProcessing ? (
+            <ActivityIndicator color="white" />
+          ) : (
+            <ButtonText className="text-white font-bold text-xl uppercase">
+              {isCOD ? "Confirm Payment (COD)" : "Pay Now"}
+            </ButtonText>
+          )}
         </Button>
       </Box>
     </SafeAreaView>

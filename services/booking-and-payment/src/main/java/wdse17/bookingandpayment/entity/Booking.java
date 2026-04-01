@@ -49,4 +49,10 @@ public class Booking {
 
     @Column(name = "is_active")
     private Boolean isActive;
+
+    @Column(name = "is_accepted")
+    private Boolean isAccepted;
+
+    @Column(name = "price")
+    private Double price;
 }

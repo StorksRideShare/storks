@@ -27,6 +27,12 @@ public class BookingService {
     @Autowired
     private OfferRepository offerRepository;
 
+    @Autowired
+    private ChildGroupService childGroupService;
+
+    private static final double PRICE_PER_KM_MONTHLY = 80.00;
+    private static final double PRICE_PER_KM_DAY = 110.00;
+
     public List<BookingEventDTO> getEventsForParent(UUID parentId) {
         return bookingRepository.findByParentId(parentId).stream()
                 .map(this::mapToDTO)
@@ -35,6 +41,14 @@ public class BookingService {
 
     public boolean isGroupBooked(UUID groupId, UUID offerId) {
         return bookingRepository.existsActiveOrPendingBooking(groupId, offerId);
+    }
+
+    public void confirmPayment(UUID id) {
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Booking not found"));
+        booking.setIsActive(true);
+        booking.setUpdatedAt(LocalDateTime.now());
+        bookingRepository.save(booking);
     }
 
     public void cancelBooking(UUID id) {
@@ -46,7 +60,7 @@ public class BookingService {
         bookingRepository.save(booking);
     }
 
-    public BookingEventDTO createBookingRequest(UUID groupId, UUID offerId) {
+    public BookingEventDTO createBookingRequest(UUID groupId, UUID offerId, String type) {
         // Validation: Cannot have duplicate active/inactive bookings for same driver and group
         if (bookingRepository.existsActiveOrPendingBooking(groupId, offerId)) {
             throw new RuntimeException("You already have a pending or active request with this driver for this group.");
@@ -57,15 +71,38 @@ public class BookingService {
         Offer offer = offerRepository.findById(offerId)
                 .orElseThrow(() -> new RuntimeException("Offer not found"));
 
+        // Price calculation
+        double price = 0;
+        int childrenCount = group.getChildren().size();
+        if (offer.getIsUsingIntelligentPricing()) {
+            Double distanceKm = childGroupService.getChildGroupsByParent(group.getParentId())
+                    .stream()
+                    .filter(g -> g.getGroupId().equals(groupId))
+                    .findFirst()
+                    .map(g -> g.getDistanceKm())
+                    .orElse(4.5);
+            
+            double rate = "MONTHLY".equalsIgnoreCase(type) ? PRICE_PER_KM_MONTHLY : PRICE_PER_KM_DAY;
+            price = distanceKm * rate * childrenCount;
+            if ("MONTHLY".equalsIgnoreCase(type)) {
+                price *= 30; // Scale for 30 days
+            }
+        } else {
+            double rate = "MONTHLY".equalsIgnoreCase(type) ? offer.getPricePerMonth() : offer.getPricePerDay();
+            price = rate * childrenCount;
+        }
+
         // Compliance with database_setup.sql - Only use Booking table
         Booking booking = Booking.builder()
                 .id(UUID.randomUUID())
                 .parentId(group.getParentId())
                 .offer(offer)
                 .childGroup(group)
-                .type(null)
+                .type(type)
+                .price(price)
                 .isActive(false)
                 .isCancelled(false)
+                .isAccepted(false)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
@@ -91,7 +128,9 @@ public class BookingService {
             status = "Confirmed";
         } else if (Boolean.TRUE.equals(booking.getIsCancelled())) {
             status = "Cancelled";
-        } 
+        } else if (Boolean.TRUE.equals(booking.getIsAccepted())) {
+            status = "Accepted";
+        }
 
         String title = "Booking Requested";
         String description = "Your request for Group: " + autoGroupName + " has been sent to " + driverName + ".";
@@ -99,6 +138,9 @@ public class BookingService {
         if ("Confirmed".equalsIgnoreCase(status)) {
             title = "Payment Confirmed";
             description = driverName + " will pick up " + autoGroupName + " tomorrow. If their schedule needs to be changed, please adjust it before 9:PM";
+        } else if ("Accepted".equalsIgnoreCase(status)) {
+            title = "Request Accepted";
+            description = driverName + " has accepted your offer, Pay him to finalize the booking.";
         }
 
         return BookingEventDTO.builder()
@@ -115,6 +157,10 @@ public class BookingService {
                 .location(group.getDefaultDropoffLocation() != null ? 
                         (group.getDefaultDropoffLocation().getNickname() != null ? 
                          group.getDefaultDropoffLocation().getNickname() : group.getDefaultDropoffLocation().getAddress()) : "Assigned School")
+                .offerId(offer.getOfferId())
+                .groupId(group.getGroupId())
+                .price(booking.getPrice())
+                .type(booking.getType())
                 .build();
     }
 }

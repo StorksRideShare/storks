@@ -44,11 +44,37 @@ public class ChildGroupService {
                     group.getDefaultDropoffLocation().getNickname() : group.getDefaultDropoffLocation().getAddress();
         }
 
+        Double distanceKm = calculateDistance(group.getPickupLocation(), group.getDefaultDropoffLocation());
+
         return ChildGroupDTO.builder()
                 .groupId(group.getGroupId())
                 .groupName(groupName)
                 .children(children)
                 .defaultDropLocation(dropLocation)
+                .distanceKm(distanceKm)
                 .build();
+    }
+
+    private Double calculateDistance(wdse17.bookingandpayment.entity.Location loc1, wdse17.bookingandpayment.entity.Location loc2) {
+        if (loc1 == null || loc2 == null || loc1.getLatitude() == null || loc1.getLongitude() == null || loc2.getLatitude() == null || loc2.getLongitude() == null) {
+            return 4.5; // fallback average distance
+        }
+
+        double lat1 = loc1.getLatitude().doubleValue();
+        double lon1 = loc1.getLongitude().doubleValue();
+        double lat2 = loc2.getLatitude().doubleValue();
+        double lon2 = loc2.getLongitude().doubleValue();
+
+        double earthRadius = 6371; // km
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLon = Math.toRadians(lon2 - lon1);
+
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                   Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
+                   Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+        return (double) Math.round(earthRadius * c * 10) / 10.0;
     }
 }

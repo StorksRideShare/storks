@@ -12,7 +12,8 @@ CREATE TABLE IF NOT EXISTS bookings
     cancelled_at TIMESTAMP WITHOUT TIME ZONE,
     type VARCHAR(255), -- 'MONTH' or 'DAY'
     is_cancelled BOOLEAN DEFAULT FALSE,
-    is_active BOOLEAN DEFAULT TRUE
+    is_active BOOLEAN DEFAULT FALSE,
+    is_accepted BOOLEAN DEFAULT FALSE
 );
 
 -- 2. Ride Passengers Table

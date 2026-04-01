@@ -13,4 +13,5 @@ public class ChildGroupDTO {
     private String groupName; // e.g., Concatenated children names
     private List<ChildDTO> children;
     private String defaultDropLocation;
+    private Double distanceKm;
 }

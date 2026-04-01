@@ -53,7 +53,7 @@ public class DataInitializer implements CommandLineRunner {
                         .build();
                 bookingRepository.save(booking1);
 
-                // Second: New Waiting Request (Inactive, no type)
+                // Second: New Waiting Request (Inactive, no type, but ACCEPTED)
                 if (groups.size() > 1) {
                     Booking booking2 = Booking.builder()
                             .id(UUID.randomUUID())
@@ -63,6 +63,7 @@ public class DataInitializer implements CommandLineRunner {
                             .type(null)
                             .isActive(false)
                             .isCancelled(false)
+                            .isAccepted(true) // SIMULATE DRIVER ACCEPTANCE
                             .createdAt(LocalDateTime.now())
                             .build();
                     bookingRepository.save(booking2);

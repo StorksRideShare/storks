@@ -66,6 +66,7 @@ public class OfferService {
                 .trips("+500")
                 .bookedGroupName(offer.getDriver().getUser().getFirstName().equals("Ranidu") ? "Loku" : null)
                 .destinations(destNames)
+                .isUsingIntelligentPricing(offer.getIsUsingIntelligentPricing())
                 .build();
     }
 }

@@ -45,11 +45,17 @@ public class BookingController {
     public BookingEventDTO createBookingRequest(@RequestBody Map<String, String> payload) {
         UUID groupId = UUID.fromString(payload.get("groupId"));
         UUID offerId = UUID.fromString(payload.get("offerId"));
-        return bookingService.createBookingRequest(groupId, offerId);
+        String type = payload.get("type");
+        return bookingService.createBookingRequest(groupId, offerId, type);
     }
 
     @PutMapping("/{id}/cancel")
     public void cancelBooking(@PathVariable UUID id) {
         bookingService.cancelBooking(id);
+    }
+
+    @PutMapping("/{id}/confirm-payment")
+    public void confirmPayment(@PathVariable UUID id) {
+        bookingService.confirmPayment(id);
     }
 }

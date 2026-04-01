@@ -24,4 +24,5 @@ public class OfferDTO {
     private String trips;
     private List<String> destinations;
     private String bookedGroupName;
+    private Boolean isUsingIntelligentPricing;
 }

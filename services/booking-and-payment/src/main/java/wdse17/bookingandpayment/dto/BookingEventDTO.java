@@ -19,4 +19,8 @@ public class BookingEventDTO {
     private String date;
     private String time;
     private String location;
+    private UUID offerId;
+    private UUID groupId;
+    private Double price;
+    private String type;
 }

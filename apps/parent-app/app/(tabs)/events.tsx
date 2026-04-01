@@ -10,11 +10,12 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { LoggedParentID } from "../../logged_parent";
 import { useToast, Toast, ToastTitle } from "@/components/ui/toast";
 import { CheckCircle2, XCircle } from "lucide-react-native";
+import { router } from "expo-router";
 
 const SERVER_IP = process.env.EXPO_PUBLIC_SERVER_IP || (Platform.OS === "android" ? "10.0.2.2" : "localhost");
 const API_BASE_URL = `http://${SERVER_IP}:8080`;
 
-const EventCard = ({ id, groupName, driverName, vehicle, plate, title, description, status, onCancel }: any) => {
+const EventCard = ({ id, groupName, driverName, vehicle, plate, title, description, status, onCancel, offerId, groupId }: any) => {
   const isRequested = status === "Requested";
   const isConfirmed = status === "Confirmed";
   const isCancelled = status === "Cancelled";
@@ -54,9 +55,9 @@ const EventCard = ({ id, groupName, driverName, vehicle, plate, title, descripti
         </Text>
       </VStack>
 
-      {!isCancelled && (
+      {!isCancelled && !isConfirmed && (
         <VStack space="md">
-          {isRequested && (
+          {(isRequested || status === "Accepted") && (
             <Button 
               className="bg-red-600 h-16 rounded-full w-full" 
               onPress={() => onCancel(id)}
@@ -69,10 +70,14 @@ const EventCard = ({ id, groupName, driverName, vehicle, plate, title, descripti
 
           {status === "Accepted" && (
             <Button 
-              className="bg-[#F97316] h-20 rounded-full w-full" 
+              className="bg-[#F97316] h-16 rounded-full w-full" 
+              onPress={() => router.push({ 
+                pathname: "/(home)/booking-request", 
+                params: { bookingId: id, offerId: offerId, groupId: groupId } 
+              })}
             >
-              <ButtonText className="text-white font-bold text-2xl uppercase">
-                Confirm & Pay
+              <ButtonText className="text-white font-bold text-xl uppercase">
+                Confirm Payment
               </ButtonText>
             </Button>
           )}
@@ -170,6 +175,8 @@ export default function EventsScreen() {
             title={event.title}
             description={event.description}
             status={event.status}
+            offerId={event.offerId}
+            groupId={event.groupId}
             onCancel={handleCancel}
           />
         ))}
