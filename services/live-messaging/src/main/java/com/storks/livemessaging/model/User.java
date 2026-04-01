@@ -25,16 +25,20 @@ public abstract class User {
 
     private String email;
 
+    @Column(name = "first_name")
     private String firstName;
+    
+    @Column(name = "last_name")
     private String lastName;
 
-    @Column(nullable = false)
+    @Column(name = "provider_type", nullable = false)
     @Enumerated(EnumType.STRING)
     private ProviderType providerType;
 
-    @Column(nullable = false)
+    @Column(name = "provider_user_id", nullable = false)
     private String providerUserId;
 
+    @Column(name = "role")
     @Enumerated(EnumType.STRING)
     private RoleType role;
 
@@ -46,5 +50,6 @@ public abstract class User {
     private LocalDateTime updatedAt;
     private LocalDateTime lastLoggedIn;
 
-    private boolean isDeleted = false;
+    @Column(name = "is_deleted", nullable = false)
+    private Boolean isDeleted = false;
 }

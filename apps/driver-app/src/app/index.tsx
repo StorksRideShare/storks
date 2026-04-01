@@ -1,16 +1,19 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import * as Device from "expo-device";
+import { Platform, StyleSheet, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import MapView, { Marker, Polyline } from "react-native-maps";
+import polyline from "@mapbox/polyline";
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { AnimatedIcon } from "@/components/animated-icon";
+import { HintRow } from "@/components/hint-row";
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { WebBadge } from "@/components/web-badge";
+import { BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
+import { useEffect, useState } from "react";
 
 function getDevMenuHint() {
-  if (Platform.OS === 'web') {
+  if (Platform.OS === "web") {
     return <ThemedText type="small">use browser devtools</ThemedText>;
   }
   if (Device.isDevice) {
@@ -20,7 +23,7 @@ function getDevMenuHint() {
       </ThemedText>
     );
   }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
+  const shortcut = Platform.OS === "android" ? "cmd+m (or ctrl+m)" : "cmd+d";
   return (
     <ThemedText type="small">
       press <ThemedText type="code">{shortcut}</ThemedText>
@@ -29,68 +32,90 @@ function getDevMenuHint() {
 }
 
 export default function HomeScreen() {
+  const [coords, setCoords] = useState<any>([]);
+  const [eta, setEta] = useState('');
+
+  const fetchRoute = async () => {
+    try {
+      const response = await fetch(
+        'http://10.0.2.2:8080/api/navigation/route?origin=6.9271,79.8612&destination=6.9067,79.8707'
+      );
+      const data = await response.json();
+
+      const points = polyline.decode(data.polyline);
+      const coordsArray = points.map(point => ({
+        latitude: point[0],
+        longitude: point[1],
+      }));
+
+      setCoords(coordsArray);
+      setEta(data.duration);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    fetchRoute();
+  }, []);
+
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
-
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
-
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
+    <View style={styles.container}>
+      <MapView
+        style={{ flex: 1 }}
+        initialRegion={{
+          latitude: 6.9271,
+          longitude: 79.8612,
+          latitudeDelta: 0.05,
+          longitudeDelta: 0.05,
+        }}
+      >
+        {/* 2. Draw the route on the map */}
+        {coords.length > 0 && (
+          <Polyline 
+            coordinates={coords} 
+            strokeWidth={4} 
+            strokeColor="blue" 
           />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
-
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
+        )}
+        
+        <Marker coordinate={{ latitude: 6.9271, longitude: 79.8612 }} title="Pickup" />
+        <Marker coordinate={{ latitude: 6.9067, longitude: 79.8707 }} title="School" />
+      </MapView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
+    justifyContent: "center",
+    flexDirection: "row",
   },
   safeArea: {
     flex: 1,
     paddingHorizontal: Spacing.four,
-    alignItems: 'center',
+    alignItems: "center",
     gap: Spacing.three,
     paddingBottom: BottomTabInset + Spacing.three,
     maxWidth: MaxContentWidth,
   },
   heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     flex: 1,
     paddingHorizontal: Spacing.four,
     gap: Spacing.four,
   },
   title: {
-    textAlign: 'center',
+    textAlign: "center",
   },
   code: {
-    textTransform: 'uppercase',
+    textTransform: "uppercase",
   },
   stepContainer: {
     gap: Spacing.three,
-    alignSelf: 'stretch',
+    alignSelf: "stretch",
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.four,
     borderRadius: Spacing.four,

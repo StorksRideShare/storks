@@ -30,7 +30,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests
                         .requestMatchers("/health/**").permitAll()
                         .requestMatchers("/ping/**").permitAll()
-                        .requestMatchers("/ws/**").permitAll()
+                        .requestMatchers("/ws", "/ws/**", "/ws/info/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(

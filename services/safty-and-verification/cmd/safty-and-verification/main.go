@@ -52,7 +52,7 @@ func main() {
 
 	// Public API group using Auth Middleware
 	apiGrp := r.Group("/api/v1")
-	apiGrp.Use(middleware.AuthMiddleware(dbPool, cfg.ClerkSecretKey))
+	apiGrp.Use(middleware.AuthMiddleware(dbPool, redisClient, cfg.ClerkSecretKey))
 	
 	verificationSvc := service.NewVerificationService(dbPool, redisClient, cfg.QRSecret, kafkaProducer)
 

@@ -1,203 +1,262 @@
-import { Text } from "@/components/Themed";
-import { useSignUp } from "@clerk/expo/legacy";
+import { useSignUp } from "@clerk/expo";
 import { Link, useRouter } from "expo-router";
+import { API_BASE_URL } from "@/middleware/apiClient";
 import * as React from "react";
-import { Pressable, StyleSheet, TextInput, View } from "react-native";
+import {
+  View,
+  Text,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+} from "react-native";
+import { Box } from "@/components/ui/box";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  AuthContainer,
+  AuthLogo,
+  AuthTitle,
+  AuthDescription,
+  AuthInput,
+  AuthButton,
+  AuthError,
+} from "@/components/auth/AuthComponents";
 
 export default function Page() {
   const { isLoaded, signUp, setActive } = useSignUp();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
+  // Form States
   const [emailAddress, setEmailAddress] = React.useState("");
   const [password, setPassword] = React.useState("");
-  const [pendingVerification, setPendingVerification] = React.useState(false);
   const [code, setCode] = React.useState("");
 
-  // Handle submission of sign-up form
+  // Navigation States
+  const [pendingVerification, setPendingVerification] = React.useState(false);
+  const [showTOS, setShowTOS] = React.useState(false);
+  const [sessionId, setSessionId] = React.useState<string | null>(null);
+
+  // Loading & Error States
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+
+  // TOS State
+  const [hasScrolledToBottom, setHasScrolledToBottom] = React.useState(false);
+
   const onSignUpPress = async () => {
     if (!isLoaded) return;
+    setIsLoading(true);
+    setError(null);
 
-    // Start sign-up process using email and password provided
     try {
-      await signUp.create({
-        emailAddress,
-        password,
-      });
-
-      // Send user an email with verification code
+      await signUp.create({ emailAddress, password });
       await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
-
-      // Set 'pendingVerification' to true to display second form
-      // and capture code
       setPendingVerification(true);
-    } catch (err) {
-      // See https://clerk.com/docs/guides/development/custom-flows/error-handling
-      // for more info on error handling
-      console.error(JSON.stringify(err, null, 2));
+    } catch (err: any) {
+      setError(
+        err?.errors?.[0]?.longMessage ??
+          err?.errors?.[0]?.message ??
+          "Something went wrong.",
+      );
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // Handle submission of verification form
   const onVerifyPress = async () => {
     if (!isLoaded) return;
+    setIsLoading(true);
+    setError(null);
 
     try {
-      // Use the code the user provided to attempt verification
       const signUpAttempt = await signUp.attemptEmailAddressVerification({
         code,
       });
-
-      // If verification was completed, set the session to active
-      // and redirect the user
       if (signUpAttempt.status === "complete") {
-        await setActive({
-          session: signUpAttempt.createdSessionId,
-          navigate: async ({ session }) => {
-            if (session?.currentTask) {
-              // Check for tasks and navigate to custom UI to help users resolve them
-              // See https://clerk.com/docs/guides/development/custom-flows/authentication/session-tasks
-              console.log(session?.currentTask);
-              return;
-            }
-
-            router.replace("/");
-          },
-        });
+        setSessionId(signUpAttempt.createdSessionId);
+        setPendingVerification(false);
+        setShowTOS(true);
       } else {
-        // If the status is not complete, check why. User may need to
-        // complete further steps.
-        console.error(JSON.stringify(signUpAttempt, null, 2));
+        setError("Verification failed. Please try again.");
       }
-    } catch (err) {
-      // See https://clerk.com/docs/guides/development/custom-flows/error-handling
-      // for more info on error handling
-      console.error(JSON.stringify(err, null, 2));
+    } catch (err: any) {
+      setError(
+        err?.errors?.[0]?.longMessage ??
+          err?.errors?.[0]?.message ??
+          "Invalid code.",
+      );
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  if (pendingVerification) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.title}>Verify your email</Text>
-        <Text style={styles.description}>
-          A verification code has been sent to your email.
-        </Text>
-        <TextInput
-          style={styles.input}
-          value={code}
-          placeholder="Enter your verification code"
-          placeholderTextColor="#666666"
-          onChangeText={(code) => setCode(code)}
-          keyboardType="numeric"
-        />
-        <Pressable
-          style={({ pressed }) => [
-            styles.button,
-            pressed && styles.buttonPressed,
-          ]}
-          onPress={onVerifyPress}
-        >
-          <Text style={styles.buttonText}>Verify</Text>
-        </Pressable>
-      </View>
-    );
-  }
+  const onAcceptTOS = async () => {
+    if (!isLoaded || !sessionId) return;
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      await setActive({ session: sessionId });
+      router.replace("/");
+    } catch (err: any) {
+      setError(
+        err?.errors?.[0]?.longMessage ??
+          err?.errors?.[0]?.message ??
+          "Something went wrong.",
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Sign up</Text>
-      <Text style={styles.label}>Email address</Text>
-      <TextInput
-        style={styles.input}
-        autoCapitalize="none"
-        value={emailAddress}
-        placeholder="Enter email"
-        placeholderTextColor="#666666"
-        onChangeText={(email) => setEmailAddress(email)}
-        keyboardType="email-address"
-      />
-      <Text style={styles.label}>Password</Text>
-      <TextInput
-        style={styles.input}
-        value={password}
-        placeholder="Enter password"
-        placeholderTextColor="#666666"
-        secureTextEntry={true}
-        onChangeText={(password) => setPassword(password)}
-      />
-      <Pressable
-        style={({ pressed }) => [
-          styles.button,
-          (!emailAddress || !password) && styles.buttonDisabled,
-          pressed && styles.buttonPressed,
-        ]}
-        onPress={onSignUpPress}
-        disabled={!emailAddress || !password}
+    <AuthContainer
+      style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}
+    >
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{ flex: 1 }}
       >
-        <Text style={styles.buttonText}>Continue</Text>
-      </Pressable>
-      <View style={styles.linkContainer}>
-        <Text>Have an account? </Text>
-        <Link
-          href={{
-            pathname: "/signin",
-          }}
-        >
-          <Text>Sign in</Text>
-        </Link>
-      </View>
-    </View>
+        <AuthLogo />
+
+        {showTOS ? (
+          <View style={styles.tosContainer}>
+            <Text style={styles.tosHeader}>
+              We've confirmed that you're real! Let's take the next step
+            </Text>
+            <Text style={styles.tosDescription}>
+              Storks thrives to be a platform where trust, credibility and
+              safety becomes synonyms.
+            </Text>
+            <AuthError message={error} />
+            <View style={styles.tosBox}>
+              <ScrollView
+                onScroll={(e) => {
+                  const { layoutMeasurement, contentOffset, contentSize } =
+                    e.nativeEvent;
+                  if (
+                    layoutMeasurement.height + contentOffset.y >=
+                    contentSize.height - 20
+                  )
+                    setHasScrolledToBottom(true);
+                }}
+                scrollEventThrottle={16}
+              >
+                <Text style={styles.tosText}>
+                  Lorem ipsum dolor sit amet consectetur adipiscing elit...
+                  (Terms and Conditions content)
+                </Text>
+              </ScrollView>
+            </View>
+            <AuthButton
+              title={
+                hasScrolledToBottom ? "Accept" : "Scroll to bottom to accept"
+              }
+              onPress={onAcceptTOS}
+              isLoading={isLoading}
+              disabled={!hasScrolledToBottom}
+              variant="tos"
+            />
+          </View>
+        ) : pendingVerification ? (
+          <View
+            style={{ flex: 1, justifyContent: "center", paddingHorizontal: 32 }}
+          >
+            <AuthTitle>Verify your email</AuthTitle>
+            <AuthDescription>
+              A verification code has been sent to your email.
+            </AuthDescription>
+            <AuthError message={error} />
+            <AuthInput
+              value={code}
+              placeholder="Enter verification code"
+              onChangeText={setCode}
+              keyboardType="numeric"
+            />
+            <AuthButton
+              title="Verify"
+              onPress={onVerifyPress}
+              isLoading={isLoading}
+              disabled={!code}
+            />
+          </View>
+        ) : (
+          <ScrollView
+            contentContainerStyle={{ flexGrow: 1 }}
+            keyboardShouldPersistTaps="handled"
+          >
+            <View style={{ flex: 1, paddingHorizontal: 32, paddingTop: 80 }}>
+              <AuthTitle>Lets Get Started</AuthTitle>
+              <AuthError message={error} />
+              <AuthInput
+                placeholder="Email"
+                value={emailAddress}
+                onChangeText={setEmailAddress}
+                keyboardType="email-address"
+              />
+              <AuthInput
+                placeholder="Password"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+              />
+              <AuthButton
+                title="Continue"
+                onPress={onSignUpPress}
+                isLoading={isLoading}
+                disabled={!emailAddress || !password}
+              />
+              <Link href="/signin" asChild>
+                <AuthButton
+                  title="Already have an account?"
+                  onPress={() => {}}
+                  variant="secondary"
+                />
+              </Link>
+            </View>
+          </ScrollView>
+        )}
+      </KeyboardAvoidingView>
+    </AuthContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  tosContainer: {
     flex: 1,
-    padding: 20,
-    gap: 12,
+    paddingHorizontal: 32,
+    paddingTop: 60,
+    paddingBottom: 40,
   },
-  title: {
-    marginBottom: 8,
+  tosHeader: {
+    fontFamily: "Syne_600SemiBold",
+    color: "#E66B00",
+    fontSize: 20,
+    textAlign: "center",
+    lineHeight: 28,
+    marginBottom: 30,
   },
-  description: {
+  tosDescription: {
+    fontFamily: "Syne_400Regular",
+    color: "#FFFFFF",
     fontSize: 14,
-    marginBottom: 16,
-    opacity: 0.8,
+    textAlign: "center",
+    lineHeight: 22,
+    marginBottom: 20,
   },
-  label: {
-    fontWeight: "600",
-    fontSize: 14,
-  },
-  input: {
+  tosBox: {
+    flex: 1,
     borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    backgroundColor: "#fff",
+    borderColor: "#E66B00",
+    borderRadius: 24,
+    padding: 20,
+    marginBottom: 30,
   },
-  button: {
-    backgroundColor: "#0a7ea4",
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-    alignItems: "center",
-    marginTop: 8,
-  },
-  buttonPressed: {
-    opacity: 0.7,
-  },
-  buttonDisabled: {
-    opacity: 0.5,
-  },
-  buttonText: {
-    color: "#fff",
-    fontWeight: "600",
-  },
-  linkContainer: {
-    flexDirection: "row",
-    gap: 4,
-    marginTop: 12,
-    alignItems: "center",
+  tosText: {
+    fontFamily: "Syne_400Regular",
+    color: "#FFFFFF",
+    fontSize: 15,
+    lineHeight: 24,
   },
 });

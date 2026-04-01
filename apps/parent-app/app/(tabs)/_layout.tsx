@@ -1,42 +1,82 @@
-import { Link, Tabs } from "expo-router";
+import { useAuth } from "@clerk/expo";
+import { Link, Redirect, Tabs } from "expo-router";
 import { SymbolView } from "expo-symbols";
 import { Home, MessageCircle } from "lucide-react-native";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Pressable } from "react-native";
 
 import { useClientOnlyValue } from "@/components/useClientOnlyValue";
 import { useColorScheme } from "@/components/useColorScheme";
 import Colors from "@/constants/Colors";
+import LoadingScreen from "@/components/LoadingScreen";
+import { API_BASE_URL } from "@/middleware/apiClient";
+import type { AuthStatus } from "@/utils/api";
 
 export default function TabLayout() {
+  // ── All hooks at the top ──────────────────────────────────────
   const colorScheme = useColorScheme();
-  const colors = Colors.dark;
+  const headerShown = useClientOnlyValue(false, true);
+
+  // useAuth is safe here — ClerkProvider wraps the entire app
+  const { isSignedIn, getToken } = useAuth();
+
+  const [checking, setChecking] = useState(true);
+  const [isOnboarded, setIsOnboarded] = useState(false);
+  const [isBanned, setIsBanned] = useState(false);
+
+  useEffect(() => {
+    if (!isSignedIn) {
+      setChecking(false);
+      return;
+    }
+
+    const check = async () => {
+      try {
+        const token = await getToken();
+        if (!token) {
+          setChecking(false);
+          return;
+        }
+
+        // Plain fetch with the Clerk token — avoids useSession ordering issues
+        const res = await fetch(`${API_BASE_URL}/api/auth/status`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (!res.ok) throw new Error(`${res.status}`);
+
+        const status: AuthStatus = await res.json();
+        setIsOnboarded(status.isOnboarded);
+        setIsBanned(status.isBanned);
+      } catch {
+        setIsOnboarded(false);
+      } finally {
+        setChecking(false);
+      }
+    };
+
+    check();
+  }, [isSignedIn]);
+
+  // ── Conditional returns AFTER all hooks ───────────────────────
+
+  if (checking) return <LoadingScreen message="Loading..." />;
+  if (!isSignedIn) return <Redirect href="/(auth)/signin" />;
+  if (isBanned) return <Redirect href="/banned" />;
+  if (!isOnboarded) return <Redirect href="/onboarding" />;
 
   return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: Colors[colorScheme].tint,
-        // Disable the static render of the header on web
-        // to prevent a hydration error in React Navigation v6.
-        headerShown: useClientOnlyValue(false, true),
+        headerShown,
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
           title: "Home",
-          tabBarIcon: ({ color }) => (
-            // <SymbolView
-            //   name={{
-            //     ios: "chevron.left.forwardslash.chevron.right",
-            //     android: "code",
-            //     web: "code",
-            //   }}
-            //   tintColor={color}
-            //   size={28}
-            // />
-            <Home color={color} size={24} />
-          ),
+          tabBarIcon: ({ color }) => <Home color={color} size={24} />,
           headerRight: () => (
             <Link href="/modal" asChild>
               <Pressable style={{ marginRight: 15 }}>
@@ -58,6 +98,20 @@ export default function TabLayout() {
         options={{
           title: "Messages",
           tabBarIcon: ({ color }) => <MessageCircle color={color} size={24} />,
+        }}
+      />
+      <Tabs.Screen
+        name="verify"
+        options={{
+          title: "Verify",
+          tabBarIcon: ({ color }) => <ShieldCheck color={color} size={24} />,
+        }}
+      />
+      <Tabs.Screen
+        name="events"
+        options={{
+          title: "Events",
+          tabBarIcon: ({ color }) => <CalendarRange color={color} size={24} />,
         }}
       />
     </Tabs>

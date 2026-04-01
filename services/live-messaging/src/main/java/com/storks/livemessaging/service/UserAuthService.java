@@ -8,8 +8,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
-import java.util.UUID;
-
 @Service
 @RequiredArgsConstructor
 public class UserAuthService {
@@ -18,8 +16,7 @@ public class UserAuthService {
     @Cacheable(value = "userClaims", key = "#providerUserId")
     public UserAuthClaim getUserById(String providerUserId) throws IllegalArgumentException, InvalidUserIdException {
         try {
-            UUID id = UUID.fromString(providerUserId);
-            return userRepository.findByProviderUserId(id)
+            return userRepository.findByProviderUserId(providerUserId)
                     .map(this::toUserAuthClaim)
                     .orElseThrow(() -> new IllegalArgumentException("User not found"));
         }
@@ -30,6 +27,6 @@ public class UserAuthService {
     }
 
     private UserAuthClaim toUserAuthClaim(AuthUser user) {
-        return new UserAuthClaim(user.getProviderUserId(), user.getEmail(), user.isDeleted(), user.getUserId());
+        return new UserAuthClaim(user.getProviderUserId(), user.getEmail(), Boolean.TRUE.equals(user.getIsDeleted()), user.getUserId());
     }
 }
