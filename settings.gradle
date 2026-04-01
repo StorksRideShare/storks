@@ -1,0 +1,21 @@
+rootProject.name = 'storks'
+
+include 'libs:common'
+include 'libs:configs'
+include 'libs:events'
+
+include 'services:admin-and-analytics'
+include 'services:booking-and-payment'
+include 'services:live-messaging'
+include 'services:matching-intelligence'
+include 'services:user-service'
+
+project(':libs:common').projectDir = file('libs/common')
+project(':libs:configs').projectDir = file('libs/configs')
+project(':libs:events').projectDir = file('libs/events')
+
+project(':services:admin-and-analytics').projectDir = file('services/admin-and-analytics')
+project(':services:booking-and-payment').projectDir = file('services/booking-and-payment')
+project(':services:live-messaging').projectDir = file('services/live-messaging')
+project(':services:matching-intelligence').projectDir = file('services/matching-intelligence')
+project(':services:user-service').projectDir = file('services/user-service')

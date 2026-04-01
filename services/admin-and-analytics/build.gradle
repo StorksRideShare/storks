@@ -29,6 +29,9 @@ repositories {
 }
 
 dependencies {
+    implementation "com.storks:common:0.0.1-SNAPSHOT"
+    implementation "com.storks:configs:0.0.1-SNAPSHOT"
+    implementation "com.storks:events:0.0.1-SNAPSHOT"
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'

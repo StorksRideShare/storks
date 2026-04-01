@@ -1,0 +1,4 @@
+rootProject.name = 'storks-libs'
+include 'common'
+include 'configs'
+include 'events'
