@@ -22,6 +22,7 @@
     "@stomp/stompjs": "^7.3.0",
     "buffer": "^6.0.3",
     "expo": "^55.0.9",
+    "expo-auth-session": "~55.0.10",
     "expo-camera": "^55.0.11",
     "expo-constants": "~55.0.7",
     "expo-font": "~55.0.4",

@@ -18,8 +18,11 @@ public class CorsConfig {
         // Allow your Expo web app
         config.setAllowedOrigins(List.of(
             "http://localhost:8081",   // Expo web
+            "http://localhost:8082",   // Expo web (fallback port)
+            "http://localhost:8083",   // Expo web (fallback port)
             "http://localhost:19006",  // Expo web (older versions)
-            "http://10.0.2.2:8081"    // Android emulator
+            "http://10.0.2.2:8081",   // Android emulator
+            "http://10.0.2.2:8082"    // Android emulator (fallback port)
         ));
 
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));

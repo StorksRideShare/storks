@@ -1,5 +1,6 @@
 import { useAuth } from "@clerk/expo";
 import { useRouter } from "expo-router";
+import { API_BASE_URL } from "@/middleware/apiClient";
 import { useFonts } from "expo-font";
 import {
   Syne_400Regular,
@@ -23,8 +24,7 @@ import {
   Dimensions,
 } from "react-native";
 import Svg, { Path, Circle } from "react-native-svg";
-import { useApiClient } from "@/middleware/apiClient";
-import type { SecondaryPhone, OnboardingPayload, OnboardingResponse } from "@/utils/api";
+import type { SecondaryPhone, OnboardingPayload } from "@/utils/api";
 
 const { width } = Dimensions.get("window");
 
@@ -90,7 +90,6 @@ function formatDateInput(raw: string): string {
 export default function OnboardingPage() {
   const { getToken } = useAuth();
   const router = useRouter();
-  const api = useApiClient();
 
   const [fontsLoaded] = useFonts({ Syne_400Regular, Syne_600SemiBold, Syne_700Bold });
 
@@ -158,20 +157,35 @@ export default function OnboardingPage() {
   setIsLoading(true);
   setError(null);
   try {
-    await api.post<OnboardingResponse>("/api/onboarding/complete", {
-      firstName:         firstName.trim(),
-      lastName:          lastName.trim(),
-      dateOfBirth,
-      primaryCountryCode,
-      primaryNumber:     primaryNumber.trim(),
-      secondaryNumbers:  secondaryNumbers.filter(s => s.number.trim().length > 0),
-      profilePictureUrl: profilePictureUri ?? null,
-    } satisfies OnboardingPayload);
+    const token = await getToken();
+    if (!token) throw new Error("Not authenticated");
+
+    const res = await fetch(`${API_BASE_URL}/api/onboarding/complete`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        firstName:         firstName.trim(),
+        lastName:          lastName.trim(),
+        dateOfBirth,
+        primaryCountryCode,
+        primaryNumber:     primaryNumber.trim(),
+        secondaryNumbers:  secondaryNumbers.filter(s => s.number.trim().length > 0),
+        profilePictureUrl: profilePictureUri ?? null,
+      } satisfies OnboardingPayload),
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`${res.status}: ${text}`);
+    }
 
     setStep(3);
   } catch (err: any) {
     setError("Something went wrong. Please try again.");
-    console.error(err);
+    console.error("[Onboarding] Error:", err);
   } finally {
     setIsLoading(false);
   }

@@ -33,10 +33,14 @@ export default function SignInPage() {
   // Form States
   const [emailAddress, setEmailAddress] = React.useState("");
   const [password, setPassword] = React.useState("");
+  const [secondFactorCode, setSecondFactorCode] = React.useState("");
 
   // Loading & Error States
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+
+  // Navigation States
+  const [pendingSecondFactor, setPendingSecondFactor] = React.useState(false);
 
   const onSignInPress = async () => {
     if (!isLoaded) return;
@@ -50,9 +54,21 @@ export default function SignInPage() {
       });
 
       if (result.status === "complete") {
-        await setActive({ session: result.createdSessionId });
-        router.replace("/");
+        await setActive({
+          session: result.createdSessionId,
+          navigate: async ({ session }) => {
+            if (session?.currentTask) {
+              console.log("Session task required:", session.currentTask);
+              return;
+            }
+            router.replace("/");
+          },
+        });
+      } else if (result.status === "needs_second_factor") {
+        await signIn.prepareSecondFactor({ strategy: "email_code" });
+        setPendingSecondFactor(true);
       } else {
+        console.error("Sign in status:", result.status, JSON.stringify(result, null, 2));
         setError("Sign in failed. Please try again.");
       }
     } catch (err: any) {
@@ -67,8 +83,107 @@ export default function SignInPage() {
     }
   };
 
+  const onVerifySecondFactor = async () => {
+    if (!isLoaded) return;
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const result = await signIn.attemptSecondFactor({
+        strategy: "email_code",
+        code: secondFactorCode,
+      });
+
+      if (result.status === "complete") {
+        await setActive({
+          session: result.createdSessionId,
+          navigate: async ({ session }) => {
+            if (session?.currentTask) {
+              console.log("Session task required:", session.currentTask);
+              return;
+            }
+            router.replace("/");
+          },
+        });
+      } else {
+        console.error("Second factor status:", result.status, JSON.stringify(result, null, 2));
+        setError("Verification failed. Please try again.");
+      }
+    } catch (err: any) {
+      console.error(JSON.stringify(err, null, 2));
+      const message =
+        err?.errors?.[0]?.longMessage ??
+        err?.errors?.[0]?.message ??
+        "Invalid code. Please try again.";
+      setError(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   if (!fontsLoaded) return null;
 
+  // ------------------------------------------------------------------
+  // UI: SECOND FACTOR — EMAIL VERIFICATION
+  // ------------------------------------------------------------------
+  if (pendingSecondFactor) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.keyboardView}
+        >
+          <View style={styles.logoContainer}>
+            <Text style={styles.logoText}>
+              <Text style={styles.logoHighlight}>S</Text>torks
+            </Text>
+          </View>
+
+          <View style={styles.verificationContainer}>
+            <Text style={styles.title}>Check your email</Text>
+            <Text style={styles.description}>
+              We sent a verification code to{"\n"}{emailAddress}
+            </Text>
+
+            {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+            <TextInput
+              style={styles.input}
+              value={secondFactorCode}
+              placeholder="Enter verification code"
+              placeholderTextColor="#7A726E"
+              onChangeText={(val) => {
+                setSecondFactorCode(val);
+                setError(null);
+              }}
+              keyboardType="numeric"
+              autoFocus
+            />
+
+            <TouchableOpacity
+              style={[
+                styles.primaryButton,
+                (!secondFactorCode || isLoading) && styles.buttonDisabled,
+              ]}
+              activeOpacity={0.8}
+              onPress={onVerifySecondFactor}
+              disabled={!secondFactorCode || isLoading}
+            >
+              {isLoading ? (
+                <ActivityIndicator color="#000000" />
+              ) : (
+                <Text style={styles.primaryButtonText}>Verify</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    );
+  }
+
+  // ------------------------------------------------------------------
+  // UI: MAIN SIGN IN
+  // ------------------------------------------------------------------
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
@@ -183,12 +298,25 @@ const styles = StyleSheet.create({
     paddingTop: 80,
     paddingBottom: 40,
   },
+  verificationContainer: {
+    flex: 1,
+    justifyContent: "center",
+    paddingHorizontal: 32,
+  },
   title: {
     fontFamily: "Syne_400Regular",
     fontSize: 18,
     color: "#FFFFFF",
     textAlign: "center",
     marginBottom: 48,
+  },
+  description: {
+    fontFamily: "Syne_400Regular",
+    fontSize: 14,
+    color: "#7A726E",
+    textAlign: "center",
+    marginBottom: 32,
+    lineHeight: 20,
   },
   errorText: {
     fontFamily: "Syne_400Regular",

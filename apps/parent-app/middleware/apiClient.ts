@@ -4,18 +4,20 @@ import { Platform } from "react-native";
 
 // ------------------------------------------------------------------
 // Environment-aware URLs
-// Port 8080 = Spring Boot admin-and-analytics service
-// Use EXPO_PUBLIC_API_BASE_URL in .env to override (recommended)
+// Port 8081 = user-service (auth, onboarding, profile)
+// iOS simulator / Expo web: set EXPO_PUBLIC_API_BASE_URL=http://localhost:8081
+// Android emulator:         set EXPO_PUBLIC_API_BASE_URL=http://10.0.2.2:8081
+//   (or remove the env var to let the platform fallback below take effect)
 // ------------------------------------------------------------------
 const CONFIG = {
   development: {
     apiUrl:
       process.env.EXPO_PUBLIC_API_BASE_URL ??
-      (Platform.OS === "android" ? "http://10.0.2.2:8080" : "http://localhost:8080"),
+      (Platform.OS === "android" ? "http://10.0.2.2:8081" : "http://localhost:8081"),
     wsUrl:
       Platform.OS === "android"
-        ? "ws://10.0.2.2:8080/ws"
-        : "ws://localhost:8080/ws",
+        ? "ws://10.0.2.2:8081/ws"
+        : "ws://localhost:8081/ws",
     verificationUrl:
       Platform.OS === "android"
         ? "http://10.0.2.2:8085"

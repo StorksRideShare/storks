@@ -1,5 +1,6 @@
 import { useSignUp } from "@clerk/expo/legacy";
 import { Link, useRouter } from "expo-router";
+import { API_BASE_URL } from "@/middleware/apiClient";
 import * as React from "react";
 import {
   Syne_400Regular,
@@ -120,7 +121,21 @@ export default function Page() {
             console.log(session?.currentTask);
             return;
           }
-          router.replace("/");
+
+          const token = await session?.getToken();
+          if (!token) throw new Error("Not authenticated");
+
+          const res = await fetch(`${API_BASE_URL}/api/users/init`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ email: emailAddress, roleType: "PARENT" }),
+          });
+          if (!res.ok) throw new Error(`Init failed: ${res.status}`);
+
+          router.replace("/(tabs)");
         },
       });
     } catch (err: any) {
