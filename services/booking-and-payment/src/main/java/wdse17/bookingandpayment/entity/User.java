@@ -28,6 +28,12 @@ public class User {
     @Column(name = "user_type")
     private String userType;
 
+    @Column(name = "provider_user_id", unique = true)
+    private String providerUserId;
+
+    @Column(name = "is_deleted")
+    private boolean isDeleted = false;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 }

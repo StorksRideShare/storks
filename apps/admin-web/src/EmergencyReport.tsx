@@ -1,6 +1,6 @@
 // apps/admin-web/src/components/EmergencyReport.tsx
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import { getApiClient } from '../apiClient';
 
 interface Alert {
   alertType: string;
@@ -14,10 +14,9 @@ const EmergencyReport = () => {
   const [alerts, setAlerts] = useState<Alert[]>([]);
 
   const fetchAlerts = async () => {
-    const res = await axios.get('http://localhost:8081/api/emergency/report', {
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-    });
-    setAlerts(res.data);
+    const apiClient = getApiClient("booking-and-payment");
+    const data = await apiClient.get<Alert[]>('/api/emergency/report');
+    setAlerts(data);
   };
 
   useEffect(() => {

@@ -2,23 +2,37 @@ import { useSession } from "@clerk/expo";
 import { useMemo } from "react";
 import { Platform } from "react-native";
 
-const CONFIG = {
-  development: {
-    apiUrl: Platform.OS === "android" ? "http://10.0.2.2:8089" : "http://localhost:8089",
-    wsUrl: Platform.OS === "android" ? "ws://10.0.2.2:8089/ws" : "ws://localhost:8089/ws",
-    verificationUrl: Platform.OS === "android" ? "http://10.0.2.2:8085" : "http://localhost:8085",
-  },
-  production: {
-    apiUrl: "https://example.com:8085", // Update with real production URL
-    wsUrl: "wss://example.com:8085/ws",
-    verificationUrl: "https://example.com:8085", // Update with real production URL
-  },
+export type ServiceName = 
+  | "admin-and-analytics"
+  | "booking-and-payment"
+  | "location-and-navigation"
+  | "user-service"
+  | "matching-searching"
+  | "live-messaging"
+  | "safty-and-verification"
+  | "available-8086"
+  | "available-8087"
+  | "available-8088";
+
+const SERVICE_PORTS: Record<ServiceName, number> = {
+  "admin-and-analytics": 8080,
+  "booking-and-payment": 8081,
+  "location-and-navigation": 8082,
+  "user-service": 8083,
+  "matching-searching": 8084,
+  "live-messaging": 8085,
+  "available-8086": 8086,
+  "available-8087": 8087,
+  "available-8088": 8088,
+  "safty-and-verification": 8089,
 };
 
-const ENV = __DEV__ ? "development" : "production";
-export const API_BASE_URL = CONFIG[ENV].apiUrl;
-export const WS_BASE_URL = CONFIG[ENV].wsUrl;
-export const VERIFICATION_API_BASE_URL = CONFIG[ENV].verificationUrl;
+const getBaseUrl = (port: number) => {
+  if (!__DEV__) {
+    return `https://example.com:${port}`;
+  }
+  return Platform.OS === "android" ? `http://10.0.2.2:${port}` : `http://localhost:${port}`;
+};
 
 export type ApiClient = {
   get: <T>(path: string) => Promise<T>;
@@ -65,9 +79,11 @@ export function createApiClient(getToken: () => Promise<string | null>, baseUrl:
   };
 }
 
-export function useApiClient(isVerification = false) {
+export function useApiClient(service: ServiceName = "safty-and-verification") {
   const { session } = useSession();
-  const baseUrl = isVerification ? VERIFICATION_API_BASE_URL : API_BASE_URL;
-  return useMemo(() => createApiClient(() => session?.getToken() ?? Promise.resolve(null), baseUrl), [session, isVerification]);
+  const port = SERVICE_PORTS[service];
+  const baseUrl = getBaseUrl(port);
+  
+  return useMemo(() => createApiClient(() => session?.getToken() ?? Promise.resolve(null), baseUrl), [session, service, baseUrl]);
 }
 

@@ -30,6 +30,12 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private String passwordHash;
 
+    @Column(unique = true)
+    private String providerUserId; // For Clerk/external auth
+
+    @Column(nullable = false)
+    private boolean isDeleted = false;
+
     @Enumerated(EnumType.STRING)
     private Role role;  // enum: PARENT, DRIVER, ADMIN
 
@@ -56,6 +62,22 @@ public class User implements UserDetails {
 
     public void setPasswordHash(String passwordHash) {
         this.passwordHash = passwordHash;
+    }
+
+    public String getProviderUserId() {
+        return providerUserId;
+    }
+
+    public void setProviderUserId(String providerUserId) {
+        this.providerUserId = providerUserId;
+    }
+
+    public boolean isDeleted() {
+        return isDeleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        isDeleted = deleted;
     }
 
     public Role getRole() {
