@@ -25,7 +25,6 @@ public class ChatRoomService {
     private final ChatRoomParticipantRepository chatRoomParticipantRepository;
     private final ChatRoomRepository chatRoomRepository;
     private final UserRepository userRepository;
-    private final com.storks.livemessaging.repositories.MessageRepository messageRepository;
 
     public List<ChatRoom> getUserActiveRooms(UUID userId) {
         List<ChatRoomParticipant> participants = chatRoomParticipantRepository.findByUser_UserIdAndIsRemovedFalse(userId);
@@ -87,59 +86,6 @@ public class ChatRoomService {
         chatRoomParticipantRepository.save(participant);
     }
 
-    @Transactional
-    public ChatRoom createGroupChat(UUID offerId, UUID driverId) {
-        return chatRoomRepository.findByOffer_OfferId(offerId)
-                .orElseGet(() -> {
-                    ChatRoom room = new ChatRoom();
-                    room.setChatRoomType(RoomType.GROUP);
-                    room.setCreatedAt(OffsetDateTime.now());
-                    room.setUpdatedAt(OffsetDateTime.now());
-                    
-                    com.storks.livemessaging.model.Offer offer = new com.storks.livemessaging.model.Offer();
-                    offer.setOfferId(offerId);
-                    room.setOffer(offer);
-                    
-                    room = chatRoomRepository.save(room);
-
-                    User driver = userRepository.findById(driverId).orElseThrow();
-                    createParticipant(room, driver);
-
-                    return room;
-                });
-    }
-
-    @Transactional
-    public void addParticipantToOfferGroup(UUID offerId, UUID userId) {
-        ChatRoom room = chatRoomRepository.findByOffer_OfferId(offerId)
-                .orElseThrow(() -> new IllegalArgumentException("No chat room found for offer: " + offerId));
-        
-        User user = userRepository.findById(userId).orElseThrow();
-        
-        chatRoomParticipantRepository.findByRoomAndUser(room.getRoomId(), userId)
-                .ifPresentOrElse(
-                        p -> {
-                            if (p.isRemoved()) {
-                                p.setRemoved(false);
-                                chatRoomParticipantRepository.save(p);
-                            }
-                        },
-                        () -> createParticipant(room, user)
-                );
-    }
-
-    @Transactional
-    public void removeParticipantFromOfferGroup(UUID offerId, UUID userId) {
-        ChatRoom room = chatRoomRepository.findByOffer_OfferId(offerId)
-                .orElseThrow(() -> new IllegalArgumentException("No chat room found for offer: " + offerId));
-        
-        chatRoomParticipantRepository.findByRoomAndUser(room.getRoomId(), userId)
-                .ifPresent(p -> {
-                    p.setRemoved(true);
-                    chatRoomParticipantRepository.save(p);
-                });
-    }
-
     public ChatRoomResponse toResponse(ChatRoom room) {
         List<ChatRoomParticipant> participants = chatRoomParticipantRepository.findByRoom_RoomId(room.getRoomId());
         
@@ -155,39 +101,12 @@ public class ChatRoomService {
                 ))
                 .collect(Collectors.toList());
 
-        String roomName = null;
-        if (room.getChatRoomType() == RoomType.GROUP && room.getOffer() != null) {
-            // Find driver
-            roomName = participants.stream()
-                    .filter(p -> p.getUser().getRole() == com.storks.livemessaging.model.types.RoleType.DRIVER)
-                    .findFirst()
-                    .map(p -> p.getUser().getFirstName() + "'s parents")
-                    .orElse("Group Chat");
-        }
-
-        String lastMessageContent = null;
-        OffsetDateTime lastMessageSentAt = null;
-
-        org.springframework.data.domain.Page<com.storks.livemessaging.model.Message> lastMessagePage = 
-            messageRepository.findByRoom_RoomIdAndIsDeletedFalseOrderBySentAtDesc(
-                room.getRoomId(), 
-                org.springframework.data.domain.PageRequest.of(0, 1)
-            );
-
-        if (!lastMessagePage.isEmpty()) {
-            com.storks.livemessaging.model.Message lastMessage = lastMessagePage.getContent().get(0);
-            lastMessageContent = lastMessage.getContent();
-            lastMessageSentAt = lastMessage.getSentAt();
-        }
-
         return new ChatRoomResponse(
                 room.getRoomId(),
                 room.getChatRoomType(),
                 participantDTOs,
                 room.getCreatedAt(),
-                room.getUpdatedAt(),
-                lastMessageContent,
-                lastMessageSentAt
+                room.getUpdatedAt()
         );
     }
 
