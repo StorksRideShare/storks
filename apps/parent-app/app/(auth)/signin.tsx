@@ -1,5 +1,5 @@
-import { useSignIn } from "@clerk/expo/legacy";
-import type { EmailCodeFactor } from "@clerk/shared/types";
+import { useSignIn } from "@clerk/clerk-expo";
+import type { EmailCodeFactor } from "@clerk/types";
 import { Link, useRouter } from "expo-router";
 import * as React from "react";
 import {
@@ -14,12 +14,11 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  SafeAreaView,
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
 } from "react-native";
-
-import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Page() {
   const { signIn, setActive, isLoaded } = useSignIn();

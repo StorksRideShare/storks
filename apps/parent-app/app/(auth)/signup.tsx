@@ -1,4 +1,4 @@
-import { useSignUp } from "@clerk/expo/legacy";
+import { useSignUp } from "@clerk/clerk-expo";
 import { Link, useRouter } from "expo-router";
 import * as React from "react";
 import {
@@ -13,6 +13,7 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  SafeAreaView,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -20,8 +21,6 @@ import {
   NativeSyntheticEvent,
   NativeScrollEvent,
 } from "react-native";
-
-import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Page() {
   const { isLoaded, signUp, setActive } = useSignUp();
