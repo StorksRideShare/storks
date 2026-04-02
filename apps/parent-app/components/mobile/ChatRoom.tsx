@@ -1,4 +1,5 @@
 import SystemNotification from "@/components/mobile/SystemNotification";
+import { useNotify } from "@/components/mobile/Notify";
 import {
   Avatar,
   AvatarFallbackText,
@@ -38,6 +39,7 @@ export default function ChatRoom() {
   const { user } = useUser();
   const { session } = useSession();
   const api = useApiClient();
+  const notify = useNotify();
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [room, setRoom] = useState<any>(null);
@@ -97,8 +99,9 @@ export default function ChatRoom() {
           };
         })
       );
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to fetch history:", error);
+      notify.error("Connection Error", "Failed to load chat history. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -175,6 +178,7 @@ export default function ChatRoom() {
       },
       (err) => {
         console.error("STOMP connection error:", err);
+        notify.warning("Disconnected", "Real-time updates are unavailable.");
         setIsConnected(false);
       }
     );
@@ -208,6 +212,7 @@ export default function ChatRoom() {
       stompClient.current.sendMessage(id, trimmed);
     } catch (error) {
       console.error("Failed to send message:", error);
+      notify.error("Send Error", "Your message couldn't be sent.");
       setMessages((prev) => prev.filter((m) => m.messageId !== tempId));
     }
   };
@@ -320,8 +325,6 @@ export default function ChatRoom() {
     );
   };
 
-  // ── UI ──────────────────────────────────────────────────────────────────────
-
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       {/* Header */}
@@ -345,6 +348,7 @@ export default function ChatRoom() {
         </Link>
       </HStack>
 
+      {/* Messages */}
       <View style={{ flex: 1 }}>
         {loading ? (
           <Box className="flex-1 items-center justify-center">
