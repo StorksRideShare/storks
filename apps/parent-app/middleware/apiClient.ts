@@ -6,19 +6,16 @@ const CONFIG = {
   development: {
     apiUrl: Platform.OS === "android" ? "http://10.0.2.2:8089" : "http://localhost:8089",
     wsUrl: Platform.OS === "android" ? "ws://10.0.2.2:8089/ws" : "ws://localhost:8089/ws",
-    verificationUrl: Platform.OS === "android" ? "http://10.0.2.2:8085" : "http://localhost:8085",
   },
   production: {
     apiUrl: "https://example.com:8085", // Update with real production URL
     wsUrl: "wss://example.com:8085/ws",
-    verificationUrl: "https://example.com:8085", // Update with real production URL
   },
 };
 
 const ENV = __DEV__ ? "development" : "production";
 export const API_BASE_URL = CONFIG[ENV].apiUrl;
 export const WS_BASE_URL = CONFIG[ENV].wsUrl;
-export const VERIFICATION_API_BASE_URL = CONFIG[ENV].verificationUrl;
 
 export type ApiClient = {
   get: <T>(path: string) => Promise<T>;
@@ -27,7 +24,7 @@ export type ApiClient = {
   delete: <T>(path: string) => Promise<T>;
 };
 
-export function createApiClient(getToken: () => Promise<string | null>, baseUrl: string): ApiClient {
+export function createApiClient(getToken: () => Promise<string | null>): ApiClient {
   const request = async <T>(path: string, options: RequestInit = {}): Promise<T> => {
     const token = await getToken();
     const headers = {
@@ -36,7 +33,7 @@ export function createApiClient(getToken: () => Promise<string | null>, baseUrl:
       ...(options.headers || {}),
     };
 
-    const url = path.startsWith("http") ? path : `${baseUrl}${path}`;
+    const url = path.startsWith("http") ? path : `${API_BASE_URL}${path}`;
     console.log(`API REQUEST: ${options.method || "GET"} ${url}`);
     
     try {
@@ -65,9 +62,8 @@ export function createApiClient(getToken: () => Promise<string | null>, baseUrl:
   };
 }
 
-export function useApiClient(isVerification = false) {
+export function useApiClient() {
   const { session } = useSession();
-  const baseUrl = isVerification ? VERIFICATION_API_BASE_URL : API_BASE_URL;
-  return useMemo(() => createApiClient(() => session?.getToken() ?? Promise.resolve(null), baseUrl), [session, isVerification]);
+  return useMemo(() => createApiClient(() => session?.getToken() ?? Promise.resolve(null)), [session]);
 }
 
