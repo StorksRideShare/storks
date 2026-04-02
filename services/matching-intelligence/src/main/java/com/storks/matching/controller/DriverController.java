@@ -19,13 +19,4 @@ public class DriverController {
     public DriverResponse getDriver(@PathVariable Long id) {
         return driverService.getDriver(id);
     }
-
-    // ✅ Book driver
-    @PostMapping("/{id}/book")
-    public void bookDriver(
-            @PathVariable Long id,
-            @RequestBody BookingRequest request
-    ) {
-        driverService.bookDriver(id, request);
-    }
 }

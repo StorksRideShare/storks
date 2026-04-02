@@ -9,7 +9,7 @@ version = '0.0.1-SNAPSHOT'
 description = 'admin-and-analytics'
 
 springBoot {
-    mainClass = 'com.storks.adminandanalytics.AdminAndAnalyticsApplication'
+    mainClass = 'com.storks.admin.AdminAndAnalyticsApplication'
 }
 
 bootJar {

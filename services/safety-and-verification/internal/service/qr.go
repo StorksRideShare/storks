@@ -9,9 +9,10 @@ import (
 	"fmt"
 	"time"
 
+	"safety-and-verification/internal/kafka"
+
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
-	"safty-and-verification/internal/kafka"
 )
 
 type QRService struct {
@@ -175,7 +176,7 @@ func (s *QRService) VerifyAfternoonQR(ctx context.Context, driverID string, payl
 	var isAbsent bool
 	absentErr := s.dbPool.QueryRow(ctx, `
 		SELECT afternoon_attendance 
-		FROM ride_passangers 
+		FROM ride_passengers 
 		WHERE ride_id = $1 AND child_id = $2 AND date = $3
 	`, rideID, payload.ChildID, today).Scan(&isAbsent)
 	

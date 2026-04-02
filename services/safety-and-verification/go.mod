@@ -1,4 +1,4 @@
-module safty-and-verification
+module safety-and-verification
 
 go 1.25.6
 

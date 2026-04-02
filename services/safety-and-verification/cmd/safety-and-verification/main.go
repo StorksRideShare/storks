@@ -6,12 +6,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"safty-and-verification/internal/api/handlers"
-	"safty-and-verification/internal/api/middleware"
-	"safty-and-verification/internal/config"
-	"safty-and-verification/internal/kafka"
-	"safty-and-verification/internal/repository"
-	"safty-and-verification/internal/service"
+	"safety-and-verification/internal/api/handlers"
+	"safety-and-verification/internal/api/middleware"
+	"safety-and-verification/internal/config"
+	"safety-and-verification/internal/kafka"
+	"safety-and-verification/internal/repository"
+	"safety-and-verification/internal/service"
 )
 
 func main() {

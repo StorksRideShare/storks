@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"safty-and-verification/internal/service"
+	"safety-and-verification/internal/service"
 )
 
 type QRHandler struct {

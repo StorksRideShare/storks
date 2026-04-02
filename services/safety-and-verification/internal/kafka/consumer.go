@@ -20,8 +20,8 @@ func NewConsumer(brokers string) *Consumer {
 	brokerList := strings.Split(brokers, ",")
 	r := kafka.NewReader(kafka.ReaderConfig{
 		Brokers:   brokerList,
+		GroupID:   "safety-and-verification-group",
 		Topic:     "verification_requests",
-		Partition: 0,
 		MinBytes:  10e3, // 10KB
 		MaxBytes:  10e6, // 10MB
 	})

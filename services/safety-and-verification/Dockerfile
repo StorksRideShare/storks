@@ -14,7 +14,7 @@ RUN go mod download
 COPY services/safety-and-verification/ .
 
 # Build the application from the cmd directory
-RUN go build -o safety-service ./cmd/safty-and-verification
+RUN go build -o safety-service ./cmd/safety-and-verification
 
 # Runtime stage
 FROM alpine:latest
