@@ -1,4 +1,4 @@
-import { ClerkProvider } from "@clerk/clerk-expo";
+import { ClerkProvider } from "@clerk/expo";
 import { tokenCache } from "@clerk/clerk-expo/token-cache";
 import {
   DarkTheme,
