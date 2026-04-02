@@ -1,7 +1,7 @@
 import { SignOutButton } from "@/components/SignOutButton";
 import { MonoText } from "@/components/StyledText";
 import { Text, View } from "@/components/Themed";
-import { Show, useSession, useUser } from "@clerk/expo";
+import { SignedIn, SignedOut, useSession, useUser } from "@clerk/clerk-expo";
 import { Link } from "expo-router";
 import { StyleSheet } from "react-native";
 
@@ -18,16 +18,16 @@ export default function Page() {
     <View style={styles.container}>
       <MonoText>Welcome!</MonoText>
       {/* Show the sign-in and sign-up buttons when the user is signed out */}
-      <Show when="signed-out">
+      <SignedOut>
         <Link href="/(auth)/signin">
           <MonoText>Sign in</MonoText>
         </Link>
         <Link href="/(auth)/signup">
           <MonoText>Sign up</MonoText>
         </Link>
-      </Show>
+      </SignedOut>
       {/* Show the sign-out button when the user is signed in */}
-      <Show when="signed-in">
+      <SignedIn>
         <MonoText>Hello {user?.emailAddresses[0].emailAddress}</MonoText>
         <Link
           href={{
@@ -37,7 +37,7 @@ export default function Page() {
           <Text>Home</Text>
         </Link>
         <SignOutButton />
-      </Show>
+      </SignedIn>
     </View>
   );
 }
