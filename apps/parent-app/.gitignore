@@ -5,7 +5,6 @@ node_modules/
 .vscode/
 .idea/
 .env 
-pnpm-lock.yaml
 # Expo
 .expo/
 dist/
