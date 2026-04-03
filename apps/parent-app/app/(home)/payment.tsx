@@ -9,11 +9,12 @@ import { Button, ButtonText } from "@/components/ui/button";
 import {
   ChevronLeft,
   ChevronDown,
-  CheckCircle2
+  CheckCircle2,
+  AlertCircle
 } from "lucide-react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useToast, Toast, ToastTitle } from "@/components/ui/toast";
+import { Modal } from "react-native";
 import { LoggedParentID } from "../../logged_parent";
 
 const SERVER_IP = process.env.EXPO_PUBLIC_SERVER_IP || (Platform.OS === "android" ? "10.0.2.2" : "localhost");
@@ -25,7 +26,23 @@ export default function PaymentScreen() {
   const [savedCard, setSavedCard] = useState<any>(null);
   const [loadingCard, setLoadingCard] = useState(true);
   const [paymentMethod, setPaymentMethod] = useState("MasterCard");
-  const toast = useToast();
+  
+  // Ultra-Reliable Center Insight State
+  const [insight, setInsight] = useState<{ visible: boolean; type: 'success' | 'warning' | 'error'; title: string; message: string }>({
+    visible: false,
+    type: 'success',
+    title: '',
+    message: ''
+  });
+
+  const showInsight = (type: 'success' | 'warning' | 'error', title: string, message: string) => {
+    setInsight({ visible: true, type, title, message });
+    if (type === 'warning' || type === 'error') {
+      setTimeout(() => {
+        setInsight(prev => ({ ...prev, visible: false }));
+      }, 3000);
+    }
+  };
 
   const isCOD = paymentMethod === "Cash On Delivery";
 
@@ -65,27 +82,18 @@ export default function PaymentScreen() {
       });
 
       if (response.ok) {
-        toast.show({
-          placement: "top",
-          render: ({ id }) => (
-            <Toast nativeID={"toast-" + id} action="success" variant="solid" className="bg-green-600 rounded-3xl p-6 mt-12 shadow-2xl">
-               <HStack space="sm" className="items-center">
-                  <CheckCircle2 color="white" size={24} />
-                  <VStack>
-                    <ToastTitle className="text-white font-bold text-xl">Payment Successful!</ToastTitle>
-                    <Text className="text-white opacity-90">Your booking is now confirmed.</Text>
-                  </VStack>
-                </HStack>
-            </Toast>
-          ),
-        });
+        showInsight('success', 'Payment Successful!', 'Your booking is now confirmed.');
 
         setTimeout(() => {
+          setInsight(prev => ({ ...prev, visible: false }));
           router.push("/(tabs)/events");
-        }, 2000);
+        }, 2200);
+      } else {
+         showInsight('error', 'Payment Failed', 'Could not process the payment.');
       }
     } catch (err) {
       console.error("Payment Error:", err);
+      showInsight('error', 'System Error', 'Could not connect to the server.');
     } finally {
       setIsProcessing(false);
     }
@@ -168,6 +176,39 @@ export default function PaymentScreen() {
           )}
         </Button>
       </Box>
+
+      <Modal transparent visible={insight.visible} animationType="fade">
+        <Box className="flex-1 justify-center items-center bg-black/80 px-6">
+          <VStack space="xl" className="w-full bg-[#1A1919] border border-gray-800 rounded-[40px] p-8 items-center shadow-2xl">
+            <Box className={`p-6 rounded-full ${
+              insight.type === 'success' ? 'bg-green-500/10' : 
+              insight.type === 'warning' ? 'bg-yellow-500/10' : 'bg-red-500/10'
+            }`}>
+              {insight.type === 'success' ? (
+                <CheckCircle2 color="#22C55E" size={64} />
+              ) : (
+                <AlertCircle color={insight.type === 'warning' ? "#EAB308" : "#EF4444"} size={64} />
+              )}
+            </Box>
+            
+            <VStack space="sm" className="items-center w-full">
+              <Text className="text-white font-bold text-3xl text-center">{insight.title}</Text>
+              <Text className="text-gray-400 text-center leading-6 text-lg">{insight.message}</Text>
+            </VStack>
+
+            {insight.type !== 'success' && (
+              <Button 
+                className={`mt-4 w-full h-16 rounded-full ${
+                  insight.type === 'warning' ? 'bg-[#EAB308]' : 'bg-[#EF4444]'
+                }`}
+                onPress={() => setInsight(prev => ({ ...prev, visible: false }))}
+              >
+                <ButtonText className="text-[#1A1919] font-bold text-xl uppercase">Got it</ButtonText>
+              </Button>
+            )}
+          </VStack>
+        </Box>
+      </Modal>
     </SafeAreaView>
   );
 }

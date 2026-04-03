@@ -12,4 +12,6 @@ public class CardDTO {
     private String cardNumber;
     private String cardHolderName;
     private Boolean isPrimary;
+    private String expiry;
+    private String cvv;
 }

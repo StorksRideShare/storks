@@ -5,10 +5,10 @@ import { HStack } from "@/components/ui/hstack";
 import { VStack } from "@/components/ui/vstack";
 import { Text } from "@/components/ui/text";
 import { Button, ButtonText } from "@/components/ui/button";
-import { ChevronLeft, CheckCircle2 } from "lucide-react-native";
+import { ChevronLeft, CheckCircle2, AlertCircle } from "lucide-react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useToast, Toast, ToastTitle } from "@/components/ui/toast";
+import { Modal } from "react-native";
 
 import { LoggedParentID } from "../../logged_parent";
 
@@ -22,20 +22,62 @@ export default function AddCardScreen() {
   const [expiry, setExpiry] = useState("");
   const [cvv, setCvv] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
-  const toast = useToast();
 
-  const isFormValid = cardName.length > 0 && cardNumber.length >= 16 && expiry.length >= 4 && cvv.length >= 3;
+  // Ultra-Reliable Center Insight State
+  const [insight, setInsight] = useState<{ visible: boolean; type: 'success' | 'warning' | 'error'; title: string; message: string }>({
+    visible: false,
+    type: 'success',
+    title: '',
+    message: ''
+  });
+
+  const showInsight = (type: 'success' | 'warning' | 'error', title: string, message: string) => {
+    setInsight({ visible: true, type, title, message });
+    if (type === 'warning') {
+      setTimeout(() => {
+        setInsight(prev => ({ ...prev, visible: false }));
+      }, 3000);
+    }
+  };
+
+  const handleCardNumberChange = (text: string) => {
+    const numericValue = text.replace(/\D/g, '');
+    let formattedValue = '';
+    for (let i = 0; i < numericValue.length; i++) {
+      if (i > 0 && i % 4 === 0) {
+        formattedValue += ' ';
+      }
+      formattedValue += numericValue[i];
+    }
+    setCardNumber(formattedValue);
+  };
+
+  const handleExpiryChange = (text: string) => {
+    let numericValue = text.replace(/\D/g, '');
+    if (numericValue.length >= 2) {
+      numericValue = numericValue.substring(0, 2) + '/' + numericValue.substring(2, 4);
+    }
+    setExpiry(numericValue);
+  };
 
   const handleSaveAndPay = async () => {
-    if (!isFormValid || !bookingId) return;
+    // Keep a basic check to prevent entirely empty submissions firing off network requests.
+    if (!cardName.trim() || !cardNumber.trim() || !cvv.trim() || !expiry.trim()) {
+      showInsight('warning', 'Missing Details', 'Please fill in all the required card fields.');
+      return;
+    }
     
+    if (!bookingId) return;
+
     try {
       setIsProcessing(true);
-      
-      // Save card details securely to database
+
+      const rawCardNumber = cardNumber.replace(/\s+/g, '');
       const cardPayload = {
-        cardNumber: cardNumber,
-        cardHolderName: cardName
+        cardNumber: rawCardNumber,
+        cardHolderName: cardName,
+        expiry: expiry,
+        cvv: cvv
       };
 
       const cardResponse = await fetch(`${API_BASE_URL}/api/cards/parent/${LoggedParentID}`, {
@@ -43,9 +85,16 @@ export default function AddCardScreen() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(cardPayload)
       });
-      
+
       if (!cardResponse.ok) {
-        throw new Error("Failed to save card securely.");
+        // Extract the exact validation error message thrown by the backend Java code
+        const errorData = await cardResponse.json().catch(() => ({}));
+        let errorMsg = errorData.message || "Failed to save card securely.";
+        // Springboot prefixes our RuntimeExceptions with this. Cleaning it for UI.
+        if (errorMsg.startsWith("Validation Error: ")) {
+             errorMsg = errorMsg.replace("Validation Error: ", "");
+        }
+        throw new Error(errorMsg);
       }
 
       // Confirm the booking
@@ -54,30 +103,18 @@ export default function AddCardScreen() {
       });
 
       if (response.ok) {
-        toast.show({
-          placement: "top",
-          render: ({ id }) => (
-            <Toast nativeID={"toast-" + id} action="success" variant="solid" className="bg-green-600 rounded-3xl p-6 mt-12 shadow-2xl">
-               <HStack space="sm" className="items-center">
-                  <CheckCircle2 color="white" size={24} />
-                  <VStack>
-                    <ToastTitle className="text-white font-bold text-xl">Payment Successful!</ToastTitle>
-                    <Text className="text-white opacity-90">Card saved and booking confirmed.</Text>
-                  </VStack>
-                </HStack>
-            </Toast>
-          ),
-        });
+        showInsight('success', 'Payment Successful!', 'Card saved and booking confirmed.');
 
         setTimeout(() => {
+          setInsight(prev => ({ ...prev, visible: false }));
           router.push("/(tabs)/events");
-        }, 1500);
+        }, 2200);
       } else {
         throw new Error("Failed to process payment");
       }
     } catch (err) {
       console.error("Payment Error:", err);
-      alert("Failed to process payment. Please try again.");
+      showInsight('error', 'Payment Failed', 'Could not process the payment. Please review your details and try again.');
     } finally {
       setIsProcessing(false);
     }
@@ -93,7 +130,7 @@ export default function AddCardScreen() {
         <Box className="w-7" />
       </HStack>
 
-      <KeyboardAvoidingView 
+      <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         className="flex-1"
       >
@@ -122,7 +159,7 @@ export default function AddCardScreen() {
               <Box className="bg-[#1A1919] rounded-2xl border border-gray-700 h-[60px] justify-center px-4">
                 <TextInput
                   value={cardNumber}
-                  onChangeText={setCardNumber}
+                  onChangeText={handleCardNumberChange}
                   placeholder="0000 0000 0000 0000"
                   placeholderTextColor="#666"
                   className="text-white text-lg font-medium"
@@ -138,7 +175,7 @@ export default function AddCardScreen() {
                 <Box className="bg-[#1A1919] rounded-2xl border border-gray-700 h-[60px] justify-center px-4">
                   <TextInput
                     value={expiry}
-                    onChangeText={setExpiry}
+                    onChangeText={handleExpiryChange}
                     placeholder="MM/YY"
                     placeholderTextColor="#666"
                     className="text-white text-lg font-medium"
@@ -171,19 +208,50 @@ export default function AddCardScreen() {
 
       <Box className="px-5 pb-8">
         <Button
-          className={!isFormValid ? "bg-[#333] h-[60px] rounded-full w-full border border-gray-700" : "bg-[#F97316] h-[60px] rounded-full w-full"}
+          className="bg-[#F97316] h-[60px] rounded-full w-full"
           onPress={handleSaveAndPay}
-          disabled={!isFormValid || isProcessing}
+          disabled={isProcessing}
         >
           {isProcessing ? (
             <ActivityIndicator color="white" />
           ) : (
-            <ButtonText className={!isFormValid ? "text-gray-500 font-bold text-xl" : "text-white font-bold text-xl"}>
+            <ButtonText className="text-white font-bold text-xl">
               Save & Pay Now
             </ButtonText>
           )}
         </Button>
       </Box>
+
+      <Modal transparent visible={insight.visible} animationType="fade">
+        <Box className="flex-1 justify-center items-center bg-black/80 px-6">
+          <VStack space="xl" className="w-full bg-[#1A1919] border border-gray-800 rounded-[40px] p-8 items-center shadow-2xl">
+            <Box className={`p-6 rounded-full ${insight.type === 'success' ? 'bg-green-500/10' :
+                insight.type === 'warning' ? 'bg-yellow-500/10' : 'bg-red-500/10'
+              }`}>
+              {insight.type === 'success' ? (
+                <CheckCircle2 color="#22C55E" size={64} />
+              ) : (
+                <AlertCircle color={insight.type === 'warning' ? "#EAB308" : "#EF4444"} size={64} />
+              )}
+            </Box>
+
+            <VStack space="sm" className="items-center w-full">
+              <Text className="text-white font-bold text-3xl text-center">{insight.title}</Text>
+              <Text className="text-gray-400 text-center leading-6 text-lg">{insight.message}</Text>
+            </VStack>
+
+            {insight.type !== 'success' && (
+              <Button
+                className={`mt-4 w-full h-16 rounded-full ${insight.type === 'warning' ? 'bg-[#EAB308]' : 'bg-[#EF4444]'
+                  }`}
+                onPress={() => setInsight(prev => ({ ...prev, visible: false }))}
+              >
+                <ButtonText className="text-[#1A1919] font-bold text-xl uppercase">Got it</ButtonText>
+              </Button>
+            )}
+          </VStack>
+        </Box>
+      </Modal>
     </SafeAreaView>
   );
 }

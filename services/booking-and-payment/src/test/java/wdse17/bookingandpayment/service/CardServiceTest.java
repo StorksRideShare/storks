@@ -33,8 +33,10 @@ public class CardServiceTest {
         parentId = UUID.randomUUID();
         // Setup a basic, valid card request
         validCardRequest = new CardDTO();
-        validCardRequest.setCardNumber("1234 5678 1234 5678");
+        validCardRequest.setCardNumber("1234567812345678");
         validCardRequest.setCardHolderName("John Doe");
+        validCardRequest.setCvv("123");
+        validCardRequest.setExpiry("12/30"); // Valid future date
     }
 
     @Test
@@ -46,7 +48,7 @@ public class CardServiceTest {
         savedCard.setCardHolderName("John Doe");
         savedCard.setIsPrimary(true);
         savedCard.setParentId(parentId);
-        
+
         when(cardRepository.save(any(Card.class))).thenReturn(savedCard);
 
         // Act (Execute the logic in our service)
@@ -55,7 +57,8 @@ public class CardServiceTest {
         // Assert (Verify the output is exactly what we expect)
         assertNotNull(result, "Result should not be null");
         assertEquals("John Doe", result.getCardHolderName(), "Card holder name must match");
-        assertTrue(result.getCardNumber().contains("5678"), "Card number should be properly obfuscated with last 4 digits");
+        assertTrue(result.getCardNumber().contains("5678"),
+                "Card number should be properly obfuscated with last 4 digits");
     }
 
     @Test
@@ -63,25 +66,26 @@ public class CardServiceTest {
         // Arrange
         validCardRequest.setCardHolderName("");
 
-        // Act & Assert (Verify that a RuntimeException is thrown because of our validation rule)
+        // Act & Assert (Verify that a RuntimeException is thrown because of our
+        // validation rule)
         Exception exception = assertThrows(RuntimeException.class, () -> {
             cardService.saveCard(parentId, validCardRequest);
         });
 
         // Ensure the exception message matches the validation comment we provided
-        assertTrue(exception.getMessage().contains("Card holder name is required"));
+        assertTrue(exception.getMessage().contains("contain only letters"), "Should fail regex validation");
     }
 
     @Test
     void testSaveCard_FailsWhenCardNumberIsTooShort() {
         // Arrange
-        validCardRequest.setCardNumber("1234"); // only 4 digits, below our 12 digit minimum
+        validCardRequest.setCardNumber("1234"); // only 4 digits, below our exact 16 requirement
 
         // Act & Assert (Verify validation rule triggers exception)
         Exception exception = assertThrows(RuntimeException.class, () -> {
             cardService.saveCard(parentId, validCardRequest);
         });
 
-        assertTrue(exception.getMessage().contains("must be at least 12 digits long"));
+        assertTrue(exception.getMessage().contains("exactly 16 digits"), "Should fail 16 digit strict length");
     }
 }

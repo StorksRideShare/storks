@@ -41,15 +41,47 @@ public class CardService {
     }
 
     public CardDTO saveCard(UUID parentId, CardDTO request) {
-        // check card holder name
-        if (request.getCardHolderName() == null || request.getCardHolderName().trim().isEmpty()) {
-            throw new RuntimeException("Validation Error: Card holder name is required.");
+        // Card Holder Name (only characters and spaces)
+        if (request.getCardHolderName() == null || !request.getCardHolderName().trim().matches("^[a-zA-Z\\s]+$")) {
+            throw new RuntimeException("Validation Error: Card holder name must contain only letters and spaces.");
         }
 
-        String rawNumber = request.getCardNumber().replaceAll("\\s+", "");
-        String last4 = rawNumber.length() >= 4 ? rawNumber.substring(rawNumber.length() - 4) : rawNumber;
+        // Card Number (exactly 16 digits)
+        String rawNumber = request.getCardNumber() != null ? request.getCardNumber().replaceAll("\\s+", "") : "";
+        if (!rawNumber.matches("^\\d{16}$")) {
+            throw new RuntimeException("Validation Error: Card number must be exactly 16 digits.");
+        }
 
-        //
+        // CVV (exactly 3 digits)
+        String cvv = request.getCvv();
+        if (cvv == null || !cvv.matches("^\\d{3}$")) {
+            throw new RuntimeException("Validation Error: CVV must be exactly 3 digits.");
+        }
+
+        // VExpiry Date (Format MM/YY and logic)
+        String expiry = request.getExpiry();
+        if (expiry == null || !expiry.matches("^\\d{2}/\\d{2}$")) {
+            throw new RuntimeException("Validation Error: Please enter a valid expiry date (MM/YY).");
+        }
+
+        String[] parts = expiry.split("/");
+        int month = Integer.parseInt(parts[0]);
+        int year = Integer.parseInt(parts[1]) + 2000;
+
+        if (month < 1 || month > 12) {
+            throw new RuntimeException("Validation Error: Month must be between 01 and 12.");
+        }
+
+        java.time.LocalDate nowDate = java.time.LocalDate.now();
+        int currentMonth = nowDate.getMonthValue();
+        int currentYear = nowDate.getYear();
+
+        if (year < currentYear || (year == currentYear && month < currentMonth)) {
+            throw new RuntimeException("Validation Error: The expiry date has already passed.");
+        }
+
+        String last4 = rawNumber.substring(rawNumber.length() - 4);
+
         String securedData = hashCardNumber(rawNumber) + ":" + last4;
 
         Card card = Card.builder()
