@@ -6,6 +6,9 @@ import java.util.UUID;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import com.storks.models.Offer;
+import com.storks.models.ChildGroup;
+
 @Entity
 @Table(name = "bookings")
 @Getter

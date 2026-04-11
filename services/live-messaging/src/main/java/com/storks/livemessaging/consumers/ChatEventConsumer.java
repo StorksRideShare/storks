@@ -34,3 +34,5 @@ public class ChatEventConsumer {
         chatRoomService.removeParticipantFromOfferGroup(event.offerId(), event.parentId());
     }
 }
+
+

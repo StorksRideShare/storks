@@ -22,3 +22,4 @@ public class GroupResponse {
     private String status;
     private LocalDate bookingDate;
 }
+

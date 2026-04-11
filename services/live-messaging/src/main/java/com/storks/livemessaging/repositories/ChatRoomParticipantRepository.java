@@ -1,6 +1,6 @@
 package com.storks.livemessaging.repositories;
 
-import com.storks.livemessaging.model.ChatRoomParticipant;
+import com.storks.models.ChatRoomParticipant;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -36,4 +36,6 @@ public interface ChatRoomParticipantRepository extends JpaRepository<ChatRoomPar
            "AND p1.room.chatRoomType = 'DIRECT'")
     Optional<UUID> findAnyDirectRoom(@Param("userId1") UUID userId1, @Param("userId2") UUID userId2);
 }
+
+
 

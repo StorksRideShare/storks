@@ -14,9 +14,11 @@ public class ChatMessagePayload {
     private UUID senderId;
     private String content;
     private OffsetDateTime sentAt;
-    private com.storks.livemessaging.model.types.MessageType type = com.storks.livemessaging.model.types.MessageType.CHAT;
+    private com.storks.models.types.MessageType type = com.storks.models.types.MessageType.CHAT;
     private List<UUID> readBy;
     
     public ChatMessagePayload() {}
 
 }
+
+

@@ -1,5 +1,6 @@
 package com.storks.matching.service;
 
+import java.util.UUID;
 import com.storks.matching.dto.SearchDriverResponse;
 import com.storks.matching.model.SearchDriver;
 import com.storks.matching.repository.SearchDriverRepository;
@@ -28,21 +29,21 @@ public class SearchDriverService {
     }
     
     // ✅ Get driver by ID
-    public SearchDriverResponse getDriverById(Long id) {
+    public SearchDriverResponse getDriverById(UUID id) {
         SearchDriver driver = driverRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Driver not found"));
         return mapToDTO(driver);
     }
 
     // ✅ Book driver
-    public String bookDriver(Long driverId, Long groupId) {
+    public String bookDriver(UUID driverId, UUID groupId) {
         SearchDriver driver = driverRepository.findById(driverId)
                 .orElseThrow(() -> new RuntimeException("Driver not found"));
 
         if (driver.getAvailableSeats() > 0) {
             driver.setAvailableSeats(driver.getAvailableSeats() - 1);
             driverRepository.save(driver);
-            return "Driver booked successfully for group " + groupId;
+            return "Driver booked successfully for ChildGroup " + groupId;
         } else {
             return "No available seats";
         }
@@ -62,3 +63,5 @@ public class SearchDriverService {
         );
     }
 }
+
+

@@ -9,3 +9,4 @@ public class MatchingIntelligenceApplication {
         SpringApplication.run(MatchingIntelligenceApplication.class, args);
     }
 }
+

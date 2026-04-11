@@ -4,7 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.storks.booking.dto.ChildDTO;
 import com.storks.booking.dto.ChildGroupDTO;
-import com.storks.booking.entity.ChildGroup;
+import com.storks.models.ChildGroup;
 import com.storks.booking.repository.ChildGroupRepository;
 
 import java.util.List;
@@ -39,9 +39,9 @@ public class ChildGroupService {
                 .collect(Collectors.joining(", "));
 
         String dropLocation = null;
-        if (group.getDefaultDropoffLocation() != null) {
-            dropLocation = group.getDefaultDropoffLocation().getNickname() != null ?
-                    group.getDefaultDropoffLocation().getNickname() : group.getDefaultDropoffLocation().getAddress();
+        if (group.getDefaultDropOffLocation() != null) {
+            dropLocation = group.getDefaultDropOffLocation().getNickname() != null ?
+                    group.getDefaultDropOffLocation().getNickname() : group.getDefaultDropOffLocation().getAddress();
         }
 
         return ChildGroupDTO.builder()

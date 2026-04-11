@@ -1,6 +1,6 @@
 package com.storks.livemessaging.dto;
 
-import com.storks.livemessaging.model.types.RoleType;
+import com.storks.models.types.RoleType;
 
 import java.util.UUID;
 
@@ -12,3 +12,5 @@ public record UserSearchResult(
         String email,
         RoleType role
 ) {}
+
+

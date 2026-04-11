@@ -1,5 +1,7 @@
 package com.storks.matching.config;
 
+import com.storks.common.auth.UserAuthJwtAuthenticationConverter;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,7 +30,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests
-                        .requestMatchers("/api/matching/health/**").permitAll()
+                        .requestMatchers("/api/matching/health/**", "/actuator/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(
@@ -65,3 +67,5 @@ public class SecurityConfig {
         return source;
     }
 }
+
+

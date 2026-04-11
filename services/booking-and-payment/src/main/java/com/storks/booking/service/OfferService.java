@@ -3,9 +3,9 @@ package com.storks.booking.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.storks.booking.dto.OfferDTO;
-import com.storks.booking.entity.Offer;
-import com.storks.booking.entity.Asset;
-import com.storks.booking.entity.Location;
+import com.storks.models.Offer;
+import com.storks.models.Assets;
+import com.storks.models.Location;
 import com.storks.booking.repository.OfferRepository;
 
 import java.util.List;
@@ -35,8 +35,8 @@ public class OfferService {
         String driverName = offer.getDriver().getFirstName() + " "
                 + offer.getDriver().getLastName();
 
-        List<String> imageUrls = offer.getVehicle().getAssets().stream()
-                .map(Asset::getAssetUrl)
+        List<String> imageUrls = offer.getVehicle().getImages().stream()
+                .map(Assets::getAssetUrl)
                 .collect(Collectors.toList());
 
         // // fallback if there are no vehicle photos uploaded in the database

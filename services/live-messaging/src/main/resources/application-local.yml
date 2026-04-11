@@ -1,0 +1,14 @@
+spring:
+  datasource:
+    url: ${LOCAL_DB_URL:jdbc:postgresql://localhost:5432/storks_messaging}
+    username: ${LOCAL_DB_USERNAME:storks}
+    password: ${LOCAL_DB_PASSWORD:storks}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always

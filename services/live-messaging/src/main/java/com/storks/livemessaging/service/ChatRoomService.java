@@ -2,10 +2,10 @@ package com.storks.livemessaging.service;
 
 import com.storks.livemessaging.dto.ChatRoomResponse;
 import com.storks.livemessaging.dto.ParticipantResponse;
-import com.storks.livemessaging.model.ChatRoom;
-import com.storks.livemessaging.model.ChatRoomParticipant;
-import com.storks.livemessaging.model.User;
-import com.storks.livemessaging.model.types.RoomType;
+import com.storks.models.ChatRoom;
+import com.storks.models.ChatRoomParticipant;
+import com.storks.models.User;
+import com.storks.models.types.RoomType;
 import com.storks.livemessaging.repositories.ChatRoomParticipantRepository;
 import com.storks.livemessaging.repositories.ChatRoomRepository;
 import com.storks.livemessaging.repositories.UserRepository;
@@ -96,7 +96,7 @@ public class ChatRoomService {
                     room.setCreatedAt(OffsetDateTime.now());
                     room.setUpdatedAt(OffsetDateTime.now());
                     
-                    com.storks.livemessaging.model.Offer offer = new com.storks.livemessaging.model.Offer();
+                    com.storks.models.Offer offer = new com.storks.models.Offer();
                     offer.setOfferId(offerId);
                     room.setOffer(offer);
                     
@@ -159,7 +159,7 @@ public class ChatRoomService {
         if (room.getChatRoomType() == RoomType.GROUP && room.getOffer() != null) {
             // Find driver
             roomName = participants.stream()
-                    .filter(p -> p.getUser().getRole() == com.storks.livemessaging.model.types.RoleType.DRIVER)
+                    .filter(p -> p.getUser().getRole() == com.storks.models.types.RoleType.DRIVER)
                     .findFirst()
                     .map(p -> p.getUser().getFirstName() + "'s parents")
                     .orElse("Group Chat");
@@ -168,14 +168,14 @@ public class ChatRoomService {
         String lastMessageContent = null;
         OffsetDateTime lastMessageSentAt = null;
 
-        org.springframework.data.domain.Page<com.storks.livemessaging.model.Message> lastMessagePage = 
+        org.springframework.data.domain.Page<com.storks.models.Message> lastMessagePage = 
             messageRepository.findByRoom_RoomIdAndIsDeletedFalseOrderBySentAtDesc(
                 room.getRoomId(), 
                 org.springframework.data.domain.PageRequest.of(0, 1)
             );
 
         if (!lastMessagePage.isEmpty()) {
-            com.storks.livemessaging.model.Message lastMessage = lastMessagePage.getContent().get(0);
+            com.storks.models.Message lastMessage = lastMessagePage.getContent().get(0);
             lastMessageContent = lastMessage.getContent();
             lastMessageSentAt = lastMessage.getSentAt();
         }
@@ -197,4 +197,6 @@ public class ChatRoomService {
         return toResponse(room);
     }
 }
+
+
 

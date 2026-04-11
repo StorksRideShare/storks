@@ -1,0 +1,14 @@
+spring:
+  datasource:
+    url: ${NEON_DB_URL}
+    username: ${NEON_DB_USERNAME}
+    password: ${NEON_DB_PASSWORD}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always

@@ -1,11 +1,8 @@
-
 package com.storks.matching.repository;
 
-import com.storks.matching.model.Child;
+import com.storks.models.Child;
 import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.UUID;
 
-import java.util.List;
+public interface ChildRepository extends JpaRepository<Child, UUID> {}
 
-public interface ChildRepository extends JpaRepository<Child, Long> {
-    List<Child> findByGroupId(Long groupId);
-}

@@ -1,8 +1,8 @@
 package com.storks.livemessaging.controller;
 
-import com.storks.livemessaging.dto.UserAuthClaim;
-import com.storks.livemessaging.model.ChatRoom;
-import com.storks.livemessaging.model.Message;
+import com.storks.models.dto.UserAuthClaim;
+import com.storks.models.ChatRoom;
+import com.storks.models.Message;
 import com.storks.livemessaging.repositories.UserRepository;
 import com.storks.livemessaging.service.ChatRoomService;
 import com.storks.livemessaging.service.MessageService;
@@ -76,7 +76,7 @@ public class ChatRestController {
             targetId = UUID.fromString(request.getTargetUserId());
         } catch (IllegalArgumentException e) {
             // Find by email or provider id
-            List<com.storks.livemessaging.model.User> candidates = userRepository.searchByEmailOrId(request.getTargetUserId());
+            List<com.storks.models.User> candidates = userRepository.searchByEmailOrId(request.getTargetUserId());
             if (candidates.isEmpty()) {
                 throw new IllegalArgumentException("User not found: " + request.getTargetUserId());
             }
@@ -105,4 +105,6 @@ public class ChatRestController {
         }
     }
 }
+
+
 

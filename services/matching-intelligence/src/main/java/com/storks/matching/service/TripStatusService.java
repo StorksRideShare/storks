@@ -20,3 +20,4 @@ public class TripStatusService {
         return repo.save(status);
     }
 }
+

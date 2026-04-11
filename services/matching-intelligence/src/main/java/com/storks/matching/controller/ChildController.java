@@ -1,5 +1,6 @@
 package com.storks.matching.controller;
 
+import java.util.UUID;
 import com.storks.matching.dto.*;
 import com.storks.matching.service.ChildService;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +19,7 @@ public class ChildController {
     // ✅ Add child
     @PostMapping("/{groupId}/children")
     public void addChild(
-            @PathVariable Long groupId,
+            @PathVariable UUID groupId,
             @RequestBody ChildRequest request
     ) {
         childService.addChild(groupId, request);
@@ -26,7 +27,9 @@ public class ChildController {
 
     // ✅ Get children
     @GetMapping("/{groupId}/children")
-    public List<ChildResponse> getChildren(@PathVariable Long groupId) {
+    public List<ChildResponse> getChildren(@PathVariable UUID groupId) {
         return childService.getChildren(groupId);
     }
 }
+
+

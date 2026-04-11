@@ -1,5 +1,7 @@
 package com.storks.booking.config;
 
+import com.storks.common.auth.UserAuthJwtAuthenticationConverter;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,7 +30,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests
-                        .requestMatchers("/api/booking/health/**").permitAll()
+                        .requestMatchers("/api/booking/health/**", "/actuator/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(
@@ -65,3 +67,4 @@ public class SecurityConfig {
         return source;
     }
 }
+

@@ -1,8 +1,11 @@
 package com.storks.matching.dto;
 
+import java.util.UUID;
 import lombok.*;
 
 @Data
 public class BookingRequest {
-    private Long groupId;
+    private UUID groupId;
 }
+
+

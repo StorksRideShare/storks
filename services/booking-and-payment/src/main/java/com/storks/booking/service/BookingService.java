@@ -4,8 +4,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.storks.booking.dto.BookingEventDTO;
 import com.storks.booking.entity.Booking;
-import com.storks.booking.entity.ChildGroup;
-import com.storks.booking.entity.Offer;
+import com.storks.models.ChildGroup;
+import com.storks.models.Offer;
 import com.storks.booking.repository.BookingRepository;
 import com.storks.booking.repository.ChildGroupRepository;
 import com.storks.booking.repository.OfferRepository;
@@ -60,7 +60,7 @@ public class BookingService {
         // Compliance with database_setup.sql - Only use Booking table
         Booking booking = Booking.builder()
                 .id(UUID.randomUUID())
-                .parentId(group.getParentId())
+                .parentId(group.getParent().getUserId())
                 .offer(offer)
                 .childGroup(group)
                 .type(null)
@@ -112,9 +112,9 @@ public class BookingService {
                 .description(description)
                 .date("Tomorrow")
                 .time("07:30 AM")
-                .location(group.getDefaultDropoffLocation() != null ? 
-                        (group.getDefaultDropoffLocation().getNickname() != null ? 
-                         group.getDefaultDropoffLocation().getNickname() : group.getDefaultDropoffLocation().getAddress()) : "Assigned School")
+                .location(group.getDefaultDropOffLocation() != null ? 
+                        (group.getDefaultDropOffLocation().getNickname() != null ? 
+                         group.getDefaultDropOffLocation().getNickname() : group.getDefaultDropOffLocation().getAddress()) : "Assigned School")
                 .build();
     }
 }

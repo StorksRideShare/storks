@@ -25,3 +25,4 @@ public class TripController {
         return service.save(status);
     }
 }
+

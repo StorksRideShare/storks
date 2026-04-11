@@ -37,9 +37,11 @@ repositories {
 }
 
 dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation project(':libs:common')
     implementation project(':libs:configs')
     implementation project(':libs:events')
+    implementation project(':libs:models')
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     implementation 'org.springframework.boot:spring-boot-starter-data-rest'
     implementation 'org.springframework.boot:spring-boot-starter-jdbc'

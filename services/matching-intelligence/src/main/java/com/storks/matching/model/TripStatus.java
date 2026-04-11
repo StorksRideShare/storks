@@ -1,5 +1,7 @@
 package com.storks.matching.model;
 
+import java.util.UUID;
+
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -11,10 +13,10 @@ public class TripStatus {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private UUID id;
 
     private double latitude;
-    private double longitude;
+    private double UUIDitude;
 
     private String status; // ARRIVING, PIN, PICKUP, DROPOFF, ABSENT
 
@@ -26,3 +28,4 @@ public class TripStatus {
 
     // getters & setters
 }
+

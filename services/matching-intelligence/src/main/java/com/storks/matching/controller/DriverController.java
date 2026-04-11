@@ -1,6 +1,7 @@
 
 package com.storks.matching.controller;
 
+import java.util.UUID;
 import com.storks.matching.dto.*;
 import com.storks.matching.service.DriverService;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +17,9 @@ public class DriverController {
 
     // ✅ Get driver profile
     @GetMapping("/{id}")
-    public DriverResponse getDriver(@PathVariable Long id) {
+    public DriverResponse getDriver(@PathVariable UUID id) {
         return driverService.getDriver(id);
     }
 }
+
+

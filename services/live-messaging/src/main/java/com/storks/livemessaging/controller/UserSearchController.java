@@ -1,6 +1,6 @@
 package com.storks.livemessaging.controller;
 
-import com.storks.livemessaging.dto.UserAuthClaim;
+import com.storks.models.dto.UserAuthClaim;
 import com.storks.livemessaging.dto.UserSearchResult;
 import com.storks.livemessaging.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -49,3 +49,5 @@ public class UserSearchController {
         return ResponseEntity.ok(results);
     }
 }
+
+

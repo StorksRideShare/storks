@@ -1,6 +1,6 @@
 package com.storks.livemessaging.dto;
 
-import com.storks.livemessaging.model.types.RoomType;
+import com.storks.models.types.RoomType;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -15,3 +15,5 @@ public record ChatRoomResponse(
         String lastMessageContent,
         OffsetDateTime lastMessageSentAt
 ) {}
+
+

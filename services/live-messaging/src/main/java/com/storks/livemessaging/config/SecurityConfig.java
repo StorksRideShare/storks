@@ -1,5 +1,7 @@
 package com.storks.livemessaging.config;
 
+import com.storks.common.auth.UserAuthJwtAuthenticationConverter;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -62,3 +64,6 @@ public class SecurityConfig {
         return source;
     }
 }
+
+
+

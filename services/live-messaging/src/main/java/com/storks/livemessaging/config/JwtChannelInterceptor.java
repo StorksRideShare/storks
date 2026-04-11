@@ -1,5 +1,6 @@
 package com.storks.livemessaging.config;
 
+import com.storks.common.auth.UserAuthJwtAuthenticationConverter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
@@ -65,3 +66,5 @@ public class JwtChannelInterceptor implements ChannelInterceptor {
         return message;
     }
 }
+
+

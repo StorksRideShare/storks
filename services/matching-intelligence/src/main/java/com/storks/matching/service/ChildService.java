@@ -1,7 +1,8 @@
 package com.storks.matching.service;
 
+import java.util.UUID;
 import com.storks.matching.dto.*;
-import com.storks.matching.model.*;
+import com.storks.models.*;
 import com.storks.matching.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,34 +17,33 @@ public class ChildService {
     private final ChildRepository childRepository;
     private final GroupRepository groupRepository;
 
-    // 🔥 Add child
-    public void addChild(Long groupId, ChildRequest request) {
+    public void addChild(UUID groupId, ChildRequest request) {
 
-        Group group = groupRepository.findById(groupId)
-                .orElseThrow(() -> new RuntimeException("Group not found"));
+        ChildGroup childGroup = groupRepository.findById(groupId)
+                .orElseThrow(() -> new RuntimeException("ChildGroup not found"));
 
         Child child = new Child();
-        child.setName(request.getName());
-        child.setAge(request.getAge());
-        child.setPickupLocation(request.getPickupLocation());
-        child.setDropLocation(request.getDropLocation());
-        child.setGroup(group);
+        child.setFirstName(request.getName());
+        child.setPreferredName(request.getName());
+        child.setGroup(childGroup);
 
         childRepository.save(child);
     }
 
-    // 🔥 Get children
-    public List<ChildResponse> getChildren(Long groupId) {
+    public List<ChildResponse> getChildren(UUID groupId) {
 
-        List<Child> children = childRepository.findByGroupId(groupId);
+        ChildGroup childGroup = groupRepository.findById(groupId)
+                .orElseThrow(() -> new RuntimeException("ChildGroup not found"));
+
+        List<Child> children = childGroup.getChildren();
 
         return children.stream()
                 .map(c -> new ChildResponse(
-                        c.getId(),
-                        c.getName(),
-                        c.getAge(),
-                        c.getPickupLocation(),
-                        c.getDropLocation()
+                        c.getChildId(),
+                        c.getPreferredName() != null ? c.getPreferredName() : c.getFirstName(),
+                        10, // fake age
+                        "Group Pickup",
+                        "Group Dropoff"
                 ))
                 .collect(Collectors.toList());
     }

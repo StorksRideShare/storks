@@ -1,5 +1,6 @@
 package com.storks.matching.controller;
 
+import java.util.UUID;
 import com.storks.matching.dto.*;
 import com.storks.matching.service.SearchDriverService;
 import lombok.RequiredArgsConstructor;
@@ -27,16 +28,18 @@ public class SearchDriverController {
 
     // 👤 Get driver profile
     @GetMapping("/{id}")
-    public SearchDriverResponse getDriverById(@PathVariable Long id) {
+    public SearchDriverResponse getDriverById(@PathVariable UUID id) {
         return driverService.getDriverById(id);
     }
 
     // 📌 Book driver
     @PostMapping("/{id}/book")
     public String bookDriver(
-            @PathVariable Long id,
-            @RequestParam Long groupId
+            @PathVariable UUID id,
+            @RequestParam UUID groupId
     ) {
         return driverService.bookDriver(id, groupId);
     }
 }
+
+

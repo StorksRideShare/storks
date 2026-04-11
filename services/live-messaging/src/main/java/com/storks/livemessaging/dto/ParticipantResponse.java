@@ -1,6 +1,6 @@
 package com.storks.livemessaging.dto;
 
-import com.storks.livemessaging.model.types.RoleType;
+import com.storks.models.types.RoleType;
 
 import java.util.UUID;
 
@@ -13,3 +13,5 @@ public record ParticipantResponse(
         RoleType role,
         boolean isRemoved
 ) {}
+
+

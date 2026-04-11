@@ -1,6 +1,6 @@
 package com.storks.livemessaging.config;
 
-import com.storks.livemessaging.dto.UserAuthClaim;
+import com.storks.models.dto.UserAuthClaim;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,3 +47,5 @@ public class WebSocketEventListener {
         }
     }
 }
+
+

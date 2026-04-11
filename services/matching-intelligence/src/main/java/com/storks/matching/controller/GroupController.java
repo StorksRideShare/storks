@@ -1,5 +1,6 @@
 package com.storks.matching.controller;
 
+import java.util.UUID;
 import com.storks.matching.dto.GroupResponse;
 import com.storks.matching.service.GroupService;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +15,9 @@ public class GroupController {
     private final GroupService groupService;
 
     @GetMapping("/{id}")
-    public GroupResponse getGroup(@PathVariable Long id) {
+    public GroupResponse getGroup(@PathVariable UUID id) {
         return groupService.getGroup(id);
     }
 }
+
+

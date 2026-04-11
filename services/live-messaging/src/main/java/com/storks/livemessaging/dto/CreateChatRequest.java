@@ -8,3 +8,5 @@ public class CreateChatRequest {
     public String getTargetUserId() { return targetUserId; }
     public void setTargetUserId(String targetUserId) { this.targetUserId = targetUserId; }
 }
+
+

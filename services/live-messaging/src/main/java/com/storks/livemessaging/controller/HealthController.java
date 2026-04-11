@@ -1,9 +1,9 @@
 package com.storks.livemessaging.controller;
 
-import com.storks.livemessaging.model.Parent;
-import com.storks.livemessaging.model.PhoneNumber;
-import com.storks.livemessaging.model.types.ProviderType;
-import com.storks.livemessaging.model.types.RoleType;
+import com.storks.models.Parent;
+import com.storks.models.PhoneNumber;
+import com.storks.models.types.ProviderType;
+import com.storks.models.types.RoleType;
 import com.storks.livemessaging.repositories.ParentRepository;
 import com.storks.livemessaging.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -23,3 +23,5 @@ public class HealthController {
         return ResponseEntity.ok("I'm alive");
     }
 }
+
+

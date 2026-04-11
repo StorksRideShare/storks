@@ -1,9 +1,9 @@
 package com.storks.livemessaging.service;
 
 import com.storks.livemessaging.dto.ChatMessagePayload;
-import com.storks.livemessaging.model.ChatRoom;
-import com.storks.livemessaging.model.Message;
-import com.storks.livemessaging.model.User;
+import com.storks.models.ChatRoom;
+import com.storks.models.Message;
+import com.storks.models.User;
 import com.storks.livemessaging.repositories.ChatRoomRepository;
 import com.storks.livemessaging.repositories.MessageRepository;
 import com.storks.livemessaging.repositories.UserRepository;
@@ -110,3 +110,5 @@ public class MessageService {
         return redisTemplate.opsForList().range(redisKey, 0, -1);
     }
 }
+
+

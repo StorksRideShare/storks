@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 
 	"safety-and-verification/internal/api/handlers"
 	"safety-and-verification/internal/api/middleware"
@@ -31,7 +32,12 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to connect to redis: %v\n", err)
 	}
-	defer redisClient.Close()
+	defer func(redisClient *redis.Client) {
+		err := redisClient.Close()
+		if err != nil {
+
+		}
+	}(redisClient)
 
 	// Initialize Kafka Producer
 	kafkaProducer := kafka.NewProducer(cfg.KafkaBrokers)

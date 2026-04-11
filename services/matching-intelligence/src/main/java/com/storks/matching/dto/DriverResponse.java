@@ -1,5 +1,6 @@
 package com.storks.matching.dto;
 
+import java.util.UUID;
 import lombok.*;
 import java.util.List;
 
@@ -7,7 +8,7 @@ import java.util.List;
 @AllArgsConstructor
 public class DriverResponse {
 
-    private Long id;
+    private UUID id;
     private String name;
     private double rating;
     private int experienceYears;
@@ -18,3 +19,5 @@ public class DriverResponse {
 
     private List<String> destinations;
 }
+
+

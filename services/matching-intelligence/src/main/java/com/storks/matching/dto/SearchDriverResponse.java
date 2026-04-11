@@ -1,5 +1,6 @@
 package com.storks.matching.dto;
 
+import java.util.UUID;
 import lombok.*;
 
 @Data
@@ -7,7 +8,7 @@ import lombok.*;
 @NoArgsConstructor
 public class SearchDriverResponse {
 
-    private Long id;
+    private UUID id;
     private String name;
     private String vehicle;
     private String plate;
@@ -20,3 +21,5 @@ public class SearchDriverResponse {
 
     private boolean verified;
 }
+
+

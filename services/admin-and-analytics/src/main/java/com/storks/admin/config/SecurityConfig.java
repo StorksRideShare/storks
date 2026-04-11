@@ -1,5 +1,6 @@
 package com.storks.admin.config;
 
+import com.storks.common.auth.UserAuthJwtAuthenticationConverter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,7 +29,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests
-                        .requestMatchers("/api/admin/health/**").permitAll()
+                        .requestMatchers("/api/admin/health/**", "/actuator/**", "/actuator/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(
@@ -65,3 +66,4 @@ public class SecurityConfig {
         return source;
     }
 }
+

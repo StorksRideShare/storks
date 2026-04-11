@@ -1,7 +1,7 @@
 package com.storks.livemessaging.controller;
 
 import com.storks.livemessaging.dto.ChatMessagePayload;
-import com.storks.livemessaging.dto.UserAuthClaim;
+import com.storks.models.dto.UserAuthClaim;
 import com.storks.livemessaging.service.MessageService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -29,7 +29,7 @@ public class ChatWebSocketController {
                 UUID senderId = claim.userId();
                 chatMessage.setSenderId(senderId);
                 
-                if (chatMessage.getType() == com.storks.livemessaging.model.types.MessageType.READ_RECEIPT) {
+                if (chatMessage.getType() == com.storks.models.types.MessageType.READ_RECEIPT) {
                     messageService.markMessageAsRead(chatMessage.getMessageId(), senderId);
                 }
                 
@@ -41,3 +41,5 @@ public class ChatWebSocketController {
         log.warn("Unauthorized message attempt over WebSocket");
     }
 }
+
+

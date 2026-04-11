@@ -31,3 +31,5 @@ public class MessageProcessorService {
         messagingTemplate.convertAndSend("/topic/room/" + payload.getRoomId(), payload);
     }
 }
+
+

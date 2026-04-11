@@ -4,7 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 import com.storks.booking.entity.Booking;
-import com.storks.booking.entity.ChildGroup;
+import com.storks.models.ChildGroup;
 import com.storks.booking.repository.BookingRepository;
 import com.storks.booking.repository.ChildGroupRepository;
 import com.storks.booking.repository.OfferRepository;
