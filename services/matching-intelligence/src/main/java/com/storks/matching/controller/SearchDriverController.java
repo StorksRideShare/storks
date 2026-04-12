@@ -9,15 +9,14 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/drivers")
+@RequestMapping("/api/v1/drivers/search")
 @RequiredArgsConstructor
 @CrossOrigin
 public class SearchDriverController {
 
     private final SearchDriverService driverService;
 
-    // 🔍 Search drivers
-    @GetMapping("/search")
+    @GetMapping
     public List<SearchDriverResponse> searchDrivers(
             @RequestParam(required = false) Integer seats,
             @RequestParam(required = false) Boolean ac,
@@ -32,7 +31,6 @@ public class SearchDriverController {
         return driverService.getDriverById(id);
     }
 
-    // 📌 Book driver
     @PostMapping("/{id}/book")
     public String bookDriver(
             @PathVariable UUID id,

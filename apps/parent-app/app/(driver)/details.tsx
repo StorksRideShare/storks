@@ -10,8 +10,8 @@ import default_vehicle_1 from "../../assets/images/default_vehicle/1.jpg";
 import default_vehicle_2 from "../../assets/images/default_vehicle/2.jpg";
 import { useAuth } from "@clerk/expo";
 import { useToast, Toast, ToastTitle } from "@/components/ui/toast";
-import { useApiClient } from "../../middleware/apiClient";
-import { LoggedParentID } from "@/logged_parent";
+import { useApiClient } from "@/middleware/apiClient";
+import { useParentStore } from "@/src/store/parentStore";
 import { ChevronLeft, ChevronDown, Star, MapPin, CheckCircle2, Bookmark, X } from "lucide-react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -24,9 +24,9 @@ interface StatBoxProps {
 
 
 const StatBox = ({ title, subTitle, icon: IconComponent }: StatBoxProps) => (
-  <Box className="flex-1 border border-dashed border-gray-500 rounded-[28px] p-4 items-center justify-center min-h-[120px] bg-[#1A1919]">
-    {IconComponent && <IconComponent size={32} color="#F97316" className="mb-2" />}
-    <Text className="text-orange-500 font-bold text-xl text-center">{title}</Text>
+  <Box className="flex-1 border border-dashed border-outline-700 rounded-[28px] p-4 items-center justify-center min-h-[120px] bg-background-900">
+    {IconComponent && <IconComponent size={32} color="#E66B00" className="mb-2" />}
+    <Text className="text-brand font-bold text-xl text-center">{title}</Text>
     {subTitle ? <Text className="text-gray-400 text-sm text-center mt-1">{subTitle}</Text> : null}
   </Box>
 );
@@ -34,6 +34,7 @@ const StatBox = ({ title, subTitle, icon: IconComponent }: StatBoxProps) => (
 export default function DriverDetailsScreen() {
   const apiClient = useApiClient("booking-and-payment");
   const { offerId, groupId } = useLocalSearchParams() as any;
+  const { parent } = useParentStore();
   const [offer, setOffer] = useState<any>(null);
   const [childGroups, setChildGroups] = useState<any[]>([]);
   const [selectedGroup, setSelectedGroup] = useState<any>(null);
@@ -87,7 +88,8 @@ export default function DriverDetailsScreen() {
 
   const fetchChildGroups = async () => {
     try {
-      const parentId = LoggedParentID;
+      const parentId = parent?.userId;
+      if (!parentId) return;
       const data = await apiClient.get<any[]>(`/child-groups?parentId=${parentId}`);
       setChildGroups(data);
       if (data.length > 0) {
@@ -166,17 +168,17 @@ export default function DriverDetailsScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView className="flex-1 bg-[#0F0E0E] items-center justify-center">
-        <ActivityIndicator size="large" color="#F97316" />
+      <SafeAreaView className="flex-1 bg-background-950 items-center justify-center">
+        <ActivityIndicator size="large" color="#E66B00" />
       </SafeAreaView>
     );
   }
 
   if (!offer) {
     return (
-      <SafeAreaView className="flex-1 bg-[#0F0E0E] items-center justify-center">
+      <SafeAreaView className="flex-1 bg-background-950 items-center justify-center">
         <Text className="text-white mb-4">Driver details not found</Text>
-        <Button onPress={() => router.back()} className="bg-orange-500 rounded-xl">
+        <Button onPress={() => router.back()} className="bg-brand rounded-xl">
           <ButtonText>Go Back</ButtonText>
         </Button>
       </SafeAreaView>
@@ -184,14 +186,14 @@ export default function DriverDetailsScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-[#0F0E0E]">
+    <SafeAreaView className="flex-1 bg-background-950">
       <HStack className="px-5 py-4 items-center justify-between">
         <Pressable onPress={() => router.back()}>
-          <ChevronLeft color="#F97316" size={28} />
+          <ChevronLeft color="#E66B00" size={28} />
         </Pressable>
-        <Text className="text-orange-500 font-bold text-2xl">Search a Driver</Text>
+        <Text className="text-brand font-bold text-2xl">Search a Driver</Text>
         <Pressable>
-          <Bookmark color="#F97316" size={28} />
+          <Bookmark color="#E66B00" size={28} />
         </Pressable>
       </HStack>
 
@@ -201,11 +203,11 @@ export default function DriverDetailsScreen() {
             <AvatarFallbackText>{offer.driverName?.charAt(0) || "DR"}</AvatarFallbackText>
           </Avatar>
           <HStack className="items-center" space="xs">
-            <Text className="text-orange-500 font-bold text-3xl">{offer.driverName || "Unknown Driver"}</Text>
-            <CheckCircle2 size={24} color="#F97316" />
+            <Text className="text-brand font-bold text-3xl">{offer.driverName || "Unknown Driver"}</Text>
+            <CheckCircle2 size={24} color="#E66B00" />
           </HStack>
           {isBooked && (
-            <Text className="text-green-600 text-lg mt-2 font-bold uppercase">Driving for {offer.bookedGroupName}</Text>
+            <Text className="text-success-600 text-lg mt-2 font-bold uppercase">Driving for {offer.bookedGroupName}</Text>
           )}
         </VStack>
 
@@ -217,11 +219,11 @@ export default function DriverDetailsScreen() {
 
         <VStack className="mb-10">
           <Text className="text-white text-2xl font-bold mb-6">Vehicle Details</Text>
-          <Box className="border border-dashed border-gray-500 rounded-[32px] p-5 bg-[#1A1919]">
+          <Box className="border border-dashed border-outline-700 rounded-[32px] p-5 bg-background-900">
             <HStack space="md" className="mb-6">
               {offer.vehicleImageUrls && offer.vehicleImageUrls.length > 0 ? (
                 offer.vehicleImageUrls.slice(0, 2).map((url: any, i: number) => (
-                  <Box key={i} className="flex-1 aspect-[4/3] bg-gray-800 rounded-3xl overflow-hidden">
+                  <Box key={i} className="flex-1 aspect-[4/3] bg-background-800 rounded-3xl overflow-hidden">
                     <Image
                       source={typeof url === "string" ? { uri: url } : url}
                       className="w-full h-full"
@@ -230,16 +232,16 @@ export default function DriverDetailsScreen() {
                 ))
               ) : (
                 <>
-                  <Box className="flex-1 aspect-[4/3] bg-gray-800 rounded-3xl overflow-hidden" />
-                  <Box className="flex-1 aspect-[4/3] bg-gray-800 rounded-3xl overflow-hidden" />
+                  <Box className="flex-1 aspect-[4/3] bg-background-800 rounded-3xl overflow-hidden" />
+                  <Box className="flex-1 aspect-[4/3] bg-background-800 rounded-3xl overflow-hidden" />
                 </>
               )}
             </HStack>
             <HStack space="xs" className="items-center mb-4">
               <Text className="text-white font-bold text-2xl">{offer.vehicleName || "Unknown Vehicle"}</Text>
-              <CheckCircle2 size={22} color="#F97316" />
+              <CheckCircle2 size={22} color="#E66B00" />
             </HStack>
-            <Box className="bg-orange-500 self-start px-5 py-2 rounded-full">
+            <Box className="bg-brand self-start px-5 py-2 rounded-full">
               <Text className="text-white font-bold text-base">{offer.plate || "N/A"}</Text>
             </Box>
           </Box>
@@ -247,33 +249,33 @@ export default function DriverDetailsScreen() {
 
         <VStack className="mb-10">
           <Text className="text-white text-2xl font-bold mb-6">Offered Destinations</Text>
-          <Box className="border border-dashed border-gray-500 rounded-[32px] p-6 bg-[#1A1919]">
+          <Box className="border border-dashed border-outline-700 rounded-[32px] p-6 bg-background-900">
             <VStack space="xl">
               {offer.destinations && offer.destinations.length > 0 ? (
                 offer.destinations.map((dest: string, index: number) => (
                   <HStack key={index} className="justify-between items-center">
                     <HStack space="md" className="flex-1 items-start">
                       <Box className="mt-1">
-                        <MapPin size={24} color="#F97316" />
+                        <MapPin size={24} color="#E66B00" />
                       </Box>
-                      <Text className="text-gray-300 text-lg flex-1 leading-6">{dest}</Text>
+                      <Text className="text-typography-300 text-lg flex-1 leading-6">{dest}</Text>
                     </HStack>
                     {selectedGroup?.defaultDropLocation === dest && (
-                      <Box className="border border-green-600 rounded-lg px-4 py-1.5 bg-green-600/10">
-                        <Text className="text-green-600 font-bold uppercase text-xs">Match</Text>
+                      <Box className="border border-success-600 rounded-lg px-4 py-1.5 bg-success-600/10">
+                        <Text className="text-success-600 font-bold uppercase text-xs">Match</Text>
                       </Box>
                     )}
                   </HStack>
                 ))
               ) : (
-                <Text className="text-gray-500 text-center">No standard destinations listed</Text>
+                <Text className="text-typography-500 text-center">No standard destinations listed</Text>
               )}
             </VStack>
           </Box>
         </VStack>
 
         <Pressable onPress={() => setShowSelector(true)}>
-          <HStack className="items-center justify-between mb-10 bg-[#1A1919] p-5 rounded-[32px]">
+          <HStack className="items-center justify-between mb-10 bg-background-900 p-5 rounded-[32px]">
             <HStack space="md" className="items-center">
               <Avatar className="bg-purple-200 w-12 h-12">
                 <AvatarFallbackText>{selectedGroup?.groupName?.charAt(0) || "G"}</AvatarFallbackText>
@@ -282,12 +284,12 @@ export default function DriverDetailsScreen() {
                 <Text className="text-white font-bold text-xl">
                   Group: {selectedGroup?.groupName || "No Group Selected"}
                 </Text>
-                <Text className="text-gray-400 text-sm">
+                <Text className="text-typography-500 text-sm">
                   {selectedGroup?.children?.map((c: any) => c.preferredName || c.firstName).join(", ") || "No children found"}
                 </Text>
               </VStack>
             </HStack>
-            <ChevronDown color="#F97316" size={24} />
+            <ChevronDown color="#E66B00" size={24} />
           </HStack>
         </Pressable>
 
@@ -298,8 +300,8 @@ export default function DriverDetailsScreen() {
         <Button
           className={
             (isBooked && !isActiveBooking) || isAlreadyBooked || !hasMatch
-              ? "bg-[#333] h-16 rounded-full w-full border border-gray-700" 
-              : "bg-[#F97316] h-16 rounded-full w-full"
+              ? "bg-background-800 h-16 rounded-full w-full border border-outline-700" 
+              : "bg-brand h-16 rounded-full w-full"
           }
           disabled={(isBooked && !isActiveBooking) || isAlreadyBooked || !hasMatch}
           onPress={handleBookingRequest}
@@ -319,11 +321,11 @@ export default function DriverDetailsScreen() {
       {showSelector && (
         <Box className="absolute inset-0 bg-black/80 justify-end z-[999]" style={{ elevation: 10 }}>
           <Pressable className="absolute inset-0" onPress={() => setShowSelector(false)} />
-          <Box className="bg-[#1A1919] border-t border-gray-800 rounded-t-[40px] p-6 pb-12 w-full">
+          <Box className="bg-background-900 border-t border-outline-800 rounded-t-[40px] p-6 pb-12 w-full">
             <HStack className="justify-between items-center mb-6 px-2">
               <Text className="text-white font-bold text-2xl">Select a Child Group</Text>
               <Pressable onPress={() => setShowSelector(false)} className="p-2">
-                <X color="#F97316" size={24} />
+                <X color="#E66B00" size={24} />
               </Pressable>
             </HStack>
             
@@ -335,18 +337,18 @@ export default function DriverDetailsScreen() {
                     setShowSelector(false);
                     setTimeout(() => setSelectedGroup(group), 50);
                   }}
-                  className="bg-[#262626] active:bg-[#333] p-5 rounded-2xl border border-gray-800"
+                  className="bg-background-800 active:bg-background-700 p-5 rounded-2xl border border-outline-700"
                 >
                   <VStack>
                     <Text className="text-white font-bold text-xl mb-1">{group.groupName}</Text>
-                    <Text className="text-gray-400 text-base">
+                    <Text className="text-typography-400 text-base">
                       {group.children?.map((c: any) => c.preferredName || c.firstName).join(", ")}
                     </Text>
                   </VStack>
                 </Pressable>
               ))}
               {childGroups.length === 0 && (
-                <Text className="text-gray-500 text-center py-10 text-lg italic">No groups available</Text>
+                <Text className="text-typography-500 text-center py-10 text-lg italic">No groups available</Text>
               )}
             </VStack>
           </Box>

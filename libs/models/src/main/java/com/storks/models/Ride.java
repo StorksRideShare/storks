@@ -19,11 +19,11 @@ public class Ride {
     private UUID rideId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "driver_id")
+    @JoinColumn(name = "driver_id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     private Driver driver;
 
     @OneToMany(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ride_id")
+    @JoinColumn(name = "ride_id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     private List<ChildGroup> groups;
 
     @Column(nullable = false)

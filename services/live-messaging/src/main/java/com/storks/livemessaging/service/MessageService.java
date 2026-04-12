@@ -35,7 +35,7 @@ public class MessageService {
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final RedisTemplate<String, Object> redisTemplate;
     
-    private static final String CHAT_MESSAGES_TOPIC = "chat-messages";
+    private static final String CHAT_MESSAGES_TOPIC = com.storks.livemessaging.config.KafkaConfig.CHAT_MESSAGES_TOPIC;
     private static final String REDIS_RECENT_MESSAGES_KEY_PREFIX = "room:messages:";
     
     public void publishMessageToKafka(ChatMessagePayload payload) {

@@ -1,6 +1,5 @@
-import { View } from "@/components/Themed";
-import { Avatar, AvatarFallbackText, AvatarImage } from "@/components/ui/avatar";
 import { Box } from "@/components/ui/box";
+import { Avatar, AvatarFallbackText, AvatarImage } from "@/components/ui/avatar";
 import { Button, ButtonText } from "@/components/ui/button";
 import { Divider } from "@/components/ui/divider";
 import { HStack } from "@/components/ui/hstack";
@@ -10,7 +9,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { useLocalSearchParams, router } from "expo-router";
 import { useEffect, useState } from "react";
 import { useApiClient } from "@/middleware/apiClient";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useSafeAreaInsets, SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft, Mail, Shield, User as UserIcon } from "lucide-react-native";
 import { Pressable, ScrollView } from "react-native";
 
@@ -31,7 +30,8 @@ type RoomDetail = {
 
 export default function ParticipantProfile() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const api = useApiClient();
+  // live-messaging service
+  const api = useApiClient("live-messaging");
   const [room, setRoom] = useState<RoomDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const insets = useSafeAreaInsets();
@@ -39,7 +39,8 @@ export default function ParticipantProfile() {
   useEffect(() => {
     const fetchDetail = async () => {
       try {
-        const data = await api.get<RoomDetail>(`/api/v1/chats/${id}`);
+        // apiClient already prepends /api/v1
+        const data = await api.get<RoomDetail>(`/chats/${id}`);
         setRoom(data);
       } catch (error) {
         console.error("Failed to fetch room detail:", error);
@@ -48,21 +49,21 @@ export default function ParticipantProfile() {
       }
     };
     fetchDetail();
-  }, [id]);
+  }, [id, api]);
 
   if (loading) {
     return (
-      <View className="flex-1 items-center justify-center bg-black">
+      <SafeAreaView className="flex-1 items-center justify-center bg-black">
         <Spinner size="large" />
-      </View>
+      </SafeAreaView>
     );
   }
 
   if (!room) {
     return (
-      <View className="flex-1 items-center justify-center bg-black">
+      <SafeAreaView className="flex-1 items-center justify-center bg-black">
         <Text className="text-white">Room not found</Text>
-      </View>
+      </SafeAreaView>
     );
   }
 

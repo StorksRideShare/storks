@@ -1,0 +1,138 @@
+openapi: 3.1.0
+info:
+  title: Storks User Service
+  version: 1.0.0
+  description: API for user management and authentication status.
+
+servers:
+  - url: http://localhost:8083/api/v1
+    description: Local Dev Server
+
+paths:
+  /auth/status:
+    get:
+      summary: Get current authentication status
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: './shared.yml#/components/schemas/ApiResponse'
+
+  /users/sync:
+    post:
+      summary: Synchronize user from provider
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                roleType:
+                  type: string
+      responses:
+        '200':
+          description: User synchronized
+          content:
+            application/json:
+              schema:
+                $ref: './shared.yml#/components/schemas/ApiResponse'
+
+  /parent/profile:
+    get:
+      summary: Get parent profile
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Parent profile retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /parent/groups:
+    get:
+      summary: Get parent groups
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of parent driver groups
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+
+  /onboarding/complete:
+    post:
+      summary: Complete user onboarding
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OnboardingRequest'
+      responses:
+        '200':
+          description: Onboarding complete
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OnboardingResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    OnboardingRequest:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        dateOfBirth:
+          type: string
+        primaryCountryCode:
+          type: string
+        primaryNumber:
+          type: string
+        secondaryNumbers:
+          type: array
+          items:
+            $ref: '#/components/schemas/SecondaryPhone'
+        profilePictureUrl:
+          type: string
+
+    SecondaryPhone:
+      type: object
+      properties:
+        countryCode:
+          type: string
+        number:
+          type: string
+
+    OnboardingResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string

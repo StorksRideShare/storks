@@ -17,7 +17,7 @@ repositories {
 }
 
 dependencies {
-    api project(':libs:common')
+    api project(':libs:models')
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
 }

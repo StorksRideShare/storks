@@ -23,7 +23,7 @@ func NewProducer(brokers string) *Producer {
 	brokerList := strings.Split(brokers, ",")
 	w := &kafka.Writer{
 		Addr:     kafka.TCP(brokerList...),
-		Topic:    "verification_events",
+		Topic:    "storks.safety.verification.events",
 		Balancer: &kafka.LeastBytes{},
 	}
 

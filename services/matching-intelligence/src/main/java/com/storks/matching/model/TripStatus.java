@@ -12,11 +12,11 @@ import lombok.*;
 public class TripStatus {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     private double latitude;
-    private double UUIDitude;
+    private double longitude;
 
     private String status; // ARRIVING, PIN, PICKUP, DROPOFF, ABSENT
 

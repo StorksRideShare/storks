@@ -1,0 +1,87 @@
+openapi: 3.1.0
+info:
+  title: Storks Admin and Analytics Service
+  version: 1.0.0
+  description: API for dashboard statistics and administrative actions.
+
+servers:
+  - url: http://localhost:8080/api/v1/admin
+    description: Local Dev Server
+
+paths:
+  /dashboard/stats:
+    get:
+      summary: Get high-level dashboard statistics
+      responses:
+        '200':
+          description: Dashboard stats
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardStatsDTO'
+
+  /dashboard/activity:
+    get:
+      summary: Get list of recent system activities
+      responses:
+        '200':
+          description: Recently logged activities
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ActivityDTO'
+
+  /dashboard/notifications:
+    get:
+      summary: Get latest administrative notifications
+      responses:
+        '200':
+          description: List of notifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/NotificationDTO'
+
+components:
+  schemas:
+    DashboardStatsDTO:
+      type: object
+      properties:
+        totalUsers:
+          type: integer
+        activeRides:
+          type: integer
+        revenue:
+          type: number
+        growth:
+          type: number
+
+    ActivityDTO:
+      type: object
+      properties:
+        id:
+          type: string
+        description:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        type:
+          type: string
+
+    NotificationDTO:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        message:
+          type: string
+        priority:
+          type: string
+          enum: [LOW, MEDIUM, HIGH, CRITICAL]

@@ -17,8 +17,8 @@ services:
       - KAFKA_CONTROLLER_LISTENER_NAMES=CONTROLLER
       - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
       - CLUSTER_ID=MkU3OEVBNTcwNTJENDM2Qk
-      - LOGGING_LEVEL_ORG_APACHE_KAFKA= WARN
-      - LOGGING_LEVEL_KAFKA=WARN
+      - KAFKA_LOG4J_ROOT_LOGLEVEL=WARN
+      - KAFKA_TOOLS_LOG4J_LOGLEVEL=WARN
     networks:
       - microservices-network
     healthcheck:
@@ -36,14 +36,14 @@ services:
 
   kafka-ui:
     container_name: storks-kafka-ui
-    image: provectuslabs/kafka-ui:latest
+    image: kafbat/kafka-ui:latest
     ports:
       - "8080:8080"
     environment:
       - KAFKA_CLUSTERS_0_NAME=local
       - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092
-      - LOGGING_LEVEL_ORG_APACHE_KAFKA= WARN
-      - LOGGING_LEVEL_KAFKA=WARN
+      - LOGGING_LEVEL_ROOT=WARN
+      - LOGGING_LEVEL_IO_KAFBAT=WARN
     depends_on:
       - kafka
     networks:
@@ -104,12 +104,14 @@ services:
     ports:
       - "8085:8085"
     environment:
-      - SPRING_PROFILES_ACTIVE=local
+      - SPRING_PROFILES_ACTIVE=neon
       - SERVER_PORT=8085
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-      - SPRING_DATA_REDIS_URL=redis://default:tLqqIFHmEGaax3G7him6YkyqFkulPoWG@redis-13088.crce276.ap-south-1-3.ec2.cloud.redislabs.com:13088
-      - INTERNAL_API_KEY=storks-internal-secret-2024-v1
-      - LOCAL_DB_URL=jdbc:postgresql://storks-postgres:5432/storks_admin
+      - SPRING_DATA_REDIS_URL=${REDIS_URL}
+      - INTERNAL_API_KEY=${INTERNAL_API_KEY}
+      - NEON_DB_URL=jdbc:postgresql://${NEON_HOST}/storks_admin?sslmode=require
+      - NEON_DB_USERNAME=${ADMIN_SERVICE_DB_USERNAME}
+      - NEON_DB_PASSWORD=${ADMIN_SERVICE_DB_PASSWORD}
     networks:
       - microservices-network
     depends_on:
@@ -124,12 +126,14 @@ services:
     ports:
       - "8088:8088"
     environment:
-      - SPRING_PROFILES_ACTIVE=local
+      - SPRING_PROFILES_ACTIVE=neon
       - SERVER_PORT=8088
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-      - SPRING_DATA_REDIS_URL=redis://default:tLqqIFHmEGaax3G7him6YkyqFkulPoWG@redis-13088.crce276.ap-south-1-3.ec2.cloud.redislabs.com:13088
-      - INTERNAL_API_KEY=storks-internal-secret-2024-v1
-      - LOCAL_DB_URL=jdbc:postgresql://storks-postgres:5432/storks_booking
+      - SPRING_DATA_REDIS_URL=${REDIS_URL}
+      - INTERNAL_API_KEY=${INTERNAL_API_KEY}
+      - NEON_DB_URL=jdbc:postgresql://${NEON_HOST}/storks_booking?sslmode=require
+      - NEON_DB_USERNAME=${BOOKING_SERVICE_DB_USERNAME}
+      - NEON_DB_PASSWORD=${BOOKING_SERVICE_DB_PASSWORD}
     networks:
       - microservices-network
     depends_on:
@@ -144,9 +148,9 @@ services:
       - "8082:8082"
     environment:
       - PORT=8082
-      - DATABASE_URL=postgresql://neondb_owner:npg_CPy4FrjaeO9l@ep-dawn-block-a1fc5xcv-pooler.ap-southeast-1.aws.neon.tech/storks?sslmode=require&channel_binding=require
+      - DATABASE_URL=postgresql://${LOCATION_SERVICE_DB_USERNAME}:${LOCATION_SERVICE_DB_PASSWORD}@${NEON_HOST}/storks_location?sslmode=require&channel_binding=require
       - KAFKA_BROKERS=kafka:9092
-      - REDIS_URL=redis://default:tLqqIFHmEGaax3G7him6YkyqFkulPoWG@redis-13088.crce276.ap-south-1-3.ec2.cloud.redislabs.com:13088
+      - REDIS_URL=${REDIS_URL}
     networks:
       - microservices-network
     depends_on:
@@ -161,12 +165,14 @@ services:
     ports:
       - "8083:8083"
     environment:
-      - SPRING_PROFILES_ACTIVE=local
+      - SPRING_PROFILES_ACTIVE=neon
       - SERVER_PORT=8083
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-      - SPRING_DATA_REDIS_URL=redis://default:tLqqIFHmEGaax3G7him6YkyqFkulPoWG@redis-13088.crce276.ap-south-1-3.ec2.cloud.redislabs.com:13088
-      - INTERNAL_API_KEY=storks-internal-secret-2024-v1
-      - LOCAL_DB_URL=jdbc:postgresql://storks-postgres:5432/storks_users
+      - SPRING_DATA_REDIS_URL=${REDIS_URL}
+      - INTERNAL_API_KEY=${INTERNAL_API_KEY}
+      - NEON_DB_URL=jdbc:postgresql://${NEON_HOST}/storks_users?sslmode=require
+      - NEON_DB_USERNAME=${USER_SERVICE_DB_USERNAME}
+      - NEON_DB_PASSWORD=${USER_SERVICE_DB_PASSWORD}
     networks:
       - microservices-network
     depends_on:
@@ -181,12 +187,14 @@ services:
     ports:
       - "8084:8084"
     environment:
-      - SPRING_PROFILES_ACTIVE=local
+      - SPRING_PROFILES_ACTIVE=neon
       - SERVER_PORT=8084
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-      - SPRING_DATA_REDIS_URL=redis://default:tLqqIFHmEGaax3G7him6YkyqFkulPoWG@redis-13088.crce276.ap-south-1-3.ec2.cloud.redislabs.com:13088
-      - INTERNAL_API_KEY=storks-internal-secret-2024-v1
-      - LOCAL_DB_URL=jdbc:postgresql://storks-postgres:5432/storks_matching
+      - SPRING_DATA_REDIS_URL=${REDIS_URL}
+      - INTERNAL_API_KEY=${INTERNAL_API_KEY}
+      - NEON_DB_URL=jdbc:postgresql://${NEON_HOST}/storks_matching?sslmode=require
+      - NEON_DB_USERNAME=${MATCHING_SERVICE_DB_USERNAME}
+      - NEON_DB_PASSWORD=${MATCHING_SERVICE_DB_PASSWORD}
     networks:
       - microservices-network
     depends_on:
@@ -201,12 +209,14 @@ services:
     ports:
       - "8086:8086"
     environment:
-      - SPRING_PROFILES_ACTIVE=local
+      - SPRING_PROFILES_ACTIVE=neon
       - SERVER_PORT=8086
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-      - SPRING_DATA_REDIS_URL=redis://default:tLqqIFHmEGaax3G7him6YkyqFkulPoWG@redis-13088.crce276.ap-south-1-3.ec2.cloud.redislabs.com:13088
-      - INTERNAL_API_KEY=storks-internal-secret-2024-v1
-      - LOCAL_DB_URL=jdbc:postgresql://storks-postgres:5432/storks_messaging
+      - SPRING_DATA_REDIS_URL=${REDIS_URL}
+      - INTERNAL_API_KEY=${INTERNAL_API_KEY}
+      - NEON_DB_URL=jdbc:postgresql://${NEON_HOST}/storks_messaging?sslmode=require
+      - NEON_DB_USERNAME=${MESSAGING_SERVICE_DB_USERNAME}
+      - NEON_DB_PASSWORD=${MESSAGING_SERVICE_DB_PASSWORD}
     networks:
       - microservices-network
     depends_on:
@@ -221,16 +231,16 @@ services:
       - "8089:8089"
     environment:
       - PORT=8089
-      - DATABASE_URL=postgresql://neondb_owner:npg_CPy4FrjaeO9l@ep-dawn-block-a1fc5xcv-pooler.ap-southeast-1.aws.neon.tech/storks?sslmode=require&channel_binding=require
+      - DATABASE_URL=postgresql://${SAFETY_SERVICE_DB_USERNAME}:${SAFETY_SERVICE_DB_PASSWORD}@${NEON_HOST}/storks_verification?sslmode=require&channel_binding=require
       - KAFKA_BROKERS=kafka:9092
-      - REDIS_URL=redis://default:tLqqIFHmEGaax3G7him6YkyqFkulPoWG@redis-13088.crce276.ap-south-1-3.ec2.cloud.redislabs.com:13088
+      - REDIS_URL=${REDIS_URL}
     networks:
       - microservices-network
     depends_on:
       - kafka
 
   storks-postgres:
-    image: postgres:16
+    image: postgres:16-alpine
     container_name: storks-postgres
     ports:
       - "5432:5432"

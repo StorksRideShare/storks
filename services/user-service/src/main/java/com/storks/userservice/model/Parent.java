@@ -17,6 +17,7 @@ import java.util.List;
 public class Parent extends User {
 
     private LocalDate dateOfBirth;
+    private String address;
 
     @Embedded
     @AttributeOverrides({

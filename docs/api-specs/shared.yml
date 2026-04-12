@@ -1,0 +1,51 @@
+openapi: 3.1.0
+info:
+  title: Storks Shared Schemas
+  version: 1.0.0
+  description: Common schemas used across Storks microservices.
+
+components:
+  schemas:
+    ApiResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          type: object
+        timestamp:
+          type: string
+          format: date-time
+
+    UserResponse:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+        email:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        role:
+          $ref: '#/components/schemas/RoleType'
+        isOnboarded:
+          type: boolean
+        isBanned:
+          type: boolean
+
+    RoleType:
+      type: string
+      enum: [PARENT, DRIVER, ADMIN, SYSTEM]
+
+    RideStatus:
+      type: string
+      enum: [REQUESTED, MATCHED, IN_PROGRESS, COMPLETED, CANCELLED]
+
+    BookingStatus:
+      type: string
+      enum: [PENDING, CONFIRMED, CANCELLED]

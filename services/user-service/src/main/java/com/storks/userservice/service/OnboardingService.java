@@ -6,7 +6,9 @@ import com.storks.userservice.model.Parent;
 import com.storks.userservice.model.PhoneNumber;
 import com.storks.userservice.repository.ParentRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -21,11 +23,12 @@ public class OnboardingService {
 
     public OnboardingResponse completeOnboarding(String clerkUserId, OnboardingRequest req) {
         Parent parent = parentRepository.findByProviderUserId(clerkUserId)
-                .orElseThrow(() -> new RuntimeException("User not found: " + clerkUserId));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found: " + clerkUserId));
 
         parent.setFirstName(req.firstName());
         parent.setLastName(req.lastName());
         parent.setProfilePictureUrl(req.profilePictureUrl());
+        parent.setAddress(req.address());
         parent.setDateOfBirth(
                 LocalDate.parse(req.dateOfBirth(), DateTimeFormatter.ofPattern("dd-MM-yyyy"))
         );

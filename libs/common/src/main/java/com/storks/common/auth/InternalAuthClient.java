@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
 @Component
-public class InternalAuthClient {
+public class InternalAuthClient implements UserAuthService {
 
     private final RestClient restClient;
     private final String internalApiKey;
@@ -21,12 +21,16 @@ public class InternalAuthClient {
         this.internalApiKey = internalApiKey;
     }
 
-    @Cacheable(value = "userClaims", key = "#providerUserId")
-    public UserAuthClaim getUserAuthClaim(String providerUserId) {
+    @Cacheable(value = "user_auth_claims", key = "#p0")
+    public UserAuthClaim getUserAuthClaim(String providerUserId, String email, String firstName, String lastName, String pictureUrl) {
         return restClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/internal/users/auth")
                         .queryParam("providerUserId", providerUserId)
+                        .queryParam("email", email)
+                        .queryParam("firstName", firstName)
+                        .queryParam("lastName", lastName)
+                        .queryParam("pictureUrl", pictureUrl)
                         .build())
                 .header("X-Internal-Api-Key", internalApiKey)
                 .retrieve()

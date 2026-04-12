@@ -6,7 +6,10 @@ const SERVER_IP =
   process.env.EXPO_PUBLIC_SERVER_IP ||
   (Platform.OS === "android" ? "10.0.2.2" : "localhost");
 
-export const API_BASE_URL = `http://${SERVER_IP}:8080`; // Standard base URL for bookings/auth
+export const API_BASE_URL = `http://${SERVER_IP}:8080`;
+
+/** WebSocket base URL for the live-messaging service (port 8085) */
+export const WS_BASE_URL = `ws://${SERVER_IP}:8085/ws`;
 
 export type ServiceName =
   | "admin-and-analytics"
@@ -15,7 +18,7 @@ export type ServiceName =
   | "user-service"
   | "matching-searching"
   | "live-messaging"
-  | "safty-and-verification"
+  | "safety-and-verification"
   | "available-8086"
   | "available-8087"
   | "available-8088";
@@ -30,12 +33,12 @@ const SERVICE_PORTS: Record<ServiceName, number> = {
   "available-8086": 8086,
   "available-8087": 8087,
   "available-8088": 8088,
-  "safty-and-verification": 8089,
+  "safety-and-verification": 8089,
 };
 
 const getBaseUrl = (port: number) => {
   if (!__DEV__) {
-    return `https://example.com:${port}`;
+    return `https://api.storks.app:${port}`;
   }
   return `http://${SERVER_IP}:${port}`;
 };
@@ -44,6 +47,7 @@ export type ApiClient = {
   get: <T>(path: string) => Promise<T>;
   post: <T>(path: string, body?: unknown) => Promise<T>;
   put: <T>(path: string, body?: unknown) => Promise<T>;
+  patch: <T>(path: string, body?: unknown) => Promise<T>;
   delete: <T>(path: string) => Promise<T>;
 };
 
@@ -61,52 +65,63 @@ export function createApiClient(
       token = await getToken();
     } catch (e: any) {
       if (e.name === "ClerkOfflineError" || e.message?.includes("offline")) {
-        console.warn(
-          "Clerk: Device is offline, proceeding without token or failing if required",
-        );
         throw new Error(
           "OFFLINE: Your session could not be verified because the device is offline.",
         );
       }
       throw e;
     }
-    const headers = {
+
+    const headers: Record<string, string> = {
       "Content-Type": "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...((options.headers as Record<string, string>) || {}),
     };
 
-    // Construct URL with prefix if path doesn't start with http
-    let url: string;
-    if (path.startsWith("http")) {
-      url = path;
-    } else {
-      // Ensure path starts with / if it doesn't already
-      const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-      url = `${baseUrl}${prefix}${normalizedPath}`;
-    }
-    
-    console.log(`API REQUEST: ${options.method || "GET"} ${url}`);
+    // Paths passed to get/post/etc must NOT include the prefix —
+    // the prefix is injected here to prevent doubled /api/v1/api/v1 paths.
+    const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+    const url = `${baseUrl}${prefix}${normalizedPath}`;
 
+    if (__DEV__) console.log(`[API] ${options.method || "GET"} ${url}`);
+
+    let response: Response;
     try {
-      const response = await fetch(url, { ...options, headers });
-      if (__DEV__) console.log(`[API] ${response.status} ${url}`);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        if (__DEV__)
-          console.error(`[API] Error ${response.status}: ${errorText}`);
-        throw new Error(
-          `API Error ${response.status}: ${errorText || response.statusText}`,
-        );
-      }
-
-      if (response.status === 204) return {} as T;
-      return response.json() as Promise<T>;
-    } catch (error) {
-      if (__DEV__) console.error(`[API] Fetch failed: ${url}`, error);
-      throw error;
+      response = await fetch(url, { ...options, headers });
+    } catch (networkError) {
+      if (__DEV__) console.error(`[API] Network failure: ${url}`, networkError);
+      throw new Error("NETWORK_ERROR: Unable to reach the server.");
     }
+
+    if (__DEV__) console.log(`[API] ${response.status} ${url}`);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      if (__DEV__)
+        console.error(`[API] Error ${response.status}: ${errorText}`);
+      throw new Error(
+        `API Error ${response.status}: ${errorText || response.statusText}`,
+      );
+    }
+
+    if (response.status === 204) return {} as T;
+
+    const json = await response.json();
+
+    // Unwrap standard ApiResponse wrapper { success, data, message }
+    if (
+      json &&
+      typeof json === "object" &&
+      "success" in json &&
+      "data" in json
+    ) {
+      if (!json.success) {
+        throw new Error(json.message || "API request failed");
+      }
+      return json.data as T;
+    }
+
+    return json as T;
   };
 
   return {
@@ -115,17 +130,22 @@ export function createApiClient(
       request(path, { method: "POST", body: JSON.stringify(body) }),
     put: (path, body) =>
       request(path, { method: "PUT", body: JSON.stringify(body) }),
+    patch: (path, body) =>
+      request(path, { method: "PATCH", body: JSON.stringify(body) }),
     delete: (path) => request(path, { method: "DELETE" }),
   };
 }
 
 export function useApiClient(
-  service: ServiceName = "safty-and-verification",
+  service: ServiceName = "user-service",
   prefix: string = "/api/v1",
 ) {
   const { session } = useSession();
   const port = SERVICE_PORTS[service];
   const baseUrl = getBaseUrl(port);
+
+
+  const sessionId = session?.id;
 
   return useMemo(
     () =>
@@ -134,6 +154,7 @@ export function useApiClient(
         baseUrl,
         prefix,
       ),
-    [session, service, baseUrl, prefix],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [sessionId, baseUrl, prefix],
   );
 }

@@ -13,7 +13,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/bookings")
-@CrossOrigin(origins = "*")
 public class BookingController {
 
     @Autowired
@@ -22,7 +21,7 @@ public class BookingController {
     @Autowired
     private BookingRepository bookingRepository;
 
-    @GetMapping("/parent")
+    @GetMapping("/my")
     public List<BookingEventDTO> getEventsForParent(@RequestParam(required = false) UUID parentId) {
         // Fallback to demo parent ID if not provided
         UUID effectiveParentId = (parentId != null) ? parentId : UUID.fromString("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a01");
@@ -46,6 +45,17 @@ public class BookingController {
         UUID groupId = UUID.fromString(payload.get("groupId"));
         UUID offerId = UUID.fromString(payload.get("offerId"));
         return bookingService.createBookingRequest(groupId, offerId);
+    }
+
+    @GetMapping("/stats")
+    public Map<String, Object> getStats() {
+        long count = bookingRepository.count();
+        // Mock revenue calculation
+        double revenue = count * 15.5; 
+        return Map.of(
+            "totalBookings", count,
+            "totalRevenue", revenue
+        );
     }
 
     @PutMapping("/{id}/cancel")

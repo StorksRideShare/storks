@@ -1,45 +1,27 @@
 import React, { PropsWithChildren, useState } from 'react';
-import { StyleSheet, TouchableOpacity, useColorScheme } from 'react-native';
+import { TouchableOpacity } from 'react-native';
 import { ChevronRight } from 'lucide-react-native';
-
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import Colors from '@/constants/Colors';
+import { Box } from '@/components/ui/box';
+import { Text } from '@/components/ui/text';
+import { VStack } from '@/components/ui/vstack';
 
 export function Collapsible({ children, title }: PropsWithChildren & { title: string }) {
   const [isOpen, setIsOpen] = useState(false);
-  const theme = useColorScheme() ?? 'light';
 
   return (
-    <ThemedView style={styles.collapsible}>
+    <Box className="my-1">
       <TouchableOpacity
-        style={styles.heading}
+        className="flex-row items-center py-3"
         onPress={() => setIsOpen((value) => !value)}
         activeOpacity={0.8}>
         <ChevronRight
           size={18}
-          color={theme === 'light' ? Colors.light.text : Colors.dark.text}
+          color="#E66B00"
           style={{ transform: [{ rotate: isOpen ? '90deg' : '0deg' }] }}
         />
-
-        <ThemedText type="defaultSemiBold" style={{ marginLeft: 6 }}>{title}</ThemedText>
+        <Text className="ml-2 font-semibold text-white">{title}</Text>
       </TouchableOpacity>
-      {isOpen && <ThemedView style={styles.content}>{children}</ThemedView>}
-    </ThemedView>
+      {isOpen && <VStack className="pl-6 pb-3">{children}</VStack>}
+    </Box>
   );
 }
-
-const styles = StyleSheet.create({
-  collapsible: {
-    marginVertical: 4,
-  },
-  heading: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-  },
-  content: {
-    paddingLeft: 24,
-    paddingBottom: 12,
-  },
-});

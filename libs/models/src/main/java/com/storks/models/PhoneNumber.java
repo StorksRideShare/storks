@@ -17,6 +17,7 @@ public class PhoneNumber {
     private String countryCode;
     @Column(nullable = false)
     private String number;
+    @Column(name = "is_primary")
     private boolean primary;
     private boolean isValidated;
     @CreationTimestamp

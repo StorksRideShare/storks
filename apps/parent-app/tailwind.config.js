@@ -1,6 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  darkMode: process.env.DARK_MODE ? process.env.DARK_MODE : 'class',
+  darkMode: 'class',
   content: [
     './app/**/*.{html,js,jsx,ts,tsx,mdx}',
     './components/**/*.{html,js,jsx,ts,tsx,mdx}',
@@ -9,7 +9,6 @@ module.exports = {
     './src/**/*.{html,js,jsx,ts,tsx,mdx}',
   ],
   presets: [require('nativewind/preset')],
-  important: 'html',
   safelist: [
     {
       pattern:
@@ -19,6 +18,12 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        // ── Storks Brand ──────────────────────────────────────────────────────
+        brand: '#E66B00',       // Primary Storks orange (canonical value)
+        'brand-light': '#F4874A',
+        'brand-dim': '#2A1E14', // Dark bg tinted orange for overlays
+
+        // ── Gluestack semantic tokens (CSS variable-driven) ───────────────────
         primary: {
           0: 'rgb(var(--color-primary-0)/<alpha-value>)',
           50: 'rgb(var(--color-primary-50)/<alpha-value>)',
@@ -166,7 +171,7 @@ module.exports = {
           success: 'rgb(var(--color-background-success)/<alpha-value>)',
           info: 'rgb(var(--color-background-info)/<alpha-value>)',
           light: '#FBFBFB',
-          dark: '#181719',
+          dark: '#0F0E0E',
         },
         indicator: {
           primary: 'rgb(var(--color-indicator-primary)/<alpha-value>)',
@@ -175,14 +180,14 @@ module.exports = {
         },
       },
       fontFamily: {
-        heading: undefined,
-        body: undefined,
-        mono: undefined,
-        jakarta: ['var(--font-plus-jakarta-sans)'],
-        roboto: ['var(--font-roboto)'],
-        code: ['var(--font-source-code-pro)'],
-        inter: ['var(--font-inter)'],
-        'space-mono': ['var(--font-space-mono)'],
+        // React Native font names (loaded via expo-font in _layout.tsx)
+        syne: ['Syne_400Regular'],
+        'syne-medium': ['Syne_500Medium'],
+        'syne-semibold': ['Syne_600SemiBold'],
+        'syne-bold': ['Syne_700Bold'],
+        // Fallbacks
+        heading: ['Syne_700Bold'],
+        body: ['Syne_400Regular'],
       },
       fontWeight: {
         extrablack: '950',

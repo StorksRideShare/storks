@@ -14,6 +14,7 @@ import { Spinner } from "@/components/ui/spinner";
 import Colors from "@/constants/Colors";
 import { StompChatClient, ChatMessage } from "@/middleware/chatFunctions";
 import { useApiClient, WS_BASE_URL } from "@/middleware/apiClient";
+import { ChatRoomSkeleton } from "@/components/skeletons/ChatRoomSkeleton";
 import { useUser, useSession } from "@clerk/expo";
 import { Link, router, useLocalSearchParams } from "expo-router";
 import { ArrowLeft, Send, Check, CheckCheck, Clock } from "lucide-react-native";
@@ -38,7 +39,7 @@ export default function ChatRoom() {
   const { id, name } = useLocalSearchParams<{ id: string; name: string }>();
   const { user } = useUser();
   const { session } = useSession();
-  const api = useApiClient();
+  const api = useApiClient("live-messaging");
   const notify = useNotify();
   const insets = useSafeAreaInsets();
 
@@ -74,9 +75,9 @@ export default function ChatRoom() {
     // fetch history
   const fetchHistory = async () => {
     try {
-      const roomData = await api.get<any>(`/api/v1/chats/${id}`);
+      const roomData = await api.get<any>(`/chats/${id}`);
       setRoom(roomData);
-      const history = await api.get<any[]>(`/api/v1/chats/${id}/messages/recent`);
+      const history = await api.get<any[]>(`/chats/${id}/messages/recent`);
       // Sort to newest at the bottom
       const sorted = [...history].sort(
         (a, b) => new Date(a.sentAt).getTime() - new Date(b.sentAt).getTime()
@@ -114,7 +115,16 @@ export default function ChatRoom() {
 
     fetchHistory();
 
-    const client = new StompChatClient(WS_BASE_URL, () => session.getToken());
+    const client = new StompChatClient(WS_BASE_URL, async () => {
+      try {
+        return await session.getToken();
+      } catch (e: any) {
+        if (e.name === "ClerkOfflineError" || e.message?.includes("offline")) {
+          return null;
+        }
+        throw e;
+      }
+    });
     stompClient.current = client;
 
     client.connect(
@@ -326,8 +336,17 @@ export default function ChatRoom() {
     );
   };
 
+  if (loading) return <ChatRoomSkeleton />;
+
   return (
-    <Box style={{ flex: 1, backgroundColor: colors.background, paddingTop: insets.top, paddingBottom: insets.bottom }}>
+    <Box
+      style={{
+        flex: 1,
+        backgroundColor: colors.background,
+        paddingTop: insets.top,
+        paddingBottom: insets.bottom,
+      }}
+    >
       {/* Header */}
       <HStack className="px-4 py-3 items-center border-b border-gray-800 bg-black" space="md">
         <Pressable onPress={() => router.back()}>
@@ -351,21 +370,15 @@ export default function ChatRoom() {
 
       {/* Messages */}
       <View style={{ flex: 1 }}>
-        {loading ? (
-          <Box className="flex-1 items-center justify-center">
-            <Spinner size="large" />
-          </Box>
-        ) : (
-          <ScrollView
-            ref={scrollViewRef}
-            className="flex-1 px-4"
-            onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: false })}
-          >
-            <VStack className="py-4">
-              {messages.map((msg, idx) => renderMessage(msg, idx))}
-            </VStack>
-          </ScrollView>
-        )}
+        <ScrollView
+          ref={scrollViewRef}
+          className="flex-1 px-4"
+          onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: false })}
+        >
+          <VStack className="py-4">
+            {messages.map((msg, idx) => renderMessage(msg, idx))}
+          </VStack>
+        </ScrollView>
       </View>
 
       <KeyboardAvoidingView
@@ -373,7 +386,7 @@ export default function ChatRoom() {
         keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
       >
         <HStack className="p-4 bg-black border-t border-gray-800 items-end gap-2">
-          <Box className="flex-1 rounded-2xl border border-orange-500/60 px-3 py-1">
+          <Box className="flex-1 rounded-2xl border border-brand/60 px-3 py-1">
             <Input className="w-full border-0">
               <InputField
                 className="text-white text-sm min-h-[40px] w-full"
@@ -389,7 +402,7 @@ export default function ChatRoom() {
             onPress={sendMessage}
             disabled={!isConnected || !inputText.trim()}
             className={`w-10 h-10 text-center rounded-full items-center justify-center ${
-              isConnected && inputText.trim() ? "bg-orange-500" : "bg-gray-800"
+              isConnected && inputText.trim() ? "bg-brand" : "bg-gray-800"
             }`}
           >
             <Send size={20} color="#ffffff" />
@@ -398,4 +411,4 @@ export default function ChatRoom() {
       </KeyboardAvoidingView>
     </Box>
   );
-}
+};

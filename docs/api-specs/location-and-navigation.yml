@@ -1,0 +1,80 @@
+openapi: 3.1.0
+info:
+  title: Storks Location and Navigation Service
+  version: 1.0.0
+  description: API for routing, distance estimation, and location health.
+
+servers:
+  - url: http://localhost:8082/api/v1
+    description: Local Dev Server
+
+paths:
+  /location/health:
+    get:
+      summary: Health check for the location service
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  service:
+                    type: string
+
+  /ping:
+    get:
+      summary: Protected ping endpoint to verify auth claims
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  user:
+                    type: object
+
+  /navigation/route:
+    get:
+      summary: Get driving route and estimated time/distance
+      parameters:
+        - name: origin
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: destination
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Route information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  polyline:
+                    type: string
+                  duration:
+                    type: string
+                  distance:
+                    type: string
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

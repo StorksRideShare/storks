@@ -1,0 +1,161 @@
+openapi: 3.1.0
+info:
+  title: Storks Live Messaging Service
+  version: 1.0.0
+  description: Real-time chat and historical message retrieval.
+
+servers:
+  - url: http://localhost:8085/api/v1
+    description: Local Dev Server
+
+paths:
+  /chats:
+    get:
+      summary: Get active chat rooms for the current user
+      responses:
+        '200':
+          description: List of chat rooms
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ChatRoomResponse'
+    post:
+      summary: Create or restore a chat room with another user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateChatRequest'
+      responses:
+        '200':
+          description: Chat room created or restored
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatRoomResponse'
+
+  /chats/{roomId}:
+    get:
+      summary: Get detailed information about a chat room
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Room details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatRoomResponse'
+
+  /chats/{roomId}/messages:
+    get:
+      summary: Get paginated message history for a room
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: size
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 50
+        - name: sort
+          in: query
+          required: false
+          schema:
+            type: string
+            default: sentAt,desc
+      responses:
+        '200':
+          description: Paginated messages
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  content:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Message'
+                  totalElements:
+                    type: integer
+                  totalPages:
+                    type: integer
+
+  /chats/{roomId}/messages/recent:
+    get:
+      summary: Get recent messages from cache (Redis)
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of recent untyped message objects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+
+components:
+  schemas:
+    ChatRoomResponse:
+      type: object
+      properties:
+        roomId:
+          type: string
+          format: uuid
+        roomName:
+          type: string
+        lastMessage:
+          type: string
+        lastMessageTime:
+          type: string
+          format: date-time
+        unreadCount:
+          type: integer
+        isDirect:
+          type: boolean
+
+    CreateChatRequest:
+      type: object
+      required: [targetUserId]
+      properties:
+        targetUserId:
+          type: string
+          description: UUID or email of the target user
+
+    Message:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        senderId:
+          type: string
+          format: uuid
+        content:
+          type: string
+        sentAt:
+          type: string
+          format: date-time
+        type:
+          type: string
+          enum: [TEXT, IMAGE, LOCATION]

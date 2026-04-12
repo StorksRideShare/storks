@@ -25,11 +25,6 @@
       "predictiveBackGestureEnabled": false,
       "package": "com.anonymous.parentapp"
     },
-    "web": {
-      "bundler": "metro",
-      "output": "static",
-      "favicon": "./assets/images/favicon.png"
-    },
     "plugins": [
       "expo-router",
       "expo-font",

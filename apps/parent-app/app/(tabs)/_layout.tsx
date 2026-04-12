@@ -1,25 +1,15 @@
 import { useAuth } from "@clerk/expo";
-import { Link, Redirect, Tabs } from "expo-router";
-import { SymbolView } from "expo-symbols";
+import { Redirect, Tabs } from "expo-router";
 import { Home, MessageCircle, Calendar, Activity } from "lucide-react-native";
 import React, { useEffect, useState } from "react";
-import { Pressable } from "react-native";
 
-import { useClientOnlyValue } from "@/components/useClientOnlyValue";
-import { useColorScheme } from "@/components/useColorScheme";
 import Colors from "@/constants/Colors";
 import LoadingScreen from "@/components/LoadingScreen";
 import { useApiClient } from "@/middleware/apiClient";
 import type { AuthStatus } from "@/utils/api";
 
 export default function TabLayout() {
-  // ── All hooks at the top ──────────────────────────────────────
-  const colorScheme = useColorScheme();
-  const headerShown = useClientOnlyValue(false, true);
-
-  // useAuth is safe here — ClerkProvider wraps the entire app
-  const { isSignedIn, getToken } = useAuth();
-
+  const { isSignedIn } = useAuth();
   const [checking, setChecking] = useState(true);
   const [isOnboarded, setIsOnboarded] = useState(false);
   const [isBanned, setIsBanned] = useState(false);
@@ -45,20 +35,27 @@ export default function TabLayout() {
     };
 
     check();
-  }, [isSignedIn]);
-
-  // ── Conditional returns AFTER all hooks ───────────────────────
+  }, [isSignedIn, apiClient]);
 
   if (checking) return <LoadingScreen message="Loading..." />;
   if (!isSignedIn) return <Redirect href="/(auth)/signin" />;
   if (isBanned) return <Redirect href="/banned" />;
   if (!isOnboarded) return <Redirect href="/onboarding" />;
 
+  const BRAND = Colors.dark.tint; // #E66B00
+
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme].tint,
-        headerShown,
+        tabBarActiveTintColor: BRAND,
+        tabBarInactiveTintColor: Colors.dark.tabIconDefault,
+        tabBarStyle: {
+          backgroundColor: "#0F0E0E",
+          borderTopColor: "#1A1919",
+          borderTopWidth: 1,
+        },
+        tabBarLabelStyle: { fontSize: 11, fontWeight: "600" },
+        headerShown: false,
       }}
     >
       <Tabs.Screen
@@ -66,20 +63,6 @@ export default function TabLayout() {
         options={{
           title: "Home",
           tabBarIcon: ({ color }) => <Home color={color} size={24} />,
-          headerRight: () => (
-            <Link href="/modal" asChild>
-              <Pressable style={{ marginRight: 15 }}>
-                {({ pressed }) => (
-                  <SymbolView
-                    name={{ ios: "info.circle", android: "info", web: "info" }}
-                    size={25}
-                    tintColor={Colors[colorScheme].text}
-                    style={{ opacity: pressed ? 0.5 : 1 }}
-                  />
-                )}
-              </Pressable>
-            </Link>
-          ),
         }}
       />
       <Tabs.Screen
@@ -92,7 +75,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="calendar"
         options={{
-          title: "Calendar",
+          title: "Schedule",
           tabBarIcon: ({ color }) => <Calendar color={color} size={24} />,
         }}
       />

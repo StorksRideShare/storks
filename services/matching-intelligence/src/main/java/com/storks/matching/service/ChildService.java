@@ -4,7 +4,9 @@ import java.util.UUID;
 import com.storks.matching.dto.*;
 import com.storks.models.*;
 import com.storks.matching.repository.*;
+import com.storks.events.ChildSyncEvent;
 import lombok.RequiredArgsConstructor;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -16,6 +18,9 @@ public class ChildService {
 
     private final ChildRepository childRepository;
     private final GroupRepository groupRepository;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
+
+    private static final String TOPIC = "storks.matching.child.sync";
 
     public void addChild(UUID groupId, ChildRequest request) {
 
@@ -28,6 +33,21 @@ public class ChildService {
         child.setGroup(childGroup);
 
         childRepository.save(child);
+        sendSyncEvent(child);
+    }
+
+    private void sendSyncEvent(Child child) {
+        ChildSyncEvent event = ChildSyncEvent.builder()
+                .childId(child.getChildId())
+                .parentId(child.getParent() != null ? child.getParent().getUserId() : null)
+                .firstName(child.getFirstName())
+                .lastName(child.getLastName())
+                .preferredName(child.getPreferredName())
+                .grade(child.getGrade())
+                .qrHash(child.getQrHash())
+                .build();
+        
+        kafkaTemplate.send(TOPIC, child.getChildId().toString(), event);
     }
 
     public List<ChildResponse> getChildren(UUID groupId) {

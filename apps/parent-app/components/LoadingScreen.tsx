@@ -1,31 +1,18 @@
 import * as React from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  Dimensions,
-  Animated,
-  Easing,
-} from "react-native";
+import { Dimensions, Animated, Easing, View } from "react-native";
 import Svg, { Path, Circle } from "react-native-svg";
-import {
-  Syne_700Bold,
-  Syne_400Regular,
-} from "@expo-google-fonts/syne";
-import { useFonts } from "expo-font";
 import { StorkIllustration } from "./common/StorkIllustration";
 
 const { width, height } = Dimensions.get("window");
 
-// Animated spinner using react-native Animated API
-function Spinner() {
+function BrandSpinner() {
   const rotation = React.useRef(new Animated.Value(0)).current;
 
   React.useEffect(() => {
     Animated.loop(
       Animated.timing(rotation, {
         toValue: 1,
-        duration: 1000,
+        duration: 900,
         easing: Easing.linear,
         useNativeDriver: true,
       })
@@ -39,21 +26,12 @@ function Spinner() {
 
   return (
     <Animated.View style={{ transform: [{ rotate }] }}>
-      <Svg width={36} height={36} viewBox="0 0 36 36">
-        {/* Full circle background (dim) */}
-        <Circle
-          cx="18"
-          cy="18"
-          r="15"
-          stroke="#3E2A18"
-          strokeWidth="2.5"
-          fill="none"
-        />
-        {/* Arc — roughly 270deg arc to mimic the spinner in the image */}
+      <Svg width={40} height={40} viewBox="0 0 40 40">
+        <Circle cx="20" cy="20" r="16" stroke="#3E2A18" strokeWidth="3" fill="none" />
         <Path
-          d="M 18 3 A 15 15 0 1 1 3 18"
+          d="M 20 4 A 16 16 0 1 1 4 20"
           stroke="#E66B00"
-          strokeWidth="2.5"
+          strokeWidth="3"
           strokeLinecap="round"
           fill="none"
         />
@@ -62,120 +40,91 @@ function Spinner() {
   );
 }
 
-
 interface LoadingScreenProps {
   message?: string;
 }
 
-export default function LoadingScreen({
-  message = "Initializing...",
-}: LoadingScreenProps) {
-  const [fontsLoaded] = useFonts({
-    Syne_700Bold,
-    Syne_400Regular,
-  });
-
-  // Fade-in animation for the whole screen
+export default function LoadingScreen({ message = "Initializing..." }: LoadingScreenProps) {
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
 
   React.useEffect(() => {
     Animated.timing(fadeAnim, {
       toValue: 1,
-      duration: 600,
+      duration: 500,
       useNativeDriver: true,
     }).start();
   }, [fadeAnim]);
 
   return (
-    <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
-      {/* Center content */}
-      <View style={styles.centerContent}>
-        <Text
-          style={[
-            styles.logoText,
-            fontsLoaded ? { fontFamily: "Syne_700Bold" } : { fontWeight: "700" },
-          ]}
-        >
-          <Text style={styles.logoHighlight}>S</Text>torks
-        </Text>
-        <Text
-          style={[
-            styles.tagline,
-            fontsLoaded
-              ? { fontFamily: "Syne_400Regular" }
-              : { fontWeight: "400" },
-          ]}
+    <Animated.View
+      style={{
+        flex: 1,
+        backgroundColor: "#171412",
+        position: "relative",
+        opacity: fadeAnim,
+      }}
+    >
+      {/* Center wordmark + spinner */}
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          marginBottom: 80,
+        }}
+      >
+        {/* Wordmark */}
+        <View style={{ flexDirection: "row", marginBottom: 8 }}>
+          <Animated.Text
+            style={{ fontSize: 48, color: "#E66B00", fontWeight: "700" }}
+          >
+            S
+          </Animated.Text>
+          <Animated.Text
+            style={{ fontSize: 48, color: "#FFFFFF", fontWeight: "700" }}
+          >
+            torks
+          </Animated.Text>
+        </View>
+
+        {/* Tagline */}
+        <Animated.Text
+          style={{
+            fontSize: 14,
+            color: "#FFFFFF",
+            letterSpacing: 0.3,
+            marginBottom: 52,
+            opacity: 0.8,
+          }}
         >
           Safe, Secure and Cared.
-        </Text>
+        </Animated.Text>
 
-        {/* Spinner */}
-        <View style={styles.spinnerContainer}>
-          <Spinner />
-        </View>
+        <BrandSpinner />
       </View>
 
       {/* Stork illustration — bottom right */}
-      <View style={styles.storkContainer} pointerEvents="none">
+      <View
+        style={{ position: "absolute", bottom: 40, right: -10 }}
+        pointerEvents="none"
+      >
         <StorkIllustration width={width * 0.55} height={height * 0.32} />
       </View>
 
-      {/* Initializing text — bottom center */}
-      <Text
-        style={[
-          styles.initText,
-          fontsLoaded
-            ? { fontFamily: "Syne_400Regular" }
-            : { fontWeight: "400" },
-        ]}
+      {/* Status message — bottom center */}
+      <Animated.Text
+        style={{
+          position: "absolute",
+          bottom: 52,
+          alignSelf: "center",
+          color: "#FFFFFF",
+          fontSize: 13,
+          letterSpacing: 0.3,
+          opacity: 0.6,
+        }}
       >
         {message}
-      </Text>
+      </Animated.Text>
     </Animated.View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#171412",
-    position: "relative",
-  },
-  centerContent: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 80,
-  },
-  logoText: {
-    fontSize: 48,
-    color: "#FFFFFF",
-    letterSpacing: 1,
-    marginBottom: 8,
-  },
-  logoHighlight: {
-    color: "#E66B00",
-  },
-  tagline: {
-    fontSize: 15,
-    color: "#FFFFFF",
-    letterSpacing: 0.3,
-    marginBottom: 48,
-  },
-  spinnerContainer: {
-    marginTop: 8,
-  },
-  storkContainer: {
-    position: "absolute",
-    bottom: 40,
-    right: -10,
-  },
-  initText: {
-    position: "absolute",
-    bottom: 52,
-    alignSelf: "center",
-    color: "#FFFFFF",
-    fontSize: 14,
-    letterSpacing: 0.3,
-  },
-});

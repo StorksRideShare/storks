@@ -3,6 +3,10 @@ spring:
     url: ${NEON_DB_URL}
     username: ${NEON_DB_USERNAME}
     password: ${NEON_DB_PASSWORD}
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
 
 management:
   endpoints:
@@ -12,3 +16,8 @@ management:
   endpoint:
     health:
       show-details: always
+
+storks:
+  internal:
+    user-service-url: http://user-service:8083
+    api-key: ${INTERNAL_API_KEY}

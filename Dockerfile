@@ -2,7 +2,7 @@
 # -----------------------------------------------------------------------------
 # Stage 1: Dependency Cache
 # -----------------------------------------------------------------------------
-FROM gradle:8-jdk21 AS build-cache
+FROM gradle:8-jdk21-alpine AS build-cache
 WORKDIR /home/gradle/src
 
 # Copy only the configuration files first
@@ -13,6 +13,7 @@ COPY --chown=gradle:gradle gradle ./gradle
 COPY --chown=gradle:gradle libs/common/build.gradle ./libs/common/
 COPY --chown=gradle:gradle libs/configs/build.gradle ./libs/configs/
 COPY --chown=gradle:gradle libs/events/build.gradle ./libs/events/
+COPY --chown=gradle:gradle libs/models/build.gradle ./libs/models/
 COPY --chown=gradle:gradle services/admin-and-analytics/build.gradle ./services/admin-and-analytics/
 COPY --chown=gradle:gradle services/booking-and-payment/build.gradle ./services/booking-and-payment/
 COPY --chown=gradle:gradle services/live-messaging/build.gradle ./services/live-messaging/
@@ -45,35 +46,35 @@ RUN --mount=type=cache,target=/home/gradle/.gradle \
 # -----------------------------------------------------------------------------
 
 # Admin Service
-FROM eclipse-temurin:21-jre-jammy AS admin-service
+FROM eclipse-temurin:21-jre-alpine AS admin-service
 WORKDIR /app
 COPY --from=build /home/gradle/src/services/admin-and-analytics/build/libs/app.jar app.jar
 EXPOSE 8085
 ENTRYPOINT ["java", "-jar", "app.jar"]
 
 # Booking Service
-FROM eclipse-temurin:21-jre-jammy AS booking-service
+FROM eclipse-temurin:21-jre-alpine AS booking-service
 WORKDIR /app
 COPY --from=build /home/gradle/src/services/booking-and-payment/build/libs/app.jar app.jar
 EXPOSE 8088
 ENTRYPOINT ["java", "-jar", "app.jar"]
 
 # User Service
-FROM eclipse-temurin:21-jre-jammy AS user-service
+FROM eclipse-temurin:21-jre-alpine AS user-service
 WORKDIR /app
 COPY --from=build /home/gradle/src/services/user-service/build/libs/app.jar app.jar
 EXPOSE 8083
 ENTRYPOINT ["java", "-jar", "app.jar"]
 
 # Matching Intelligence
-FROM eclipse-temurin:21-jre-jammy AS matching-intelligence
+FROM eclipse-temurin:21-jre-alpine AS matching-intelligence
 WORKDIR /app
 COPY --from=build /home/gradle/src/services/matching-intelligence/build/libs/app.jar app.jar
 EXPOSE 8084
 ENTRYPOINT ["java", "-jar", "app.jar"]
 
 # Live Messaging
-FROM eclipse-temurin:21-jre-jammy AS live-messaging
+FROM eclipse-temurin:21-jre-alpine AS live-messaging
 WORKDIR /app
 COPY --from=build /home/gradle/src/services/live-messaging/build/libs/app.jar app.jar
 EXPOSE 8086

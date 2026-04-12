@@ -11,10 +11,10 @@ import org.springframework.kafka.support.serializer.JsonSerializer;
 @Configuration
 public class KafkaConfig {
 
-    public static final String CHAT_MESSAGES_TOPIC = "chat-messages";
-    public static final String OFFER_CREATED_TOPIC = "offer-created";
-    public static final String BOOKING_CREATED_TOPIC = "booking-created";
-    public static final String BOOKING_CANCELLED_TOPIC = "booking-cancelled";
+    public static final String CHAT_MESSAGES_TOPIC = "storks.messaging.chat.messages";
+    public static final String OFFER_CREATED_TOPIC = "storks.messaging.offer.created";
+    public static final String BOOKING_CREATED_TOPIC = "storks.booking.created";
+    public static final String BOOKING_CANCELLED_TOPIC = "storks.booking.cancelled";
 
     @Bean
     public NewTopic chatMessagesTopic() {

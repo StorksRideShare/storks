@@ -3,8 +3,10 @@ package com.storks.matching.service;
 import java.util.UUID;
 import com.storks.matching.dto.GroupResponse;
 import com.storks.models.ChildGroup;
+import com.storks.events.ChildGroupSyncEvent;
 import com.storks.matching.repository.GroupRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.stream.Collectors;
@@ -14,6 +16,25 @@ import java.util.stream.Collectors;
 public class GroupService {
 
     private final GroupRepository groupRepository;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
+
+    private static final String TOPIC = "storks.matching.group.sync";
+
+    public void saveGroup(ChildGroup group) {
+        groupRepository.save(group);
+        sendSyncEvent(group);
+    }
+
+    private void sendSyncEvent(ChildGroup group) {
+        // Just as an example, if there were properties like name/description we'd set them here
+        ChildGroupSyncEvent event = ChildGroupSyncEvent.builder()
+                .groupId(group.getGroupId())
+                .name("Group " + group.getGroupId())
+                .description("Replicated group")
+                .build();
+
+        kafkaTemplate.send(TOPIC, group.getGroupId().toString(), event);
+    }
 
     public GroupResponse getGroup(UUID id) {
 

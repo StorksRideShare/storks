@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { Platform } from "react-native";
+import { useAuth } from "@clerk/expo";
 
 // In a real app, this would use an environment variable or a more robust way to get the server IP
 const SERVER_IP = "10.0.2.2"; // Default for Android emulator to localhost
@@ -48,7 +49,17 @@ export function createApiClient(
     path: string,
     options: RequestInit = {},
   ): Promise<T> => {
-    const token = await getToken();
+    let token: string | null = null;
+    try {
+      token = await getToken();
+    } catch (e: any) {
+      if (e.name === "ClerkOfflineError" || e.message?.includes("offline")) {
+        console.warn("Clerk: Device is offline, proceeding without token or failing if required");
+        throw new Error("OFFLINE: Your session could not be verified because the device is offline.");
+      }
+      throw e;
+    }
+
     const headers = {
       "Content-Type": "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -77,7 +88,17 @@ export function createApiClient(
       }
 
       if (response.status === 204) return {} as T;
-      return response.json() as Promise<T>;
+      const json = await response.json();
+
+      // Unwrap ApiResponse if present
+      if (json && typeof json === 'object' && 'success' in json && 'data' in json) {
+        if (!json.success) {
+          throw new Error(json.message || "API request failed");
+        }
+        return json.data as T;
+      }
+
+      return json as T;
     } catch (error) {
       console.error(`[API] Fetch failed: ${url}`, error);
       throw error;
@@ -98,15 +119,13 @@ export function useApiClient(
   service: ServiceName = "location-and-navigation",
   prefix: string = "/api/v1",
 ) {
-  // For now, driver-app might not have Clerk integrated yet or uses a different auth
-  // This is a placeholder for token retrieval
-  const getToken = async () => null; 
+  const { getToken } = useAuth();
 
   const port = SERVICE_PORTS[service];
   const baseUrl = getBaseUrl(port);
 
   return useMemo(
     () => createApiClient(getToken, baseUrl, prefix),
-    [service, baseUrl, prefix],
+    [getToken, service, baseUrl, prefix],
   );
 }

@@ -13,15 +13,14 @@ import {
 } from "lucide-react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { LoggedParentID } from "@/logged_parent";
-import { Platform } from "react-native";
 import { useApiClient } from "@/middleware/apiClient";
+import { useParentStore } from "@/src/store/parentStore";
 
-// API_BASE_URL is now handled by apiClient
 
 export default function BookingRequestScreen() {
   const { offerId, groupId } = useLocalSearchParams() as any;
   const apiClient = useApiClient("booking-and-payment");
+  const { parent } = useParentStore();
   const [bookingType, setBookingType] = useState("Monthly");
   const [acknowledged, setAcknowledged] = useState(false);
   const [isStorksPricing, setIsStorksPricing] = useState(true);
@@ -52,7 +51,8 @@ export default function BookingRequestScreen() {
 
   const fetchGroupDetails = async () => {
     try {
-      const parentId = LoggedParentID;
+      const parentId = parent?.userId;
+      if (!parentId) return;
       const data = await apiClient.get<any[]>(`/child-groups?parentId=${parentId}`);
       const group = data.find((g: any) => g.groupId === groupId);
       if (group) {
@@ -233,8 +233,20 @@ export default function BookingRequestScreen() {
       {/* Action Button */}
       <Box className="px-5 pb-8">
         <Button
-          className="bg-[#F97316] h-16 rounded-3xl w-full"
-          onPress={() => router.push("/(home)/payment")}
+          className="bg-brand h-16 rounded-3xl w-full"
+          onPress={() =>
+            router.push({
+              pathname: "/(groups)/payment",
+              params: {
+                driverName: offer?.driverName ?? "",
+                groupName: selectedGroup?.groupName ?? "",
+                totalAmount: bookingType === "Monthly" ? "21075" : "220",
+                bookingType,
+                offerId,
+                groupId,
+              },
+            })
+          }
         >
           <ButtonText className="text-white font-bold text-xl uppercase">
             Book {offer?.driverName?.split(" ")[0] || "Driver"}

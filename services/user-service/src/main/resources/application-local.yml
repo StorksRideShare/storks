@@ -12,3 +12,8 @@ management:
   endpoint:
     health:
       show-details: always
+
+storks:
+  internal:
+    user-service-url: http://localhost:8083
+    api-key: ${INTERNAL_API_KEY:storks-internal-secret-2024-v1}

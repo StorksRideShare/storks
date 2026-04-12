@@ -1,11 +1,9 @@
-openapi: "3.0.3"
+openapi: 3.1.0
 info:
-  title: Storks API
-  version: "1.0"
-servers:
-  - url: http:localhost:8080
-    description: >
-      Default Server, this is simply serving our homepage.
+  title: Storks API Umbrella
+  version: 1.0.0
+  description: Comprehensive entry point for all Storks microservices.
+
 paths:
   /test:
     get:
@@ -14,15 +12,17 @@ paths:
           description: OK
   /health:
     get:
-      description: ""
-      parameters: []
+      description: API Gateway health check
       responses:
         "200":
           description: OK
-  /:
-    get:
-      responses:
-        "200":
-          description: >
-            OK
-            Serves Homepage
+
+# This file serves as a reference point. Each microservice has its own detailed spec.
+# - admin-and-analytics.yml
+# - booking-and-payment.yml
+# - live-messaging.yml
+# - location-and-navigation.yml
+# - matching-intelligence.yml
+# - safety-and-verification.yml
+# - user-service.yml
+# - shared.yml (Shared Components)

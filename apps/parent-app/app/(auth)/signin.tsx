@@ -1,189 +1,295 @@
-import { useSignIn } from "@clerk/expo";
-import { Link, useRouter } from "expo-router";
-import * as React from "react";
-import { KeyboardAvoidingView, Platform, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import { StyleSheet, ScrollView } from "react-native";
+import { useSignIn, useAuth } from "@clerk/expo";
+import { useRouter } from "expo-router";
+import { AuthContainer, AuthLogo, OAuthButtons } from "@/components/auth/AuthComponents";
+import { Eye, EyeOff } from "lucide-react-native";
+
+import { VStack } from "@/components/ui/vstack";
+import { HStack } from "@/components/ui/hstack";
+import { Input, InputField, InputSlot } from "@/components/ui/input";
+import { Button, ButtonText, ButtonSpinner } from "@/components/ui/button";
+import { Text } from "@/components/ui/text";
 import { Box } from "@/components/ui/box";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import {
-  AuthContainer,
-  AuthLogo,
-  AuthTitle,
-  AuthDescription,
-  AuthInput,
-  AuthButton,
-  AuthError,
-} from "@/components/auth/AuthComponents";
+import { FormControl, FormControlLabel, FormControlLabelText, FormControlError, FormControlErrorText } from "@/components/ui/form-control";
 
 export default function SignInPage() {
-  const { isLoaded, signIn, setActive } = useSignIn();
+  const { signIn, setActive, errors, fetchStatus } = useSignIn() as any;
+  const { isSignedIn } = useAuth();
   const router = useRouter();
-  const insets = useSafeAreaInsets();
-  const [fontsLoaded] = useFonts({
-    Syne_400Regular,
-    Syne_600SemiBold,
-    Syne_700Bold,
-  });
 
-  const [emailAddress, setEmailAddress] = React.useState("");
-  const [password, setPassword] = React.useState("");
-  const [secondFactorCode, setSecondFactorCode] = React.useState("");
+  // Component state
+  const [emailAddress, setEmailAddress] = useState("");
+  const [password, setPassword] = useState("");
+  const [code, setCode] = useState("");
+  const [passwordVisible, setPasswordVisible] = useState(false);
 
-  // Loading & Error States
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
+  useEffect(() => {
+    if (isSignedIn) router.replace("/(tabs)");
+  }, [isSignedIn]);
 
-  // Navigation States
-  const [pendingSecondFactor, setPendingSecondFactor] = React.useState(false);
+  if (isSignedIn) return null;
 
   const onSignInPress = async () => {
-    if (!isLoaded) return;
-    setIsLoading(true);
-    setError(null);
+    if (!emailAddress || !password) return;
 
-    try {
-      const result = await signIn.create({
-        identifier: emailAddress,
-        password,
-      });
+    // Utilize official API which resolves instead of throwing
+    const { error } = await signIn.password({
+      emailAddress: emailAddress.trim(),
+      password,
+    });
 
-      if (signInAttempt.status === "complete") {
-        await setActive({ session: signInAttempt.createdSessionId });
-        router.replace("/");
-      } else if (signInAttempt.status === "needs_second_factor") {
-        const emailCodeFactor = signInAttempt.supportedSecondFactors?.find(
-          (factor: any) => factor.strategy === "email_code",
-        );
+    if (error) {
+      console.error("[SignIn Error]", JSON.stringify(error, null, 2));
+      return;
+    }
 
-        if (emailCodeFactor) {
-          await signIn.prepareSecondFactor({
-            strategy: "email_code",
-            emailAddressId: emailCodeFactor.emailAddressId,
-          });
-          setShowEmailCode(true);
+    if (signIn.status === "complete") {
+      await setActive({ session: signIn.createdSessionId });
+      router.replace("/(tabs)");
+    } else if (
+      signIn.status === "needs_first_factor" ||
+      signIn.status === "needs_second_factor" ||
+      signIn.status === "needs_client_trust"
+    ) {
+      // MFA / Trust requires verification code
+      if (signIn.status === "needs_first_factor") {
+        const emailFactor = signIn.supportedFirstFactors?.find((f: any) => f.strategy === "email_code");
+        if (emailFactor && emailFactor.emailAddressId) {
+          await signIn.prepareFirstFactor({ strategy: "email_code", emailAddressId: emailFactor.emailAddressId });
         }
       } else {
-        console.error(
-          "Sign in status:",
-          result.status,
-          JSON.stringify(result, null, 2),
-        );
-        setError("Sign in failed. Please try again.");
+        await signIn.prepareSecondFactor({ strategy: "email_code" });
       }
-    } catch (err: any) {
-      setError(
-        err?.errors?.[0]?.longMessage ??
-          err?.errors?.[0]?.message ??
-          "Something went wrong.",
-      );
-    } finally {
-      setIsLoading(false);
+    } else {
+      console.error("[SignIn API] Unexpected sign in status:", signIn.status);
     }
   };
 
-  const onVerifySecondFactor = async () => {
-    if (!isLoaded) return;
-    setIsLoading(true);
-    setError(null);
+  const onVerifyPress = async () => {
+    if (code.length < 6) return;
 
-    try {
-      const result = await signIn.attemptSecondFactor({
-        strategy: "email_code",
-        code: secondFactorCode,
-      });
+    let result;
+    if (signIn.status === "needs_first_factor") {
+      // Attempt verification for the first factor
+      result = await signIn.attemptFirstFactor({ strategy: "email_code", code });
+    } else {
+      result = await signIn.attemptSecondFactor({ strategy: "email_code", code });
+    }
 
-      if (signInAttempt.status === "complete") {
-        await setActive({ session: signInAttempt.createdSessionId });
-        router.replace("/");
-      } else {
-        console.error(
-          "Second factor status:",
-          result.status,
-          JSON.stringify(result, null, 2),
-        );
-        setError("Verification failed. Please try again.");
-      }
-    } catch (err: any) {
-      setError(
-        err?.errors?.[0]?.longMessage ??
-          err?.errors?.[0]?.message ??
-          "Something went wrong.",
-      );
-    } finally {
-      setIsLoading(false);
+    if (result && result.status === "complete") {
+      await setActive({ session: result.createdSessionId });
+      router.replace("/(tabs)");
+    } else {
+      console.error("[Verify Error] Verification not complete:", result?.status);
     }
   };
 
+  const onResendCode = async () => {
+    if (signIn.status === "needs_first_factor") {
+      const emailFactor = signIn.supportedFirstFactors?.find((f: any) => f.strategy === "email_code");
+      if (emailFactor && emailFactor.emailAddressId) {
+        await signIn.prepareFirstFactor({ strategy: "email_code", emailAddressId: emailFactor.emailAddressId });
+      }
+    } else {
+      await signIn.prepareSecondFactor({ strategy: "email_code" });
+    }
+  };
+
+  const onStartOver = () => {
+    // Reset to start
+    signIn.reset();
+  };
+
+  const isFetching = fetchStatus === "fetching";
+
+  // ── MFA / Verify Code Display ────────────────────────────────────────────────
+  if (signIn?.status === "needs_first_factor" || signIn?.status === "needs_second_factor" || signIn?.status === "needs_client_trust") {
+    return (
+      <AuthContainer>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <AuthLogo />
+          <VStack style={styles.card} space="xl">
+            <VStack space="sm">
+              <Text style={styles.title}>Verify your device</Text>
+              <Text style={styles.subtitle}>
+                We sent a 6-digit code to {emailAddress}.{"\n"}Enter it below.
+              </Text>
+            </VStack>
+
+            <FormControl isInvalid={!!errors?.fields?.code}>
+              <Input variant="rounded" className="h-14 bg-transparent border-[1.5px] border-orange-600 px-2">
+                <InputField
+                  value={code}
+                  onChangeText={setCode}
+                  placeholder="6-digit code"
+                  placeholderTextColor="#6b6b6b"
+                  keyboardType="number-pad"
+                  maxLength={6}
+                  textAlign="center"
+                  className="text-white text-lg font-bold"
+                  autoFocus
+                />
+              </Input>
+              {errors?.fields?.code && (
+                <FormControlError>
+                  <FormControlErrorText className="text-red-400 mt-1">{errors.fields.code.message}</FormControlErrorText>
+                </FormControlError>
+              )}
+            </FormControl>
+
+            <VStack space="md" className="mt-2">
+              <Button
+                className="h-14 rounded-full bg-orange-600"
+                isDisabled={code.length < 6 || isFetching}
+                disabled={code.length < 6 || isFetching}
+                onPress={onVerifyPress}
+              >
+                {isFetching ? <ButtonSpinner color="white" /> : <ButtonText className="font-bold text-white text-base tracking-wide">Verify</ButtonText>}
+              </Button>
+
+              <HStack space="md" className="justify-center mt-2">
+                <Button
+                  variant="link"
+                  disabled={isFetching}
+                  isDisabled={isFetching}
+                  onPress={onResendCode}
+                >
+                  <ButtonText className="text-orange-600 font-semibold">Resend code</ButtonText>
+                </Button>
+                <Text className="text-neutral-500">•</Text>
+                <Button
+                  variant="link"
+                  disabled={isFetching}
+                  isDisabled={isFetching}
+                  onPress={onStartOver}
+                >
+                  <ButtonText className="text-orange-600 font-semibold">Start over</ButtonText>
+                </Button>
+              </HStack>
+            </VStack>
+          </VStack>
+        </ScrollView>
+      </AuthContainer>
+    );
+  }
+
+  // ── Main Form UI ─────────────────────────────────────────────────────────────
   return (
-    <AuthContainer
-      style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}
-    >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={{ flex: 1 }}
+    <AuthContainer>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
         <AuthLogo />
+        <VStack style={styles.card} space="xl">
+          <VStack space="sm" className="mb-2">
+            <Text style={styles.title}>Welcome back</Text>
+            <Text style={styles.subtitle}>Sign in to your Storks account.</Text>
+          </VStack>
 
-        <View
-          style={{ flex: 1, justifyContent: "center", paddingHorizontal: 32 }}
-        >
-          {showEmailCode ? (
-            <>
-              <AuthTitle>Verify your email</AuthTitle>
-              <AuthDescription>
-                A verification code has been sent to your email.
-              </AuthDescription>
-              <AuthError message={error} />
-              <AuthInput
-                value={code}
-                placeholder="Enter verification code"
-                onChangeText={setCode}
-                keyboardType="numeric"
-              />
-              <AuthButton
-                title="Verify"
-                onPress={onVerifyPress}
-                isLoading={isLoading}
-                disabled={!code}
-              />
-              <AuthButton
-                title="Go back"
-                onPress={() => setShowEmailCode(false)}
-                variant="secondary"
-              />
-            </>
-          ) : (
-            <>
-              <AuthTitle>Welcome Back!</AuthTitle>
-              <AuthError message={error} />
-              <AuthInput
-                placeholder="Email"
-                keyboardType="email-address"
+          {/* Non-field global errors */}
+          {errors?.globalError && (
+            <Box className="bg-red-400/10 border border-red-400/30 rounded-xl p-3">
+              <Text className="text-red-400 text-sm text-center">{errors.globalError.message}</Text>
+            </Box>
+          )}
+
+          {/* Email field */}
+          <FormControl isInvalid={!!errors?.fields?.identifier || !!errors?.fields?.emailAddress}>
+            <FormControlLabel className="mb-1.5"><FormControlLabelText className="text-neutral-300 font-semibold tracking-wide">Email address</FormControlLabelText></FormControlLabel>
+            <Input variant="rounded" className="h-14 bg-transparent border-[1.5px] border-orange-600 px-4">
+              <InputField
                 value={emailAddress}
                 onChangeText={setEmailAddress}
+                placeholder="you@example.com"
+                placeholderTextColor="#6b6b6b"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                className="text-white text-[15px]"
               />
-              <AuthInput
-                placeholder="Password"
-                secureTextEntry
+            </Input>
+            {(errors?.fields?.identifier || errors?.fields?.emailAddress) && (
+              <FormControlError>
+                <FormControlErrorText className="text-red-400 mt-1">
+                  {errors.fields.identifier?.message || errors.fields.emailAddress?.message}
+                </FormControlErrorText>
+              </FormControlError>
+            )}
+          </FormControl>
+
+          {/* Password field */}
+          <FormControl isInvalid={!!errors?.fields?.password}>
+            <FormControlLabel className="mb-1.5"><FormControlLabelText className="text-neutral-300 font-semibold tracking-wide">Password</FormControlLabelText></FormControlLabel>
+            <Input variant="rounded" className="h-14 bg-transparent border-[1.5px] border-orange-600 px-4">
+              <InputField
                 value={password}
                 onChangeText={setPassword}
+                placeholder="Your password"
+                placeholderTextColor="#6b6b6b"
+                secureTextEntry={!passwordVisible}
+                className="text-white text-[15px]"
               />
-              <AuthButton
-                title="Log In"
-                onPress={onSignInPress}
-                isLoading={isLoading}
-                disabled={!emailAddress || !password}
-              />
-              <Link href="/signup" asChild>
-                <AuthButton
-                  title="Don't have an account yet?"
-                  onPress={() => {}}
-                  variant="secondary"
-                />
-              </Link>
-            </>
-          )}
-        </View>
-      </KeyboardAvoidingView>
+              <InputSlot className="pr-1" onPress={() => setPasswordVisible(!passwordVisible)}>
+                {passwordVisible ? <EyeOff size={20} color="#ea580c" /> : <Eye size={20} color="#ea580c" />}
+              </InputSlot>
+            </Input>
+            {errors?.fields?.password && (
+              <FormControlError>
+                <FormControlErrorText className="text-red-400 mt-1">{errors.fields.password.message}</FormControlErrorText>
+              </FormControlError>
+            )}
+          </FormControl>
+
+          <Button
+            className="mt-4 h-14 rounded-full bg-orange-600"
+            isDisabled={!emailAddress || !password || isFetching}
+            disabled={!emailAddress || !password || isFetching}
+            onPress={onSignInPress}
+          >
+            {isFetching ? <ButtonSpinner color="white" /> : <ButtonText className="font-bold text-white text-base tracking-wide">Sign In</ButtonText>}
+          </Button>
+
+          <OAuthButtons />
+
+          <HStack className="justify-center mt-3 items-center space-x-1">
+            <Text className="text-neutral-400 text-sm">Don't have an account? </Text>
+            <Button variant="link" onPress={() => router.push("/(auth)/signup")} className="p-0 m-0 h-auto">
+              <ButtonText className="text-orange-600 font-semibold text-sm m-0 p-0">Sign up</ButtonText>
+            </Button>
+          </HStack>
+        </VStack>
+      </ScrollView>
     </AuthContainer>
   );
 }
+
+const styles = StyleSheet.create({
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: "center",
+    paddingBottom: 40,
+  },
+  card: {
+    width: "100%",
+  },
+  title: {
+    color: "white",
+    fontSize: 28,
+    fontWeight: "700",
+    letterSpacing: -0.5,
+    textAlign: "center",
+  },
+  subtitle: {
+    color: "#a3a3a3",
+    fontSize: 14,
+    textAlign: "center",
+    lineHeight: 20,
+  },
+});

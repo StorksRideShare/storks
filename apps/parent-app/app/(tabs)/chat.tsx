@@ -1,241 +1,135 @@
-import { View } from "@/components/Themed";
-import ChatCard from "@/components/mobile/ChatCard";
-import { VStack } from "@/components/ui/vstack";
-import { HStack } from "@/components/ui/hstack";
-import { Text } from "@/components/ui/text";
-import { Spinner } from "@/components/ui/spinner";
-import { Fab, FabIcon, FabLabel } from "@/components/ui/fab";
-import { Icon, AddIcon, SearchIcon } from "@/components/ui/icon";
-import { Actionsheet, ActionsheetBackdrop, ActionsheetContent, ActionsheetDragIndicator, ActionsheetDragIndicatorWrapper, ActionsheetItem, ActionsheetItemText } from "@/components/ui/actionsheet";
-import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
+import React, { useEffect, useRef, useState } from "react";
+import { ScrollView, Pressable } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Plus } from "lucide-react-native";
 import { useUser } from "@clerk/expo";
-import { useEffect, useState } from "react";
-import { FlatList, RefreshControl, StyleSheet, Modal } from "react-native";
+import { Link, router } from "expo-router";
+import { Avatar, AvatarFallbackText } from "@/components/ui/avatar";
+import { Box } from "@/components/ui/box";
+import { HStack } from "@/components/ui/hstack";
+import { VStack } from "@/components/ui/vstack";
+import { Text } from "@/components/ui/text";
 import { useApiClient } from "@/middleware/apiClient";
-import { router } from "expo-router";
-import { useNotify } from "@/components/mobile/Notify";
+import { ChatListSkeleton } from "@/components/skeletons/ChatListSkeleton";
+import { useApiError } from "@/src/hooks/useApiError";
+import type { ChatRoom } from "@/utils/api";
 
-type Room = {
-  roomId: string;
-  chatRoomType: "DIRECT" | "GROUP";
-  participants: any[];
-  updatedAt: string;
-  lastMessageContent?: string;
-  lastMessageSentAt?: string;
-};
-
-type UserSearch = {
-  userId: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-};
-
-export default function TabTwoScreen() {
-  const { isLoaded, isSignedIn, user } = useUser();
-  const api = useApiClient();
-  const notify = useNotify();
-  const [rooms, setRooms] = useState<Room[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [showSearch, setShowSearch] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<UserSearch[]>([]);
-  const [searching, setSearching] = useState(false);
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedSearchQuery(searchQuery);
-    }, 500);
-    return () => clearTimeout(handler);
-  }, [searchQuery]);
-
-  useEffect(() => {
-    if (debouncedSearchQuery.length >= 3) {
-      performSearch(debouncedSearchQuery);
-    } else {
-      setSearchResults([]);
-    }
-  }, [debouncedSearchQuery]);
-
-  const fetchRooms = async () => {
-    try {
-      const data = await api.get<any[]>("/api/v1/chats");
-      const sorted = [...data].sort((a, b) => {
-        if (a.chatRoomType === "GROUP" && b.chatRoomType !== "GROUP") return -1;
-        if (a.chatRoomType !== "GROUP" && b.chatRoomType === "GROUP") return 1;
-        return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
-      });
-      setRooms(sorted);
-    } catch (error) {
-      console.error("Failed to fetch rooms:", error);
-      notify.error("Connection Error", "Could not load chats.");
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
-
-  useEffect(() => {
-    if (isLoaded && isSignedIn) {
-      fetchRooms();
-    }
-  }, [isLoaded, isSignedIn]);
-
-  const performSearch = async (q: string) => {
-    setSearching(true);
-    try {
-      const results = await api.get<UserSearch[]>(`/api/v1/users/search?q=${q}`);
-      setSearchResults(results);
-    } catch (error) {
-      console.error("Search failed:", error);
-      notify.error("Search Error", "Search failed. Please try again.");
-    } finally {
-      setSearching(false);
-    }
-  };
-
-  const handleSearch = (q: string) => {
-    setSearchQuery(q);
-  };
-
-  const createChat = async (targetUser: UserSearch) => {
-    try {
-      const room = await api.post<any>("/api/v1/chats", { targetUserId: targetUser.userId });
-      setShowSearch(false);
-      setSearchQuery("");
-      setSearchResults([]);
-      fetchRooms();
-      const name = `${targetUser.firstName} ${targetUser.lastName}`.trim();
-      router.push({
-        pathname: "/chats/[id]",
-        params: { id: room.roomId, name },
-      });
-    } catch (error) {
-      console.error("Failed to create chat:", error);
-      notify.error("Creation Error", "Could not start new chat.");
-    }
-  };
-
-  const getChatName = (room: Room) => {
-    if (room.chatRoomType === "DIRECT") {
-      const other = room.participants.find((p) => p.providerUserId !== user?.id);
-      return other ? `${other.firstName} ${other.lastName}`.trim() || "Direct Chat" : "Direct Chat";
-    }
-    
-    const driver = room.participants.find((p) => p.role === "DRIVER");
-    return driver ? `${driver.firstName}'s parents` : "Group Chat";
-  };
-
-  if (loading) {
-    return (
-      <View style={styles.center}>
-        <Spinner size="large" className="text-orange-500" />
-      </View>
-    );
-  }
+function ChatCard({ room, currentUserId }: { room: ChatRoom; currentUserId: string }) {
+  const other = room.participants.find((p) => p.providerUserId !== currentUserId);
+  const displayName = other
+    ? `${other.firstName ?? ""} ${other.lastName ?? ""}`.trim()
+    : "Unknown";
+  const initials = other
+    ? `${other.firstName?.[0] ?? ""}${other.lastName?.[0] ?? ""}`.toUpperCase()
+    : "?";
+  const lastMessage = room.lastMessageContent ?? "";
+  const lastAt = room.lastMessageSentAt
+    ? new Date(room.lastMessageSentAt).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : "";
 
   return (
-    <View style={styles.container}>
-      <FlatList
-        data={rooms}
-        keyExtractor={(item) => item.roomId}
-        renderItem={({ item }) => (
-          <ChatCard
-            type={item.chatRoomType.toLowerCase() as any}
-            roomId={item.roomId}
-            name={getChatName(item)}
-            recentMessage={item.lastMessageContent ?? "Tap to chat"}
-            lastMessageTime={item.lastMessageSentAt 
-              ? new Date(item.lastMessageSentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-              : new Date(item.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-          />
-        )}
-        ListEmptyComponent={
-          <VStack className="items-center justify-center pt-20" space="md">
-            <Text className="text-gray-500 text-lg">No chats active</Text>
-            <Text className="text-gray-400 text-sm">Start a new conversation below</Text>
-          </VStack>
-        }
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchRooms(); }} />
-        }
-        contentContainerStyle={{ flexGrow: 1 }}
-      />
-
-      <Fab
-        size="lg"
-        placement="bottom right"
-        onPress={() => setShowSearch(true)}
-        className="mb-4 mr-4 bg-orange-600"
-      >
-        <FabIcon as={AddIcon} className="text-white" />
-      </Fab>
-
-      <Modal visible={showSearch} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowSearch(false)}>
-        <View className="flex-1 bg-black">
-          <VStack className="flex-1 w-full p-4 pt-12" space="md">
-            <HStack className="justify-between items-center mb-4">
-              <Text className="text-xl font-bold text-white">New Conversation</Text>
-              <Text className="text-orange-500 font-bold" onPress={() => setShowSearch(false)}>Cancel</Text>
+    <Link
+      href={{ pathname: "/chats/[id]", params: { id: room.roomId, name: displayName } }}
+      asChild
+    >
+      <Pressable>
+        <HStack
+          space="md"
+          className="items-center px-4 py-4 border-b border-outline-800"
+        >
+          <Avatar size="md" className="bg-purple-200">
+            <AvatarFallbackText>{initials}</AvatarFallbackText>
+          </Avatar>
+          <VStack className="flex-1">
+            <HStack className="justify-between items-center">
+              <Text className="text-white font-bold">{displayName}</Text>
+              {lastAt && (
+                <Text className="text-typography-500 text-xs">{lastAt}</Text>
+              )}
             </HStack>
-            <Input size="md" className="bg-gray-900 border-gray-800">
-              <InputSlot className="pl-3">
-                <InputIcon as={SearchIcon} color="white" />
-              </InputSlot>
-              <InputField
-                className="text-white"
-                placeholder="Search by email or ID..."
-                placeholderTextColor="#ffc787ff"
-                value={searchQuery}
-                onChangeText={handleSearch}
-                autoFocus
-              />
-              {searching && (
-                <InputSlot className="pr-3">
-                  <Spinner size="small" className="text-orange-500" />
-                </InputSlot>
-              )}
-            </Input>
-
-            <FlatList
-              data={searchResults}
-              keyExtractor={(item) => item.userId}
-              renderItem={({ item }) => (
-                <HStack className="p-4 border-b border-gray-800 items-center justify-between">
-                  <VStack>
-                    <Text className="font-bold text-white">
-                      {item.firstName} {item.lastName}
-                    </Text>
-                    <Text className="text-gray-500 text-xs">{item.email}</Text>
-                  </VStack>
-                  <Text className="text-blue-500 font-bold" onPress={() => createChat(item)}>Chat</Text>
-                </HStack>
-              )}
-              style={{ flex: 1, marginTop: 10 }}
-              ListEmptyComponent={
-                searchQuery.length >= 3 && !searching ? (
-                  <Text className="text-center text-gray-400 py-4">No users found</Text>
-                ) : null
-              }
-            />
+            <Text
+              className="text-typography-500 text-sm mt-0.5"
+              numberOfLines={1}
+            >
+              {lastMessage || "Tap to start chatting"}
+            </Text>
           </VStack>
-        </View>
-      </Modal>
-    </View>
+        </HStack>
+      </Pressable>
+    </Link>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingTop: 10,
-  },
-  center: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});
+export default function ChatScreen() {
+  const { user } = useUser();
+  // live-messaging service on port 8085
+  const api = useApiClient("live-messaging");
+  const { handleError } = useApiError();
 
+  const [rooms, setRooms] = useState<ChatRoom[]>([]);
+  const [loading, setLoading] = useState(true);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
+
+  useEffect(() => {
+    const fetchRooms = async () => {
+      setLoading(true);
+      try {
+        // Correct path — apiClient already prepends /api/v1
+        const data = await api.get<ChatRoom[]>("/chats");
+        if (mountedRef.current) {
+          const sorted = [...data].sort((a, b) => {
+            const ta = a.lastMessageSentAt ? new Date(a.lastMessageSentAt).getTime() : 0;
+            const tb = b.lastMessageSentAt ? new Date(b.lastMessageSentAt).getTime() : 0;
+            return tb - ta;
+          });
+          setRooms(sorted);
+        }
+      } catch (err) {
+        if (mountedRef.current) handleError(err, "ChatScreen.fetchRooms");
+      } finally {
+        if (mountedRef.current) setLoading(false);
+      }
+    };
+    fetchRooms();
+  }, [api]);
+
+  if (loading) return <ChatListSkeleton />;
+
+  return (
+    <SafeAreaView className="flex-1 bg-background-950">
+      <HStack className="px-5 py-4 items-center justify-between">
+        <Text className="text-white font-bold text-2xl">Messages</Text>
+        <Pressable
+          onPress={() => router.push("/modal")}
+          className="bg-brand/10 p-2.5 rounded-full"
+        >
+          <Plus color="#E66B00" size={22} />
+        </Pressable>
+      </HStack>
+
+      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+        {rooms.length === 0 ? (
+          <Box className="flex-1 py-24 items-center">
+            <Text className="text-typography-500 text-lg">No conversations yet.</Text>
+          </Box>
+        ) : (
+          rooms.map((room) => (
+            <ChatCard
+              key={room.roomId}
+              room={room}
+              currentUserId={user?.id ?? ""}
+            />
+          ))
+        )}
+      </ScrollView>
+    </SafeAreaView>
+  );
+}

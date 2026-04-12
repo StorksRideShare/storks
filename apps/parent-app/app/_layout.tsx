@@ -1,8 +1,7 @@
 import { ClerkProvider } from "@clerk/expo";
-import { tokenCache } from "@clerk/expo/token-cache";
+import { tokenCache } from "@/utils/cache";
 import {
   DarkTheme,
-  DefaultTheme,
   ThemeProvider,
 } from "@react-navigation/native";
 import { Buffer } from "buffer";
@@ -13,7 +12,6 @@ import { useEffect } from "react";
 import "react-native-reanimated";
 global.Buffer = Buffer;
 
-import { useColorScheme } from "@/components/useColorScheme";
 import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider";
 import "@/global.css";
 
@@ -28,8 +26,7 @@ import {
 export { ErrorBoundary } from "expo-router";
 
 export const unstable_settings = {
-  // Ensure that reloading on `/modal` keeps a back button present.
-  initialRouteName: "(home)",
+  initialRouteName: "index",
 };
 
 SplashScreen.preventAutoHideAsync();
@@ -49,11 +46,6 @@ export default function RootLayout() {
     Syne_700Bold,
   });
 
-  useEffect(() => {
-    if (error) {
-      console.error("Font loading error:", error);
-    }
-  }, [error]);
 
   useEffect(() => {
     if (loaded) {
@@ -65,31 +57,31 @@ export default function RootLayout() {
     return <LoadingScreen message="Initializing Storks..." />;
   }
 
-  return <RootLayoutNav />;
+  return (
+    <ClerkProvider publishableKey={publishableKey!} tokenCache={tokenCache}>
+      <RootLayoutNav />
+    </ClerkProvider>
+  );
 }
 
 function RootLayoutNav() {
-  const colorScheme = useColorScheme();
 
   return (
-    <GluestackUIProvider mode={colorScheme === "dark" ? "dark" : "light"}>
-      <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-        <ClerkProvider publishableKey={publishableKey!} tokenCache={tokenCache}>
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="(home)" />
-            <Stack.Screen name="(auth)" />
-            <Stack.Screen name="(tabs)" />
-            <Stack.Screen name="(verify)" />
-            <Stack.Screen name="(driver)" />
-            <Stack.Screen name="(groups)" />
-            <Stack.Screen name="(offer)" />
-            <Stack.Screen name="(track)" />
-            <Stack.Screen name="onboarding" options={{ headerShown: false }} />
-            <Stack.Screen name="modal" options={{ presentation: "modal" }} />
-            <Stack.Screen name="chats" />
-            <Stack.Screen name="banned" />
-          </Stack>
-        </ClerkProvider>
+    <GluestackUIProvider mode="dark">
+      <ThemeProvider value={DarkTheme}>
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="(auth)" />
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="(driver)" />
+          <Stack.Screen name="(verify)" />
+          <Stack.Screen name="(groups)" />
+          <Stack.Screen name="(offer)" />
+          <Stack.Screen name="(track)" />
+          <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+          <Stack.Screen name="modal" options={{ presentation: "modal" }} />
+          <Stack.Screen name="chats" />
+          <Stack.Screen name="+not-found" />
+        </Stack>
       </ThemeProvider>
     </GluestackUIProvider>
   );

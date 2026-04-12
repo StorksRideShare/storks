@@ -1,0 +1,106 @@
+openapi: 3.1.0
+info:
+  title: Storks Matching Intelligence Service
+  version: 1.0.0
+  description: API for driver matching, searching, and booking.
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Local Dev Server
+
+paths:
+  /drivers/search:
+    get:
+      summary: Search for available drivers based on criteria
+      parameters:
+        - name: seats
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: ac
+          in: query
+          required: false
+          schema:
+            type: boolean
+        - name: nfc
+          in: query
+          required: false
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: List of matching drivers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SearchDriverResponse'
+
+  /drivers/search/{id}:
+    get:
+      summary: Get detailed driver profile
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Driver details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchDriverResponse'
+
+  /drivers/search/{id}/book:
+    post:
+      summary: Book a specific driver for a group
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: groupId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Booking status message
+          content:
+            text/plain:
+              schema:
+                type: string
+
+components:
+  schemas:
+    SearchDriverResponse:
+      type: object
+      properties:
+        driverId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        rating:
+          type: number
+        vehicleType:
+          type: string
+        availableSeats:
+          type: integer
+        hasAC:
+          type: boolean
+        hasNFC:
+          type: boolean
+        basePrice:
+          type: number
+        profilePicture:
+          type: string
