@@ -48,13 +48,17 @@ export default function RootLayout() {
 
 
   useEffect(() => {
-    if (loaded) {
+    if (loaded || error) {
       SplashScreen.hideAsync().catch(() => {});
     }
-  }, [loaded]);
+  }, [loaded, error]);
 
   if (!loaded && !error) {
     return <LoadingScreen message="Initializing Storks..." />;
+  }
+
+  if (error) {
+    console.error("Font loading error:", error);
   }
 
   return (
