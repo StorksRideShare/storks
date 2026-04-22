@@ -19,5 +19,5 @@ management:
 
 storks:
   internal:
-    user-service-url: http://user-service:8083
+    user-service-url: ${USER_SERVICE_URL:http://user-service:8083}
     api-key: ${INTERNAL_API_KEY}

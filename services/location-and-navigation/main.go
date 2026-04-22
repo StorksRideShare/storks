@@ -90,7 +90,7 @@ func main() {
 	}
 	
 	r.GET("/api/v1/navigation/route", getRoute)
-	r.Run(":8080")
+
 
 	log.Printf("Starting location-and-navigation service on port %s...", cfg.Port)
 	if err := r.Run(":" + cfg.Port); err != nil {
