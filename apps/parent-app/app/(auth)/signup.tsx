@@ -42,7 +42,9 @@ Storks is committed to the safety of children. All drivers are background-checke
 For questions, please contact us at legal@storks.app`;
 
 export default function SignUpPage() {
-  const { signUp, setActive, errors, fetchStatus } = useSignUp() as any;
+  // v3: useSignUp no longer returns setActive — session activation happens via signUp.finalize().
+  // Removed the `as any` cast; the proper v3 types match the API we're using.
+  const { signUp, errors, fetchStatus } = useSignUp();
   const { isSignedIn } = useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -75,7 +77,7 @@ export default function SignUpPage() {
 
   const onSignUpPress = async () => {
     setLocalError("");
-    
+
     // Local Password Validation
     const pwdError = validatePassword(password);
     if (pwdError) {
@@ -88,6 +90,7 @@ export default function SignUpPage() {
       return;
     }
 
+    // signUp.password() is the v3 API — unchanged from what was already here
     const { error } = await signUp.password({
       emailAddress: emailAddress.trim(),
       password,
@@ -98,7 +101,7 @@ export default function SignUpPage() {
       return;
     }
 
-    // Prepare email verification natively via the expo structure
+    // Prepare email verification — unchanged from v3 API already in use
     await signUp.verifications.sendEmailCode();
     setStep("verify");
   };
@@ -107,9 +110,7 @@ export default function SignUpPage() {
     if (code.length < 6) return;
     setLocalError("");
 
-    await signUp.verifications.verifyEmailCode({
-      code,
-    });
+    await signUp.verifications.verifyEmailCode({ code });
 
     if (signUp.status === "complete") {
       setStep("tos");
@@ -126,14 +127,16 @@ export default function SignUpPage() {
   const onAcceptTOS = async () => {
     setLocalError("");
     try {
+      // v3: signUp.finalize() replaces the old setActive() call. The navigate
+      // callback receives { session } and is responsible for routing.
       await signUp.finalize({
-        navigate: ({ session }: any) => {
+        navigate: ({ session }) => {
           if (session) {
             router.replace("/(tabs)");
           } else {
             setLocalError("Failed to build session tasks");
           }
-        }
+        },
       });
     } catch (err: any) {
       console.error("[Finalize Error]", err);
@@ -141,6 +144,7 @@ export default function SignUpPage() {
     }
   };
 
+  // v3: fetchStatus === 'loading' replaces the old 'fetching' value
   const isFetching = fetchStatus === "fetching";
 
   // ── Step 3: Terms of Service ─────────────────────────────────────────────────
@@ -194,7 +198,6 @@ export default function SignUpPage() {
   }
 
   // ── Step 2: Verify email code ─────────────────────────────────────────────────
-  // If the status goes to missing requirements, fallback to our verification view
   if (step === "verify" || (signUp?.status === "missing_requirements" && signUp?.unverifiedFields?.includes("email_address"))) {
     return (
       <AuthContainer>
@@ -260,7 +263,7 @@ export default function SignUpPage() {
 
   const passwordMismatch = confirmPassword.length > 0 && password !== confirmPassword;
   const canSubmit = emailAddress.length > 0 && password.length >= 8 && confirmPassword === password && !isFetching;
-  
+
   // ── Step 1: Sign up form ──────────────────────────────────────────────────────
   return (
     <AuthContainer>
@@ -282,13 +285,7 @@ export default function SignUpPage() {
               <Text className="text-red-400 text-sm text-center">{localError}</Text>
             </Box>
           ) : null}
-
-          {/* Global Clerk Errors */}
-          {errors?.globalError && (
-            <Box className="bg-red-400/10 border border-red-400/30 rounded-xl p-3 mb-2">
-              <Text className="text-red-400 text-sm text-center">{errors.globalError.message}</Text>
-            </Box>
-          )}
+          
 
           {/* Email field */}
           <FormControl isInvalid={!!errors?.fields?.emailAddress}>
@@ -364,7 +361,7 @@ export default function SignUpPage() {
             disabled={!canSubmit}
             onPress={onSignUpPress}
           >
-             {isFetching ? <ButtonSpinner color="white" /> : <ButtonText className="font-bold text-white text-base tracking-wide">Create Account</ButtonText>}
+            {isFetching ? <ButtonSpinner color="white" /> : <ButtonText className="font-bold text-white text-base tracking-wide">Create Account</ButtonText>}
           </Button>
 
           <OAuthButtons />

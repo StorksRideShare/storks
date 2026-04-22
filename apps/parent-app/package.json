@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@clerk/expo": "3.1.9",
+    "@clerk/types": "^4.101.20",
     "@expo-google-fonts/syne": "^0.4.2",
     "@expo/html-elements": "^0.12.5",
     "@gluestack-ui/core": "3.0.10",
