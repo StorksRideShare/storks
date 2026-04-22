@@ -12,5 +12,5 @@
 *.cache
 *.vscode
 *.idea
-*.gradle
+*.gradle/
 *build
