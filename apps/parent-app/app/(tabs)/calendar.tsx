@@ -147,7 +147,7 @@ export default function CalendarScreen() {
   if (isLoading) return <CalendarScreenSkeleton />;
 
   return (
-    <SafeAreaView className="flex-1 bg-background-950">
+    <SafeAreaView className="flex-1 ">
       <HStack className="px-5 py-4 items-center justify-center">
         <Text className="text-brand font-bold text-2xl">Schedule</Text>
       </HStack>
@@ -161,7 +161,7 @@ export default function CalendarScreen() {
       >
         {/* Child selector */}
         {allChildren.length > 1 && (
-          <Box className="bg-background-800 p-4 rounded-3xl mt-2 mb-5 border border-outline-700">
+          <Box className="  p-4 rounded-3xl mt-2 mb-5 border border-outline-700">
             <HStack className="items-center justify-between">
               <Pressable
                 onPress={() => setSelectedChildIndex((i) => Math.max(0, i - 1))}
@@ -201,7 +201,7 @@ export default function CalendarScreen() {
         )}
 
         {/* Calendar */}
-        <Box className="bg-background-800 rounded-[32px] p-6 border border-outline-700 mb-6">
+        <Box className="  rounded-[32px] p-6 border border-outline-700 mb-6">
           {/* Month navigation */}
           <HStack className="justify-between items-center mb-5 px-2">
             <Pressable onPress={prevMonth}>
@@ -282,7 +282,7 @@ export default function CalendarScreen() {
         </Text>
 
         {dayEntries.length > 0 ? (
-          <Box className="border border-dashed border-outline-600 rounded-3xl p-6 bg-background-800 mb-8">
+          <Box className="border border-dashed border-outline-600 rounded-3xl p-6   mb-8">
             <VStack space="lg">
               {dayEntries.map((entry, i) => (
                 <React.Fragment key={entry.id}>
@@ -309,7 +309,7 @@ export default function CalendarScreen() {
       {/* Absence type modal */}
       <Modal isOpen={!!absenceModalEntry} onClose={() => setAbsenceModalEntry(null)}>
         <ModalBackdrop />
-        <ModalContent className="bg-background-800 rounded-[32px] border border-outline-700 mx-6">
+        <ModalContent className="  rounded-[32px] border border-outline-700 mx-6">
           <ModalBody className="p-6">
             <Text className="text-white font-bold text-xl mb-2">
               Report Absence

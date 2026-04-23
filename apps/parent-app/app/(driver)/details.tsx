@@ -223,7 +223,7 @@ export default function DriverDetailsScreen() {
             <HStack space="md" className="mb-6">
               {offer.vehicleImageUrls && offer.vehicleImageUrls.length > 0 ? (
                 offer.vehicleImageUrls.slice(0, 2).map((url: any, i: number) => (
-                  <Box key={i} className="flex-1 aspect-[4/3] bg-background-800 rounded-3xl overflow-hidden">
+                  <Box key={i} className="flex-1 aspect-[4/3] bg-  rounded-3xl overflow-hidden">
                     <Image
                       source={typeof url === "string" ? { uri: url } : url}
                       className="w-full h-full"
@@ -232,8 +232,8 @@ export default function DriverDetailsScreen() {
                 ))
               ) : (
                 <>
-                  <Box className="flex-1 aspect-[4/3] bg-background-800 rounded-3xl overflow-hidden" />
-                  <Box className="flex-1 aspect-[4/3] bg-background-800 rounded-3xl overflow-hidden" />
+                  <Box className="flex-1 aspect-[4/3] bg-  rounded-3xl overflow-hidden" />
+                  <Box className="flex-1 aspect-[4/3] bg-  rounded-3xl overflow-hidden" />
                 </>
               )}
             </HStack>
@@ -300,7 +300,7 @@ export default function DriverDetailsScreen() {
         <Button
           className={
             (isBooked && !isActiveBooking) || isAlreadyBooked || !hasMatch
-              ? "bg-background-800 h-16 rounded-full w-full border border-outline-700" 
+              ? "bg-  h-16 rounded-full w-full border border-outline-700" 
               : "bg-brand h-16 rounded-full w-full"
           }
           disabled={(isBooked && !isActiveBooking) || isAlreadyBooked || !hasMatch}
@@ -337,7 +337,7 @@ export default function DriverDetailsScreen() {
                     setShowSelector(false);
                     setTimeout(() => setSelectedGroup(group), 50);
                   }}
-                  className="bg-background-800 active:bg-background-700 p-5 rounded-2xl border border-outline-700"
+                  className="bg-  active:bg-background-700 p-5 rounded-2xl border border-outline-700"
                 >
                   <VStack>
                     <Text className="text-white font-bold text-xl mb-1">{group.groupName}</Text>

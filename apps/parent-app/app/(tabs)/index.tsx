@@ -18,10 +18,10 @@ import type { DriverGroup } from "@/utils/api";
 function ChildCard({ group }: { group: DriverGroup }) {
   return (
     <VStack space="md" className="mb-6">
-      {group.children.map((child) => (
+      {group.children?.map((child) => (
         <Box
           key={child.id}
-          className="bg-background-800 p-5 rounded-[28px] border border-outline-700"
+          className="  p-5 rounded-[28px] border border-outline-700"
         >
           <HStack className="items-center justify-between mb-4">
             <HStack space="md" className="items-center">
@@ -91,7 +91,7 @@ export default function HomeScreen() {
   if (isLoading) return <HomeScreenSkeleton />;
 
   return (
-    <SafeAreaView className="flex-1 bg-background-950">
+    <SafeAreaView className="flex-1 ">
       {/* Header */}
       <HStack className="px-5 py-4 items-center justify-between">
         <VStack>
@@ -131,12 +131,12 @@ export default function HomeScreen() {
           Children Status
         </Text>
 
-        {groups.map((group) => (
+        {groups?.map((group) => (
           <ChildCard key={group.id} group={group} />
         ))}
 
-        {groups.length === 0 && !isLoading && (
-          <Box className="bg-background-800 p-8 rounded-[32px] items-center justify-center mt-10 border border-dashed border-outline-600">
+        {(!groups || groups.length === 0) && !isLoading && (
+          <Box className="  p-8 rounded-[32px] items-center justify-center mt-10 border border-dashed border-outline-600">
             <Text className="text-typography-500 text-center text-lg mb-4">
               No active groups or drivers found.
             </Text>
@@ -155,7 +155,7 @@ export default function HomeScreen() {
         </Text>
         <HStack space="md" className="mb-10">
           <Pressable
-            className="flex-1 bg-background-800 p-5 rounded-[24px] border border-outline-700 items-center"
+            className="flex-1   p-5 rounded-[24px] border border-outline-700 items-center"
             onPress={() => router.push("/(tabs)/activity")}
           >
             <Box className="bg-brand/10 p-3 rounded-2xl mb-2">
@@ -165,7 +165,7 @@ export default function HomeScreen() {
           </Pressable>
 
           <Pressable
-            className="flex-1 bg-background-800 p-5 rounded-[24px] border border-outline-700 items-center"
+            className="flex-1   p-5 rounded-[24px] border border-outline-700 items-center"
             onPress={() => router.push("/(tabs)/calendar")}
           >
             <Box className="bg-purple-500/10 p-3 rounded-2xl mb-2">
@@ -175,7 +175,7 @@ export default function HomeScreen() {
           </Pressable>
 
           <Pressable
-            className="flex-1 bg-background-800 p-5 rounded-[24px] border border-outline-700 items-center"
+            className="flex-1   p-5 rounded-[24px] border border-outline-700 items-center"
             onPress={() => router.push("/(tabs)/chat")}
           >
             <Box className="bg-blue-500/10 p-3 rounded-2xl mb-2">

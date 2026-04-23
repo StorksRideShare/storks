@@ -6,7 +6,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 function ChildCardSkeleton() {
   return (
-    <Box className="bg-background-800 p-5 rounded-[28px] border border-outline-700 mb-4">
+    <Box className=" p-5 rounded-[28px] border border-outline-700 mb-4">
       <HStack className="items-center justify-between mb-4">
         <HStack space="md" className="items-center">
           <Skeleton variant="circular" className="h-10 w-10" />
@@ -32,7 +32,7 @@ function ChildCardSkeleton() {
 
 export function HomeScreenSkeleton() {
   return (
-    <SafeAreaView className="flex-1 bg-background-950">
+    <SafeAreaView className="flex-1">
       {/* Header */}
       <HStack className="px-5 py-4 items-center justify-between">
         <VStack space="xs">
@@ -58,7 +58,7 @@ export function HomeScreenSkeleton() {
           {[1, 2, 3].map((i) => (
             <Box
               key={i}
-              className="flex-1 bg-background-800 p-5 rounded-[24px] border border-outline-700 items-center"
+              className="flex-1  p-5 rounded-[24px] border border-outline-700 items-center"
             >
               <Skeleton variant="rounded" className="h-12 w-12 rounded-2xl mb-2" />
               <SkeletonText _lines={1} className="h-3 w-12" />

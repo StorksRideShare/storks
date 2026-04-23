@@ -173,6 +173,7 @@ services:
       - NEON_DB_URL=jdbc:postgresql://${NEON_HOST}/storks_users?sslmode=require
       - NEON_DB_USERNAME=${USER_SERVICE_DB_USERNAME}
       - NEON_DB_PASSWORD=${USER_SERVICE_DB_PASSWORD}
+      - CLERK_SECRET_KEY=sk_test_Oj5jKnaK9g46e8B9My07ySsPbJ0Bf7umAACgXWxwKh
     networks:
       - microservices-network
     depends_on:

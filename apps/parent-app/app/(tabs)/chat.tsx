@@ -104,15 +104,9 @@ export default function ChatScreen() {
   if (loading) return <ChatListSkeleton />;
 
   return (
-    <SafeAreaView className="flex-1 bg-background-950">
+    <SafeAreaView className="flex-1 bg-black">
       <HStack className="px-5 py-4 items-center justify-between">
         <Text className="text-white font-bold text-2xl">Messages</Text>
-        <Pressable
-          onPress={() => router.push("/modal")}
-          className="bg-brand/10 p-2.5 rounded-full"
-        >
-          <Plus color="#E66B00" size={22} />
-        </Pressable>
       </HStack>
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
@@ -130,6 +124,20 @@ export default function ChatScreen() {
           ))
         )}
       </ScrollView>
+
+      <Pressable
+        onPress={() => router.push("/search-account")}
+        className="absolute bottom-6 right-6 bg-[#E66B00] h-14 w-14 rounded-full items-center justify-center shadow-lg"
+        style={{
+          elevation: 5,
+          shadowColor: "#E66B00",
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.3,
+          shadowRadius: 8,
+        }}
+      >
+        <Plus color="#FFFFFF" size={28} />
+      </Pressable>
     </SafeAreaView>
   );
 }

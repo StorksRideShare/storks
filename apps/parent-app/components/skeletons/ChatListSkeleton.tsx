@@ -21,7 +21,7 @@ function ChatRowSkeleton() {
 
 export function ChatListSkeleton() {
   return (
-    <SafeAreaView className="flex-1 bg-background-950">
+    <SafeAreaView className="flex-1 ">
       <Box className="pt-2">
         {[1, 2, 3, 4, 5].map((i) => (
           <ChatRowSkeleton key={i} />

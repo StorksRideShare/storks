@@ -1,4 +1,5 @@
 import { Client, Message } from "@stomp/stompjs";
+import { ClerkOfflineError } from "@clerk/react/errors";
 import "text-encoding"; // Required for STOMP in React Native
 
 /**
@@ -40,7 +41,7 @@ export class StompChatClient {
         try {
           token = await this.getToken();
         } catch (e: any) {
-          if (e.name === "ClerkOfflineError" || e.message?.includes("offline")) {
+          if (ClerkOfflineError.is(e)) {
             console.warn("STOMP: Device is offline, skipping token fetch");
             this.client?.deactivate();
             return;

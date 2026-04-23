@@ -138,7 +138,7 @@ export default function ActivityScreen() {
   if (isLoading) return <ActivityScreenSkeleton />;
 
   return (
-    <SafeAreaView className="flex-1 bg-background-950 px-5">
+    <SafeAreaView className="flex-1  px-5">
       <HStack className="justify-between items-center py-4 mb-4">
         <Text className="text-white font-bold text-2xl">Storks</Text>
         <Text className="text-brand font-bold text-3xl">Activity</Text>

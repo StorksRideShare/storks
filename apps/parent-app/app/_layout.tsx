@@ -83,6 +83,7 @@ function RootLayoutNav() {
           <Stack.Screen name="(track)" />
           <Stack.Screen name="onboarding" options={{ headerShown: false }} />
           <Stack.Screen name="modal" options={{ presentation: "modal" }} />
+          <Stack.Screen name="search-account" options={{ presentation: "modal", headerShown: false }} />
           <Stack.Screen name="chats" />
           <Stack.Screen name="+not-found" />
         </Stack>

@@ -9,9 +9,9 @@ import { useApiClient } from "@/middleware/apiClient";
 import type { AuthStatus } from "@/utils/api";
 
 export default function TabLayout() {
-  const { isSignedIn } = useAuth();
+  const { isSignedIn, signOut } = useAuth();
   const [checking, setChecking] = useState(true);
-  const [isOnboarded, setIsOnboarded] = useState(false);
+  const [isOnboarded, setIsOnboarded] = useState(true);
   const [isBanned, setIsBanned] = useState(false);
 
   const apiClient = useApiClient("user-service");
@@ -27,15 +27,18 @@ export default function TabLayout() {
         const status = await apiClient.get<AuthStatus>("/auth/status");
         setIsOnboarded(status.isOnboarded);
         setIsBanned(status.isBanned);
-      } catch {
-        setIsOnboarded(false);
+      } catch (err: any) {
+        if (err.message && err.message.includes("401")) {
+          await signOut();
+        }
+        // On other errors (like network timeout), we leave isOnboarded as true
       } finally {
         setChecking(false);
       }
     };
 
     check();
-  }, [isSignedIn, apiClient]);
+  }, [isSignedIn, apiClient, signOut]);
 
   if (checking) return <LoadingScreen message="Loading..." />;
   if (!isSignedIn) return <Redirect href="/(auth)/signin" />;

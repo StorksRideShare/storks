@@ -16,6 +16,7 @@ import { StompChatClient, ChatMessage } from "@/middleware/chatFunctions";
 import { useApiClient, WS_BASE_URL } from "@/middleware/apiClient";
 import { ChatRoomSkeleton } from "@/components/skeletons/ChatRoomSkeleton";
 import { useUser, useSession } from "@clerk/expo";
+import { ClerkOfflineError } from "@clerk/react/errors";
 import { Link, router, useLocalSearchParams } from "expo-router";
 import { ArrowLeft, Send, Check, CheckCheck, Clock } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
@@ -119,7 +120,7 @@ export default function ChatRoom() {
       try {
         return await session.getToken();
       } catch (e: any) {
-        if (e.name === "ClerkOfflineError" || e.message?.includes("offline")) {
+        if (ClerkOfflineError.is(e)) {
           return null;
         }
         throw e;

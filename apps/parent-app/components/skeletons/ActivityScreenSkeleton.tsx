@@ -35,7 +35,7 @@ function EventCardSkeleton() {
 
 export function ActivityScreenSkeleton() {
   return (
-    <SafeAreaView className="flex-1 bg-background-950 px-5">
+    <SafeAreaView className="flex-1 px-5">
       <HStack className="justify-between items-center py-4 mb-4">
         <SkeletonText _lines={1} className="h-6 w-20" />
         <SkeletonText _lines={1} className="h-7 w-24" />

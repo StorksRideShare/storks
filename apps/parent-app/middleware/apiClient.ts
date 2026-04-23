@@ -1,4 +1,5 @@
 import { useSession } from "@clerk/expo";
+import { ClerkOfflineError } from "@clerk/react/errors";
 import { useMemo } from "react";
 import { Platform } from "react-native";
 
@@ -24,15 +25,15 @@ export type ServiceName =
   | "available-8088";
 
 const SERVICE_PORTS: Record<ServiceName, number> = {
-  "admin-and-analytics": 8080,
-  "booking-and-payment": 8081,
+  "admin-and-analytics": 8085,
+  "booking-and-payment": 8088,
   "location-and-navigation": 8082,
   "user-service": 8083,
   "matching-searching": 8084,
-  "live-messaging": 8085,
-  "available-8086": 8086,
+  "live-messaging": 8086,
+  "available-8086": 8080,
   "available-8087": 8087,
-  "available-8088": 8088,
+  "available-8088": 8081,
   "safety-and-verification": 8089,
 };
 
@@ -64,7 +65,7 @@ export function createApiClient(
     try {
       token = await getToken();
     } catch (e: any) {
-      if (e.name === "ClerkOfflineError" || e.message?.includes("offline")) {
+      if (ClerkOfflineError.is(e)) {
         throw new Error(
           "OFFLINE: Your session could not be verified because the device is offline.",
         );

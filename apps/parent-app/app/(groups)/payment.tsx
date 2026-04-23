@@ -59,7 +59,7 @@ export default function PaymentScreen() {
         </Text>
 
         {/* Payment Method Card — Stripe integration in Phase 7 */}
-        <Box className="bg-background-800 p-4 rounded-3xl mb-8 border border-outline-700">
+        <Box className="  p-4 rounded-3xl mb-8 border border-outline-700">
           <HStack className="items-center justify-between">
             <HStack space="md" className="items-center">
               <Avatar className="bg-purple-200">
@@ -77,7 +77,7 @@ export default function PaymentScreen() {
         </Box>
 
         {/* Payment summary */}
-        <Box className="border border-dashed border-outline-600 rounded-3xl p-6 bg-background-800 mb-12">
+        <Box className="border border-dashed border-outline-600 rounded-3xl p-6   mb-12">
           <VStack space="lg">
             <Text className="text-white font-bold text-lg mb-2">
               {driverName} : {groupName}
