@@ -9,5 +9,5 @@ import java.util.UUID;
 
 @Repository
 public interface ChildGroupRepository extends JpaRepository<ChildGroup, UUID> {
-    List<ChildGroup> findByParentUserId(UUID userId);
+    List<ChildGroup> findByParent_UserId(UUID userId);
 }

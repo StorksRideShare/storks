@@ -3,7 +3,9 @@ import { Platform } from "react-native";
 import { useAuth } from "@clerk/expo";
 
 // In a real app, this would use an environment variable or a more robust way to get the server IP
-const SERVER_IP = "10.0.2.2"; // Default for Android emulator to localhost
+const SERVER_IP =
+  process.env.EXPO_PUBLIC_SERVER_IP ||
+  (Platform.OS === "android" ? "10.0.2.2" : "localhost");
 
 export const API_BASE_URL = `http://${SERVER_IP}:8080`;
 
@@ -14,7 +16,7 @@ export type ServiceName =
   | "user-service"
   | "matching-searching"
   | "live-messaging"
-  | "safty-and-verification";
+  | "safety-and-verification";
 
 const SERVICE_PORTS: Record<ServiceName, number> = {
   "admin-and-analytics": 8080,
@@ -23,7 +25,7 @@ const SERVICE_PORTS: Record<ServiceName, number> = {
   "user-service": 8083,
   "matching-searching": 8084,
   "live-messaging": 8085,
-  "safty-and-verification": 8089,
+  "safety-and-verification": 8089,
 };
 
 const getBaseUrl = (port: number) => {
@@ -37,6 +39,7 @@ export type ApiClient = {
   get: <T>(path: string) => Promise<T>;
   post: <T>(path: string, body?: unknown) => Promise<T>;
   put: <T>(path: string, body?: unknown) => Promise<T>;
+  patch: <T>(path: string, body?: unknown) => Promise<T>;
   delete: <T>(path: string) => Promise<T>;
 };
 
@@ -111,6 +114,8 @@ export function createApiClient(
       request(path, { method: "POST", body: JSON.stringify(body) }),
     put: (path, body) =>
       request(path, { method: "PUT", body: JSON.stringify(body) }),
+    patch: (path, body) =>
+      request(path, { method: "PATCH", body: JSON.stringify(body) }),
     delete: (path) => request(path, { method: "DELETE" }),
   };
 }

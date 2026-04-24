@@ -1,6 +1,26 @@
 import { Route, RouteStop, NavigationRoute, Location, Driver } from '../types';
 import polyline from '@mapbox/polyline';
 
+export interface DriverProfile {
+  id: string;
+  userId: string;
+  fullName: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  profilePictureUrl?: string;
+  role: string;
+  onboarded: boolean;
+}
+
+export interface AuthStatus {
+  isBanned: boolean;
+  isOnboarded: boolean;
+  userId: string;
+  role: string;
+}
+
 // Mock driver data
 const MOCK_DRIVER: Driver = {
   id: 'driver-1',
@@ -104,8 +124,20 @@ const MOCK_ROUTE: Route = {
 // Simulate network delay
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-// Mock API functions
+// Mock API functions (using real api clients where available)
+import { ApiClient } from '../middleware/apiClient';
+
 export const driverApi = {
+  // Real API calls via user-service
+  async getProfile(apiClient: ApiClient): Promise<DriverProfile> {
+    return await apiClient.get<DriverProfile>('/driver/profile');
+  },
+
+  async getAuthStatus(apiClient: ApiClient): Promise<AuthStatus> {
+    return await apiClient.get<AuthStatus>('/driver/status');
+  },
+
+  // Mocked API calls
   async getDriver(): Promise<Driver> {
     await delay(300);
     return MOCK_DRIVER;
