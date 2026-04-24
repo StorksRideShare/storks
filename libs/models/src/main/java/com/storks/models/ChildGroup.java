@@ -21,6 +21,9 @@ public class ChildGroup {
     @JoinColumn(name = "parent_id")
     private Parent parent;
 
+    @Column(name = "ride_id")
+    private UUID rideId;
+
     @OneToMany(mappedBy = "group", cascade = CascadeType.ALL)
     private List<Child> children = new ArrayList<>();
 

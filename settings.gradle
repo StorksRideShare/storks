@@ -1,4 +1,12 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        mavenCentral()
+    }
+}
+
 rootProject.name = 'storks'
+
 
 include 'libs:common'
 include 'libs:configs'

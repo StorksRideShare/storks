@@ -8,13 +8,12 @@ import { Avatar, AvatarFallbackText } from "@/components/ui/avatar";
 import { Button, ButtonText } from "@/components/ui/button";
 import default_vehicle_1 from "../../assets/images/default_vehicle/1.jpg";
 import default_vehicle_2 from "../../assets/images/default_vehicle/2.jpg";
-import { useAuth } from "@clerk/expo";
-import { useToast, Toast, ToastTitle } from "@/components/ui/toast";
 import { useApiClient } from "@/middleware/apiClient";
 import { useParentStore } from "@/src/store/parentStore";
 import { ChevronLeft, ChevronDown, Star, MapPin, CheckCircle2, Bookmark, X } from "lucide-react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
+
 
 interface StatBoxProps {
   title: string;
@@ -105,8 +104,8 @@ export default function DriverDetailsScreen() {
     try {
       if (initial) setLoading(true);
       const data = await apiClient.get<any>(`/offers/${offerId}`);
-      if (data.vehicleImageUrls.length === 0) {
-        data.vehicleImageUrls = [default_vehicle_1, default_vehicle_2];
+      if (!data.vehicleImageUrls) {
+        data.vehicleImageUrls = [];
       }
       if (data.bookedGroupName) {
         setIsBooked(true);
@@ -121,49 +120,12 @@ export default function DriverDetailsScreen() {
     }
   };
 
-  const handleBookingRequest = async () => {
-    if (!hasMatch) return;
-    
-    try {
-      const data = await apiClient.post<any>(`/bookings/request`, {
-        groupId: selectedGroup.groupId,
-        offerId: offer.offerId,
-      });
-
-      toast.show({
-        placement: "top",
-        render: ({ id }) => {
-          return (
-            <Toast nativeID={"toast-" + id} action="success" variant="solid" className="bg-green-600 rounded-3xl p-6 mt-12 shadow-2xl">
-              <VStack space="xs">
-                <HStack space="sm" className="items-center">
-                  <CheckCircle2 color="white" size={20} />
-                  <ToastTitle className="text-white font-bold text-xl">Booking Requested!</ToastTitle>
-                </HStack>
-                <Text className="text-white text-base opacity-90">
-                  Your request for {selectedGroup.groupName} has been sent to {offer.driverName}.
-                </Text>
-              </VStack>
-            </Toast>
-          );
-        },
-      });
-
-      setTimeout(() => {
-        router.push("/activity");
-      }, 2000);
-    } catch (err) {
-      console.error("Booking Request Error:", err);
-      toast.show({
-        placement: "top",
-        render: ({ id }) => (
-          <Toast nativeID={"toast-err-" + id} action="error" variant="solid" className="bg-red-600 rounded-3xl p-6 mt-12">
-            <ToastTitle className="text-white font-bold">Request Failed</ToastTitle>
-            <Text className="text-white">{(err as any).message || "Could not send request."}</Text>
-          </Toast>
-        ),
-      });
-    }
+  const handleBookingRequest = () => {
+    if (!hasMatch || !selectedGroup) return;
+    // Navigate to booking confirmation screen instead of calling API directly
+    router.push(
+      `/(driver)/booking?offerId=${offer.offerId}&groupId=${selectedGroup.groupId}`
+    );
   };
 
   if (loading) {
@@ -212,9 +174,9 @@ export default function DriverDetailsScreen() {
         </VStack>
 
         <HStack space="md" className="mb-10">
-          <StatBox icon={Star} title={offer.rating || "4.8 Rated"} subTitle="" />
-          <StatBox title={offer.experience || "5 Years"} subTitle="Experience" />
-          <StatBox title={offer.trips || "+500"} subTitle="Safe Trips" />
+          {offer.rating && <StatBox icon={Star} title={offer.rating.toString()} subTitle="Rating" />}
+          {offer.experience && <StatBox title={offer.experience} subTitle="Experience" />}
+          {offer.trips && <StatBox title={offer.trips} subTitle="Safe Trips" />}
         </HStack>
 
         <VStack className="mb-10">
@@ -300,7 +262,7 @@ export default function DriverDetailsScreen() {
         <Button
           className={
             (isBooked && !isActiveBooking) || isAlreadyBooked || !hasMatch
-              ? "bg-  h-16 rounded-full w-full border border-outline-700" 
+              ? "bg-outline-700 h-16 rounded-full w-full border border-outline-700"
               : "bg-brand h-16 rounded-full w-full"
           }
           disabled={(isBooked && !isActiveBooking) || isAlreadyBooked || !hasMatch}
@@ -310,8 +272,8 @@ export default function DriverDetailsScreen() {
             {(() => {
               if (!hasMatch) return "No Matches";
               if (isActiveBooking) return `Driving for ${selectedGroup?.groupName}`;
-              if (isAlreadyBooked) return "Already Requested";
-              return "Request Booking";
+              if (isAlreadyBooked) return "Request Sent";
+              return `Book ${offer.driverName?.split(" ")[0] ?? "Driver"}`;
             })()}
           </ButtonText>
         </Button>

@@ -17,52 +17,43 @@ import java.util.UUID;
 @Inheritance(strategy = InheritanceType.JOINED)
 @DiscriminatorColumn(name = "user_type",  discriminatorType = DiscriminatorType.STRING)
 @Table(name = "users")
+@Access(AccessType.FIELD)
 public abstract class User {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "user_id")
     private UUID userId;
 
-    @Column(name = "email")
     private String email;
-
-    @Column(name = "first_name")
     private String firstName;
-    
-    @Column(name = "last_name")
     private String lastName;
+    private String profilePictureUrl;
 
-    @Column(name = "provider_type", nullable = false)
+    @Column(name = "provider_type")
     @Enumerated(EnumType.STRING)
     private ProviderType providerType;
 
-    @Column(name = "provider_user_id", nullable = false, unique = true)
+    @Column(nullable = false, unique = true)
     private String providerUserId;
 
-    @Column(name = "role")
     @Enumerated(EnumType.STRING)
     private RoleType role;
-    
-    @Column(name = "profile_picture_url")
-    private String profilePictureUrl;
 
-    @Column(name = "onboarded", nullable = false)
+    @Column(nullable = false)
     private boolean onboarded = false;
 
-    @Column(name = "banned", nullable = false)
+    @Column(nullable = false)
     private boolean banned = false;
 
+    @Column(nullable = false)
+    private boolean deleted = false;
+
     @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
-    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-    
-    @Column(name = "last_logged_in")
-    private LocalDateTime lastLoggedIn;
 
-    @Column(name = "is_deleted", nullable = false)
-    private Boolean isDeleted = false;
+    private LocalDateTime lastLoggedIn;
 }

@@ -29,7 +29,11 @@ public class RedisConfig {
         com.fasterxml.jackson.databind.jsontype.PolymorphicTypeValidator ptv = com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator.builder()
                 .allowIfBaseType(Object.class)
                 .build();
-        mapper.activateDefaultTyping(ptv, ObjectMapper.DefaultTyping.NON_FINAL);
+        // Use WRAPPER_OBJECT (As.PROPERTY) so Jackson writes {"@class":"...", ...} —
+        // this is the canonical format expected by GenericJackson2JsonRedisSerializer.
+        // WRAPPER_ARRAY writes ["...", {...}] and is incompatible with that serializer.
+        mapper.activateDefaultTyping(ptv, ObjectMapper.DefaultTyping.NON_FINAL,
+                com.fasterxml.jackson.annotation.JsonTypeInfo.As.PROPERTY);
         return mapper;
     }
 

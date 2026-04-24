@@ -1,6 +1,6 @@
 package com.storks.userservice.repository;
 
-import com.storks.userservice.model.Parent;
+import com.storks.models.Parent;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

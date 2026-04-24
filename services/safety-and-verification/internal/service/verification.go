@@ -58,18 +58,28 @@ func (s *VerificationService) HandleMorningOTPRequest(ctx context.Context, userI
 		return "", fmt.Errorf("morning OTPs can only be requested before 7:30 AM")
 	}
 
-	// Make sure user is authorized (check if user exists)
-	// Make sure group.driver_id matches ride.driver_id
+	// Support 'ride-today' placeholder for testing/dev
 	var driverID string
-	err := s.dbPool.QueryRow(ctx, `
-		SELECT r.driver_id 
-		FROM rides r
-		JOIN child_groups cg ON cg.ride_id = r.ride_id
-		WHERE r.ride_id = $1 AND cg.group_id = $2
-	`, rideID, groupID).Scan(&driverID)
+	var err error
+	if rideID == "ride-today" {
+		err = s.dbPool.QueryRow(ctx, `
+			SELECT r.driver_id 
+			FROM rides r
+			JOIN child_groups cg ON cg.ride_id = r.ride_id
+			WHERE cg.group_id = $1
+			LIMIT 1
+		`, groupID).Scan(&driverID)
+	} else {
+		err = s.dbPool.QueryRow(ctx, `
+			SELECT r.driver_id 
+			FROM rides r
+			JOIN child_groups cg ON cg.ride_id = r.ride_id
+			WHERE r.ride_id = $1 AND cg.group_id = $2
+		`, rideID, groupID).Scan(&driverID)
+	}
 	
 	if err != nil {
-		return "", fmt.Errorf("failed to validate ride and group: %v", err)
+		return "", fmt.Errorf("failed to validate ride and group: %v (rideID: %s, groupID: %s)", err, rideID, groupID)
 	}
 
 	pin, err := GeneratePIN()

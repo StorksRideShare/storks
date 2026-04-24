@@ -2,8 +2,8 @@ package com.storks.userservice.service;
 
 import com.storks.userservice.dto.OnboardingRequest;
 import com.storks.userservice.dto.OnboardingResponse;
-import com.storks.userservice.model.Parent;
-import com.storks.userservice.model.PhoneNumber;
+import com.storks.models.Parent;
+import com.storks.models.PhoneNumber;
 import com.storks.userservice.repository.ParentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

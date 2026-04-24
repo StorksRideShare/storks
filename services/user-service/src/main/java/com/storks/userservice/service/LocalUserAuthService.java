@@ -3,7 +3,7 @@ package com.storks.userservice.service;
 import com.clerk.backend_api.Clerk;
 import com.storks.common.auth.UserAuthService;
 import com.storks.models.dto.UserAuthClaim;
-import com.storks.userservice.model.User;
+import com.storks.models.User;
 import com.storks.userservice.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +22,7 @@ public class LocalUserAuthService implements UserAuthService {
     private final Clerk clerk;
 
     @Override
-    @Cacheable(value = "user_auth_claims_v2", key = "#p0")
+    @Cacheable(value = "user_auth_claims_v4", key = "#p0")
     public UserAuthClaim getUserAuthClaim(String providerUserId, String email, String firstName, String lastName, String pictureUrl) {
         
         String finalEmail = email;

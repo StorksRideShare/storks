@@ -4,68 +4,77 @@ import { VStack } from "@/components/ui/vstack";
 import { Skeleton, SkeletonText } from "@/components/ui/skeleton";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-function ChildCardSkeleton() {
+function GroupCardSkeleton() {
   return (
-    <Box className=" p-5 rounded-[28px] border border-outline-700 mb-4">
-      <HStack className="items-center justify-between mb-4">
-        <HStack space="md" className="items-center">
-          <Skeleton variant="circular" className="h-10 w-10" />
-          <VStack space="sm">
-            <SkeletonText _lines={1} className="h-4 w-32" />
-            <SkeletonText _lines={1} className="h-3 w-24" />
-          </VStack>
+    <Box className="rounded-[20px] border border-outline-700 mb-5 overflow-hidden p-4">
+      <HStack className="items-center justify-between mb-3">
+        <HStack space="sm" className="items-center flex-1">
+          <SkeletonText _lines={1} className="h-4 w-28" />
+          <SkeletonText _lines={1} className="h-3 w-20" />
         </HStack>
-        <Skeleton variant="rounded" className="h-6 w-14 rounded-full" />
+        <Skeleton variant="rounded" className="h-7 w-24 rounded-full" />
       </HStack>
-      <SkeletonText _lines={1} className="h-3 w-3/4 mb-3" />
-      <Box className="h-px bg-outline-700 mb-3" />
-      <HStack className="justify-between items-center">
-        <VStack space="xs">
-          <SkeletonText _lines={1} className="h-2 w-24" />
-          <SkeletonText _lines={1} className="h-4 w-16" />
-        </VStack>
-        <Skeleton variant="rounded" className="h-10 w-20 rounded-full" />
-      </HStack>
+
+      <Box className="rounded-[14px] bg-background-900 p-4">
+        {/* Driver row */}
+        <HStack space="sm" className="items-center mb-4">
+          <Skeleton variant="circular" className="h-8 w-8" />
+          <SkeletonText _lines={1} className="h-4 w-32 flex-1" />
+          <Skeleton variant="rounded" className="h-6 w-16 rounded-full" />
+        </HStack>
+
+        <Box className="h-px bg-outline-800 mb-4" />
+
+        {/* Child row 1 */}
+        <HStack space="sm" className="items-center mb-3">
+          <Box className="w-5 h-5 rounded-full bg-outline-700" />
+          <SkeletonText _lines={1} className="h-4 w-24 flex-1" />
+          <Skeleton variant="rounded" className="h-5 w-16 rounded-full" />
+        </HStack>
+        <SkeletonText _lines={1} className="h-3 w-36 mb-4 ml-7" />
+
+        {/* Child row 2 */}
+        <HStack space="sm" className="items-center mb-3">
+          <Box className="w-5 h-5 rounded-full bg-outline-700" />
+          <SkeletonText _lines={1} className="h-4 w-28 flex-1" />
+          <Skeleton variant="rounded" className="h-5 w-16 rounded-full" />
+        </HStack>
+        <SkeletonText _lines={1} className="h-3 w-40 ml-7" />
+
+        {/* Countdown */}
+        <SkeletonText _lines={1} className="h-4 w-44 mt-4" />
+      </Box>
     </Box>
   );
 }
 
 export function HomeScreenSkeleton() {
   return (
-    <SafeAreaView className="flex-1">
+    <SafeAreaView className="flex-1" edges={["top"]}>
       {/* Header */}
       <HStack className="px-5 py-4 items-center justify-between">
-        <VStack space="xs">
-          <SkeletonText _lines={1} className="h-3 w-24" />
-          <SkeletonText _lines={1} className="h-6 w-32" />
-        </VStack>
-        <Skeleton variant="circular" className="h-12 w-12" />
+        <SkeletonText _lines={1} className="h-6 w-20" />
+        <Skeleton variant="circular" className="h-10 w-10" />
       </HStack>
 
-      <VStack className="flex-1 px-5">
-        {/* Section title */}
-        <SkeletonText _lines={1} className="h-5 w-36 mt-6 mb-4" />
+      <Box className="h-px bg-outline-800 mx-5 mb-1" />
 
-        {/* Two child cards */}
-        <ChildCardSkeleton />
-        <ChildCardSkeleton />
+      <VStack className="flex-1 px-5 mt-4">
+        <GroupCardSkeleton />
+        <GroupCardSkeleton />
 
-        {/* Quick Actions title */}
-        <SkeletonText _lines={1} className="h-5 w-32 mt-4 mb-4" />
-
-        {/* Three action buttons */}
-        <HStack space="md">
-          {[1, 2, 3].map((i) => (
-            <Box
-              key={i}
-              className="flex-1  p-5 rounded-[24px] border border-outline-700 items-center"
-            >
-              <Skeleton variant="rounded" className="h-12 w-12 rounded-2xl mb-2" />
-              <SkeletonText _lines={1} className="h-3 w-12" />
-            </Box>
-          ))}
+        {/* News skeleton */}
+        <SkeletonText _lines={1} className="h-5 w-28 mb-3" />
+        <HStack space="sm">
+          <Skeleton variant="rounded" className="h-28 w-44 rounded-[18px]" />
+          <Skeleton variant="rounded" className="h-28 w-44 rounded-[18px]" />
         </HStack>
       </VStack>
+
+      {/* Search bar skeleton */}
+      <Box className="px-5 pb-4 pt-2">
+        <Skeleton variant="rounded" className="h-14 w-full rounded-full" />
+      </Box>
     </SafeAreaView>
   );
 }

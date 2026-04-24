@@ -202,6 +202,7 @@ export interface DriverGroup {
   driver: DriverProfile;
   children: ChildProfile[];
   parentId: string;
+  rideId?: string;
 }
 
 // ── Offers / Matching ─────────────────────────────────────────────────────────

@@ -41,8 +41,12 @@ export function useParentDashboard(): UseParentDashboardResult {
         api.get<DriverGroup[]>("/parent/groups"),
       ]);
 
+      const normalizedGroups = fetchedGroups.map(g => ({
+        ...g,
+        children: g.children ?? []
+      }));
       setParent(fetchedParent);
-      setGroups(fetchedGroups);
+      setGroups(normalizedGroups);
     } catch (err: any) {
       const isOffline =
         err.message?.includes("OFFLINE") ||

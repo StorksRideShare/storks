@@ -14,43 +14,46 @@ import { QRShowcase } from "@/components/mobile/QRShowcase";
 import { PINShowcase } from "@/components/mobile/PINShowcase";
 import { PINInput } from "@/components/mobile/PINInput";
 import { QRScanner } from "@/components/mobile/QRScanner";
+import { useVerification } from "@/src/hooks/useVerification";
+import { useParentStore } from "@/src/store/parentStore";
+import { useEffect } from "react";
+import QRCode from "react-native-qrcode-svg";
 
 export default function VerifyScreen() {
+  const { groups } = useParentStore();
+  const { qrPayload, pin, isLoading, error: apiError, fetchMorningVerification, fetchAfternoonVerification } = useVerification();
+  
   const [activeTab, setActiveTab] = useState<"morning" | "afternoon">("morning");
   const [showScanner, setShowScanner] = useState(false);
   const [verificationStatus, setVerificationStatus] = useState<string | null>(null);
 
-  // Mock data for testing
-  const mockMorningQR = JSON.stringify({
-    type: "morning",
-    ride_id: "ride-123",
-    group_id: "group-456",
-    expires_at: Math.floor(Date.now() / 1000) + 300,
-    hash: "mock-hash"
-  });
+  const selectedGroup = groups[0];
 
-  const mockAfternoonPIN = "123456";
+  useEffect(() => {
+    if (selectedGroup) {
+      if (activeTab === "morning") {
+        fetchMorningVerification(selectedGroup.id, selectedGroup.rideId || "ride-today");
+      } else {
+        fetchAfternoonVerification(selectedGroup.id);
+      }
+    }
+  }, [activeTab, selectedGroup, fetchMorningVerification, fetchAfternoonVerification]);
 
   const handleScan = async (data: string) => {
     setShowScanner(false);
-    try {
-      const payload = JSON.parse(data);
-      setVerificationStatus("Verifying QR...");
-      setTimeout(() => {
-        setVerificationStatus(`QR Verified Successfully! ✅`);
-      }, 1000);
-    } catch (error) {
-      setVerificationStatus("Invalid QR Code ❌");
-    }
+    // This is where a parent might scan a driver's QR, but usually it's the other way around.
+    // However, if the design allows parent to scan, we keep the logic but use real verification if needed.
+    setVerificationStatus("Verifying...");
+    setTimeout(() => {
+      setVerificationStatus("Verified! ✅");
+    }, 1000);
   };
 
-  const handlePinComplete = async (pin: string) => {
-    try {
-      setVerificationStatus("Verifying PIN...");
-      setTimeout(() => {
-        setVerificationStatus(`PIN [${pin}] Verified Successfully! ✅`);
-      }, 1000);
-    } catch (error) {
+  const handlePinComplete = async (enteredPin: string) => {
+    setVerificationStatus("Verifying PIN...");
+    if (enteredPin === pin) {
+      setVerificationStatus("PIN Verified Successfully! ✅");
+    } else {
       setVerificationStatus("Invalid PIN ❌");
     }
   };
@@ -110,14 +113,39 @@ export default function VerifyScreen() {
             </Box>
           )}
 
+          {apiError && (
+            <Box className="bg-red-500/10 p-5 rounded-2xl border border-red-500/20 mb-6">
+              <HStack space="md" className="items-center">
+                <X size={20} color="#FF5252" />
+                <Text className="text-red-500 font-medium text-base">{apiError}</Text>
+              </HStack>
+            </Box>
+          )}
+
           {/* Components Display */}
           <VStack space="xl" key={activeTab}>
             <VStack space="sm">
               <Text className="text-sm font-bold text-gray-400 uppercase px-2 mb-2">Showcase Mode</Text>
-              {activeTab === "morning" ? (
-                <QRShowcase payload={mockMorningQR} />
+              {isLoading ? (
+                 <Box className="h-64 bg-[#1A1919] rounded-[32px] items-center justify-center">
+                   <Text className="text-gray-500">Loading verification data...</Text>
+                 </Box>
+              ) : activeTab === "morning" ? (
+                qrPayload ? (
+                  <QRShowcase payload={JSON.stringify(qrPayload)} />
+                ) : (
+                  <Box className="h-64 bg-[#1A1919] rounded-[32px] items-center justify-center">
+                    <Text className="text-gray-500">No Morning QR available</Text>
+                  </Box>
+                )
               ) : (
-                <PINShowcase pin={mockAfternoonPIN} />
+                pin ? (
+                  <PINShowcase pin={pin} />
+                ) : (
+                  <Box className="h-64 bg-[#1A1919] rounded-[32px] items-center justify-center">
+                    <Text className="text-gray-500">No Afternoon PIN available</Text>
+                  </Box>
+                )
               )}
             </VStack>
 

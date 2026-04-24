@@ -19,10 +19,7 @@ export type ServiceName =
   | "user-service"
   | "matching-searching"
   | "live-messaging"
-  | "safety-and-verification"
-  | "available-8086"
-  | "available-8087"
-  | "available-8088";
+  | "safety-and-verification";
 
 const SERVICE_PORTS: Record<ServiceName, number> = {
   "admin-and-analytics": 8085,
@@ -31,9 +28,6 @@ const SERVICE_PORTS: Record<ServiceName, number> = {
   "user-service": 8083,
   "matching-searching": 8084,
   "live-messaging": 8086,
-  "available-8086": 8080,
-  "available-8087": 8087,
-  "available-8088": 8081,
   "safety-and-verification": 8089,
 };
 

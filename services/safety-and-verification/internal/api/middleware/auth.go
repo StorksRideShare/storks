@@ -79,6 +79,8 @@ func AuthMiddleware(dbPool *pgxpool.Pool, redisClient *redis.Client, clerkSecret
 		redisClient.Set(c.Request.Context(), cacheKey, claimJSON, 1 * time.Hour)
 
 		c.Set("userClaim", userClaim)
+		c.Set("userID", userClaim.UserID)
+		c.Set("userType", userClaim.UserType)
 		c.Next()
 	}
 }

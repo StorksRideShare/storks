@@ -25,11 +25,16 @@ public class PhoneNumber {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
+    public PhoneNumber() {}
+
     public PhoneNumber(String countryCode, String number) {
         this.countryCode = countryCode;
         this.number = number;
-
     }
 
-    public PhoneNumber() {}
+    public PhoneNumber(String countryCode, String number, boolean primary) {
+        this.countryCode = countryCode;
+        this.number = number;
+        this.primary = primary;
+    }
 }

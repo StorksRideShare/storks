@@ -2,7 +2,7 @@ package com.storks.userservice.controller;
 
 import com.storks.userservice.dto.ApiResponse;
 import com.storks.models.dto.UserAuthClaim;
-import com.storks.userservice.model.User;
+import com.storks.models.User;
 import com.storks.userservice.repository.UserRepository;
 import com.storks.userservice.service.UserService;
 import lombok.RequiredArgsConstructor;

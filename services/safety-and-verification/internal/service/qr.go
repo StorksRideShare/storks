@@ -69,9 +69,21 @@ func (s *QRService) GenerateMorningQR(ctx context.Context, rideID, groupID strin
 		return nil, fmt.Errorf("morning QRs can only be requested before 7:30 AM")
 	}
 
+	// Support 'ride-today' placeholder
+	effectiveRideID := rideID
+	if rideID == "ride-today" {
+		var rID string
+		err := s.dbPool.QueryRow(ctx, `
+			SELECT ride_id FROM child_groups WHERE group_id = $1 LIMIT 1
+		`, groupID).Scan(&rID)
+		if err == nil {
+			effectiveRideID = rID
+		}
+	}
+
 	payload := &QRPayload{
 		Type:      "morning",
-		RideID:    rideID,
+		RideID:    effectiveRideID,
 		GroupID:   groupID,
 		ExpiresAt: now.Add(5 * time.Minute).Unix(),
 	}

@@ -7,8 +7,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication(scanBasePackages = {"com.storks.userservice", "com.storks.common"})
-@EntityScan("com.storks.userservice")
-@EnableJpaRepositories("com.storks.userservice")
+@EntityScan({"com.storks.userservice", "com.storks.models"})
+@EnableJpaRepositories({"com.storks.userservice", "com.storks.models"})
 @EnableCaching
 public class UserServiceApplication {
     public static void main(String[] args) {

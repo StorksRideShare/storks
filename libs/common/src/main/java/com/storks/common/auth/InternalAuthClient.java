@@ -21,7 +21,7 @@ public class InternalAuthClient implements UserAuthService {
         this.internalApiKey = internalApiKey;
     }
 
-    @Cacheable(value = "user_auth_claims", key = "#p0")
+    @Cacheable(value = "user_auth_claims_v4", key = "#p0")
     public UserAuthClaim getUserAuthClaim(String providerUserId, String email, String firstName, String lastName, String pictureUrl) {
         return restClient.get()
                 .uri(uriBuilder -> uriBuilder

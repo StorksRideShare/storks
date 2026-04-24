@@ -1,9 +1,9 @@
 package com.storks.userservice.service;
 
 import com.storks.userservice.dto.AuthStatusResponse;
-import com.storks.userservice.model.Parent;
-import com.storks.userservice.model.User;
-import com.storks.userservice.model.types.RoleType;
+import com.storks.models.Parent;
+import com.storks.models.User;
+import com.storks.models.types.RoleType;
 import com.storks.userservice.repository.ParentRepository;
 import com.storks.userservice.repository.UserRepository;
 import com.storks.events.UserSyncEvent;
