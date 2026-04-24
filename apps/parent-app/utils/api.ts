@@ -199,10 +199,16 @@ export interface DriverGroup {
   id: string;
   groupName: string;
   groupCode: string;
-  driver: DriverProfile;
+  driver?: DriverProfile;
   children: ChildProfile[];
   parentId: string;
   rideId?: string;
+  pickupAddress?: string;
+  pickupLatitude?: number;
+  pickupLongitude?: number;
+  dropoffAddress?: string;
+  dropoffLatitude?: number;
+  dropoffLongitude?: number;
 }
 
 // ── Offers / Matching ─────────────────────────────────────────────────────────
@@ -227,6 +233,28 @@ export interface ChildGroup {
     firstName: string;
     preferredName?: string;
   }>;
+}
+
+export interface AddChildPayload {
+  firstName: string;
+  lastName: string;
+  preferredName?: string;
+  pronouns?: string;
+  grade?: string;
+  schoolName?: string;
+  groupId: string;
+}
+
+export interface AddChildResponse {
+  id: string;
+  firstName: string;
+  lastName: string;
+  preferredName: string;
+  grade: string;
+  schoolName: string;
+  pronouns: string;
+  parentId: string;
+  groupId: string;
 }
 
 export interface BookingRequestPayload {

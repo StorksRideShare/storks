@@ -1,9 +1,11 @@
 package com.storks.userservice.service;
 
 import com.storks.userservice.dto.AuthStatusResponse;
+import com.storks.models.Driver;
 import com.storks.models.Parent;
 import com.storks.models.User;
 import com.storks.models.types.RoleType;
+import com.storks.userservice.repository.DriverRepository;
 import com.storks.userservice.repository.ParentRepository;
 import com.storks.userservice.repository.UserRepository;
 import com.storks.events.UserSyncEvent;
@@ -24,6 +26,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final ParentRepository parentRepository;
+    private final DriverRepository driverRepository;
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
     private static final String TOPIC = "storks.users.sync";
@@ -55,6 +58,7 @@ public class UserService {
         return userRepository.findByProviderUserId(providerUserId)
                 .orElseGet(() -> {
                     log.info("Provisioning minimal user: {}", providerUserId);
+                    // Default to PARENT; callers that know the role should use syncUser() instead
                     Parent parent = new Parent();
                     parent.setProviderUserId(providerUserId);
                     parent.setEmail(email);
@@ -62,6 +66,39 @@ public class UserService {
                     parent.setLastName(lastName);
                     parent.setProfilePictureUrl(pictureUrl);
                     parent.setRole(RoleType.PARENT);
+                    parent.setLastLoggedIn(LocalDateTime.now());
+                    Parent saved = parentRepository.save(parent);
+                    sendSyncEvent(saved);
+                    return saved;
+                });
+    }
+
+    @Transactional
+    public User syncUserMinimalWithRole(String providerUserId, String email, String firstName,
+                                        String lastName, String pictureUrl, RoleType role) {
+        return userRepository.findByProviderUserId(providerUserId)
+                .orElseGet(() -> {
+                    log.info("Provisioning {} user: {}", role, providerUserId);
+                    if (role == RoleType.DRIVER) {
+                        Driver driver = new Driver();
+                        driver.setProviderUserId(providerUserId);
+                        driver.setEmail(email);
+                        driver.setFirstName(firstName);
+                        driver.setLastName(lastName);
+                        driver.setProfilePictureUrl(pictureUrl);
+                        driver.setRole(RoleType.DRIVER);
+                        driver.setLastLoggedIn(LocalDateTime.now());
+                        Driver saved = driverRepository.save(driver);
+                        sendSyncEvent(saved);
+                        return saved;
+                    }
+                    Parent parent = new Parent();
+                    parent.setProviderUserId(providerUserId);
+                    parent.setEmail(email);
+                    parent.setFirstName(firstName);
+                    parent.setLastName(lastName);
+                    parent.setProfilePictureUrl(pictureUrl);
+                    parent.setRole(role);
                     parent.setLastLoggedIn(LocalDateTime.now());
                     Parent saved = parentRepository.save(parent);
                     sendSyncEvent(saved);
