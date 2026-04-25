@@ -1,4 +1,5 @@
 import { useSignUp } from "@clerk/expo/legacy";
+import { useAuth } from "@clerk/expo";
 import { Link, useRouter } from "expo-router";
 import { API_BASE_URL } from "@/middleware/apiClient";
 import * as React from "react";
@@ -25,6 +26,7 @@ import {
 
 export default function Page() {
   const { isLoaded, signUp, setActive } = useSignUp();
+  const { getToken } = useAuth();
   const router = useRouter();
 
   const [fontsLoaded] = useFonts({
@@ -114,30 +116,22 @@ export default function Page() {
     setError(null);
 
     try {
-      await setActive({
-        session: sessionId,
-        navigate: async ({ session }) => {
-          if (session?.currentTask) {
-            console.log(session?.currentTask);
-            return;
-          }
+      await setActive({ session: sessionId });
 
-          const token = await session?.getToken();
-          if (!token) throw new Error("Not authenticated");
+      const token = await getToken();
+      if (!token) throw new Error("Not authenticated");
 
-          const res = await fetch(`${API_BASE_URL}/api/users/init`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ email: emailAddress, roleType: "PARENT" }),
-          });
-          if (!res.ok) throw new Error(`Init failed: ${res.status}`);
-
-          router.replace("/(tabs)");
+      const res = await fetch(`${API_BASE_URL}/api/users/init`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
+        body: JSON.stringify({ email: emailAddress, roleType: "PARENT" }),
       });
+      if (!res.ok) throw new Error(`Init failed: ${res.status}`);
+
+      router.replace("/(tabs)");
     } catch (err: any) {
       console.error(JSON.stringify(err, null, 2));
       const message =
