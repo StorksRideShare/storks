@@ -1,7 +1,7 @@
 import { useAuth } from "@clerk/expo";
 import { Link, Redirect, Tabs } from "expo-router";
 import { SymbolView } from "expo-symbols";
-import { Home, MessageCircle } from "lucide-react-native";
+import { Home, MessageCircle, Users } from "lucide-react-native";
 import React, { useEffect, useState } from "react";
 import { Pressable } from "react-native";
 
@@ -95,6 +95,14 @@ export default function TabLayout() {
         options={{
           title: "Messages",
           tabBarIcon: ({ color }) => <MessageCircle color={color} size={24} />,
+        }}
+      />
+      <Tabs.Screen
+        name="children"
+        options={{
+          title: "My Children",
+          headerShown: false,
+          tabBarIcon: ({ color }) => <Users color={color} size={24} />,
         }}
       />
     </Tabs>

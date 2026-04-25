@@ -40,3 +40,45 @@ export interface OnboardingResponse {
   success: boolean;
   message: string;
 }
+
+// ── Child profiles ────────────────────────────────────────────────────────────
+
+export type DayOfWeek = 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY';
+
+export interface WeeklySchedulePayload {
+  dayOfWeek: DayOfWeek;
+  customDropoffAddress?: string;
+  customPickupAddress?: string;
+}
+
+export interface CreateChildPayload {
+  firstName: string;
+  lastName: string;
+  preferredName?: string;
+  pronouns?: string;
+  dateOfBirth?: string;           // DD-MM-YYYY
+  schoolName?: string;
+  schoolAddress?: string;
+  grade?: string;
+  frontPictureUrl?: string;
+  sidePictureUrl?: string;
+  identificationDescription?: string;
+  disabilities?: string[];
+  medicalNotes?: string[];
+  weeklySchedule?: WeeklySchedulePayload[];
+}
+
+export interface ChildProfile {
+  childId: string;
+  firstName: string;
+  lastName: string;
+  preferredName?: string;
+  dateOfBirth?: string;
+  age?: number;
+  schoolName?: string;
+  frontPictureUrl?: string;
+  qrHash?: string;
+  disabilities?: string[];
+  medicalNotes?: string[];
+  weeklySchedule?: WeeklySchedulePayload[];
+}

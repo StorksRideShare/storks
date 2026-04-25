@@ -1,5 +1,7 @@
 import { useSignIn } from "@clerk/expo/legacy";
+import { useAuth } from "@clerk/expo";
 import { Link, useRouter } from "expo-router";
+import { API_BASE_URL } from "@/middleware/apiClient";
 import * as React from "react";
 import {
   Syne_400Regular,
@@ -22,6 +24,7 @@ import {
 
 export default function SignInPage() {
   const { isLoaded, signIn, setActive } = useSignIn();
+  const { getToken } = useAuth();
   const router = useRouter();
 
   const [fontsLoaded] = useFonts({
@@ -54,16 +57,18 @@ export default function SignInPage() {
       });
 
       if (result.status === "complete") {
-        await setActive({
-          session: result.createdSessionId,
-          navigate: async ({ session }) => {
-            if (session?.currentTask) {
-              console.log("Session task required:", session.currentTask);
-              return;
-            }
-            router.replace("/");
-          },
-        });
+        await setActive({ session: result.createdSessionId });
+
+        const token = await getToken();
+        if (token) {
+          await fetch(`${API_BASE_URL}/api/users/init`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ email: emailAddress, roleType: "PARENT" }),
+          });
+        }
+
+        router.replace("/");
       } else if (result.status === "needs_second_factor") {
         await signIn.prepareSecondFactor({ strategy: "email_code" });
         setPendingSecondFactor(true);
@@ -95,16 +100,18 @@ export default function SignInPage() {
       });
 
       if (result.status === "complete") {
-        await setActive({
-          session: result.createdSessionId,
-          navigate: async ({ session }) => {
-            if (session?.currentTask) {
-              console.log("Session task required:", session.currentTask);
-              return;
-            }
-            router.replace("/");
-          },
-        });
+        await setActive({ session: result.createdSessionId });
+
+        const token = await getToken();
+        if (token) {
+          await fetch(`${API_BASE_URL}/api/users/init`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ email: emailAddress, roleType: "PARENT" }),
+          });
+        }
+
+        router.replace("/");
       } else {
         console.error("Second factor status:", result.status, JSON.stringify(result, null, 2));
         setError("Verification failed. Please try again.");
