@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
@@ -59,31 +60,40 @@ func main() {
 	// Public API group using Auth Middleware
 	apiGrp := r.Group("/api/v1")
 	apiGrp.Use(middleware.AuthMiddleware(dbPool, redisClient, cfg.ClerkSecretKey))
-	
-	verificationSvc := service.NewVerificationService(dbPool, redisClient, cfg.QRSecret, kafkaProducer)
+
+	verificationSvc := service.NewVerificationService(dbPool, redisClient, cfg.QRSecret, kafkaProducer, cfg.DemoMode)
 
 	// Cron Scheduler (background process)
 	sched := service.NewScheduler(verificationSvc)
 	sched.Start(context.Background())
+
+	apiGrp.POST("/demo/scheduler/trigger", func(c *gin.Context) {
+		sched.RunBatchGeneration(c.Request.Context())
+		c.JSON(http.StatusOK, gin.H{"message": "Scheduler triggered"})
+	})
 
 	otpHandler := handlers.NewOTPHandler(verificationSvc)
 
 	apiGrp.POST("/otp/request", otpHandler.HandleOTPRequest)
 	apiGrp.POST("/otp/verify", otpHandler.HandleOTPVerify)
 
-	qrSvc := service.NewQRService(dbPool, redisClient, cfg.QRSecret, kafkaProducer)
+	qrSvc := service.NewQRService(dbPool, redisClient, cfg.QRSecret, kafkaProducer, cfg.DemoMode)
 	qrHandler := handlers.NewQRHandler(qrSvc)
-	
+
 	apiGrp.POST("/qr/request", qrHandler.HandleQRRequest)
 	apiGrp.POST("/qr/verify", qrHandler.HandleQRVerify)
-	
+
+	emergencySvc := service.NewEmergencyService(dbPool, redisClient, kafkaProducer, true)
+	emHandler := handlers.NewEmergencyHandler(emergencySvc)
+	apiGrp.POST("/emergency/new", emHandler.HandleEmergency)
+
 	// Initialize Kafka Consumer
 	kafkaConsumer := kafka.NewConsumer(cfg.KafkaBrokers)
 	if kafkaConsumer != nil {
 		kafkaConsumer.Start(context.Background(), func(ctx context.Context, action string, payload map[string]interface{}) {
 			// Extremely simple routing for kafka commands
 			log.Printf("Kafka Request received: %s", action)
-			
+
 			switch action {
 			case "generate_morning_otp":
 				rID, _ := payload["ride_id"].(string)
@@ -100,7 +110,12 @@ func main() {
 				_, _ = qrSvc.GenerateAfternoonQR(ctx, gID, cID)
 			}
 		})
-		defer kafkaConsumer.Close()
+		defer func(kafkaConsumer *kafka.Consumer) {
+			err := kafkaConsumer.Close()
+			if err != nil {
+
+			}
+		}(kafkaConsumer)
 	}
 
 	log.Printf("Starting server on port %s...\n", cfg.Port)

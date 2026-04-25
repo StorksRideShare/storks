@@ -18,8 +18,17 @@ public class PhoneNumber {
     @Column(nullable = false)
     private String number;
     @Column(name = "is_primary")
-    private boolean primary;
-    private boolean isValidated;
+    private Boolean primary = false;
+
+    public Boolean isPrimary() {
+        return primary;
+    }
+    @Column(name = "is_validated")
+    private Boolean isValidated = false;
+
+    public Boolean isValidated() {
+        return isValidated;
+    }
     @CreationTimestamp
     private LocalDateTime addedAt;
     @UpdateTimestamp
@@ -32,7 +41,7 @@ public class PhoneNumber {
         this.number = number;
     }
 
-    public PhoneNumber(String countryCode, String number, boolean primary) {
+    public PhoneNumber(String countryCode, String number, Boolean primary) {
         this.countryCode = countryCode;
         this.number = number;
         this.primary = primary;

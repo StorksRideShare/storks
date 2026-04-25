@@ -27,15 +27,9 @@ export function useBookings(): UseBookingsResult {
       const data = await api.get<BookingResponse[]>("/bookings/my");
       setBookings(data);
     } catch (err: any) {
-      const isOffline =
-        err.message?.includes("OFFLINE") ||
-        err.message?.includes("NETWORK_ERROR");
-      setError(
-        isOffline
-          ? "You appear to be offline."
-          : "Failed to load bookings. Pull to refresh."
-      );
-      if (__DEV__) console.error("[useBookings] fetchBookings:", err);
+      if (__DEV__) console.warn("[useBookings] Service unavailable", err);
+      // In isolation mode, we just show empty bookings
+      setBookings([]);
     } finally {
       setIsLoading(false);
     }

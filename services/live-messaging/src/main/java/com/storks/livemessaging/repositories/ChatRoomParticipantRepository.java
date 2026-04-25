@@ -27,7 +27,7 @@ public interface ChatRoomParticipantRepository extends JpaRepository<ChatRoomPar
            "JOIN ChatRoomParticipant p2 ON p1.room.roomId = p2.room.roomId " +
            "WHERE p1.user.userId = :userId1 AND p2.user.userId = :userId2 " +
            "AND p1.room.chatRoomType = 'DIRECT' " +
-           "AND p1.room.isDeleted = false")
+           "AND p1.room.deleted = false")
     Optional<UUID> findExistingDirectRoom(@Param("userId1") UUID userId1, @Param("userId2") UUID userId2);
 
     @Query("SELECT p1.room.roomId FROM ChatRoomParticipant p1 " +

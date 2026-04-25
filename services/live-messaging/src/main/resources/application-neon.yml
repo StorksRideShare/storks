@@ -1,4 +1,6 @@
 spring:
+  application:
+    name: live-messaging
   datasource:
     url: ${NEON_DB_URL}
     username: ${NEON_DB_USERNAME}
@@ -7,6 +9,12 @@ spring:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: update
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://real-bird-20.clerk.accounts.dev
+          jwk-set-uri: https://real-bird-20.clerk.accounts.dev/.well-known/jwks.json
 
 management:
   endpoints:

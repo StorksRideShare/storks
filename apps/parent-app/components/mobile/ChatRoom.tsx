@@ -23,7 +23,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
-  ScrollView,
+  FlatList,
   Pressable,
   View,
 } from "react-native";
@@ -45,6 +45,9 @@ export default function ChatRoom() {
   const insets = useSafeAreaInsets();
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [fetchingMore, setFetchingMore] = useState(false);
   const [room, setRoom] = useState<any>(null);
   const [inputText, setInputText] = useState("");
   const [isConnected, setIsConnected] = useState(false);
@@ -53,7 +56,7 @@ export default function ChatRoom() {
   const readIds = useRef<Set<string>>(new Set());
 
   const colors = Colors.dark;
-  const scrollViewRef = useRef<ScrollView>(null);
+  const flatListRef = useRef<FlatList>(null);
   const stompClient = useRef<StompChatClient | null>(null);
   /** Backend UUID of the current user */
   const myBackendIdRef = useRef<string | null>(null);
@@ -74,39 +77,51 @@ export default function ChatRoom() {
   }, [room, user?.id]);
 
     // fetch history
-  const fetchHistory = async () => {
+  const fetchHistory = async (pageNum: number = 0, append: boolean = false) => {
     try {
-      const roomData = await api.get<any>(`/chats/${id}`);
-      setRoom(roomData);
-      const history = await api.get<any[]>(`/chats/${id}/messages/recent`);
-      // Sort to newest at the bottom
-      const sorted = [...history].sort(
-        (a, b) => new Date(a.sentAt).getTime() - new Date(b.sentAt).getTime()
-      );
+      if (!append) setLoading(true);
+      else setFetchingMore(true);
+
+      if (!append) {
+        const roomData = await api.get<any>(`/chats/${id}`);
+        setRoom(roomData);
+      }
       
-      const myId = roomData?.participants?.find((p: any) => p.providerUserId === user?.id)?.userId;
+      const pageData = await api.get<any>(`/chats/${id}/messages?page=${pageNum}&size=50`);
+      const fetchedMessages = pageData.content || [];
       
-      setMessages(
-        sorted.map((m) => {
-          const isMe = m.senderId === myId;
-          const isReadByOther = m.readBy && m.readBy.length > 0 && m.readBy.some((uid: string) => uid !== myId);
-          
-          return {
-            messageId: m.messageId,
-            roomId: m.roomId,
-            senderId: m.senderId,
-            content: m.content,
-            sentAt: m.sentAt,
-            type: m.type,
-            status: (isMe ? (isReadByOther ? "read" : "sent") : "read") as any,
-          };
-        })
-      );
+      const myId = myBackendIdRef.current;
+      
+      const formatted = fetchedMessages.map((m: any) => {
+        const isMe = m.senderId === myId;
+        const isReadByOther = m.readBy && m.readBy.length > 0 && m.readBy.some((uid: string) => uid !== myId);
+        
+        return {
+          messageId: m.messageId,
+          roomId: m.roomId,
+          senderId: m.senderId,
+          content: m.content,
+          sentAt: m.sentAt,
+          type: m.type,
+          status: (isMe ? (isReadByOther ? "read" : "sent") : "read") as any,
+        };
+      });
+
+      setMessages((prev) => append ? [...prev, ...formatted] : formatted);
+      setHasMore(!pageData.last);
+      setPage(pageNum);
     } catch (error: any) {
       console.error("Failed to fetch history:", error);
       notify.error("Connection Error", "Failed to load chat history. Please try again.");
     } finally {
-      setLoading(false);
+      if (!append) setLoading(false);
+      else setFetchingMore(false);
+    }
+  };
+
+  const loadMore = () => {
+    if (hasMore && !fetchingMore && !loading) {
+      fetchHistory(page + 1, true);
     }
   };
 
@@ -114,7 +129,7 @@ export default function ChatRoom() {
   useEffect(() => {
     if (!id || !session) return;
 
-    fetchHistory();
+    fetchHistory(0, false);
 
     const client = new StompChatClient(WS_BASE_URL, async () => {
       try {
@@ -170,7 +185,8 @@ export default function ChatRoom() {
 
             const isReadByOther = msg.readBy && msg.readBy.length > 0 && msg.readBy.some((uid: string) => uid !== backendId);
             const incomingStatus: ChatMessage["status"] = isEcho ? (isReadByOther ? "read" : "sent") : "read";
-            return [...updated, { ...msg, status: incomingStatus }];
+            // Inverted list: prepend new messages
+            return [{ ...msg, status: incomingStatus }, ...updated];
           });
 
           // Send read receipt for NEW messages from others that we haven't read yet
@@ -184,8 +200,6 @@ export default function ChatRoom() {
                }
             }
           }
-
-          setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 80);
         });
       },
       (err) => {
@@ -216,9 +230,12 @@ export default function ChatRoom() {
       status: "sending",
     };
 
-    setMessages((prev) => [...prev, tempMessage]);
+    // Inverted list: prepend
+    setMessages((prev) => [tempMessage, ...prev]);
     setInputText("");
-    setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 80);
+    
+    // Scroll to top (which is offset 0) since we are sending a new message
+    flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
 
     try {
       stompClient.current.sendMessage(id, trimmed);
@@ -238,19 +255,21 @@ export default function ChatRoom() {
     return null;
   };
 
-  const renderMessage = (msg: ChatMessage, index: number) => {
+  const renderMessage = ({ item: msg, index }: { item: ChatMessage; index: number }) => {
     const isMe = msg.senderId === myBackendIdRef.current;
     const isSystem = msg.type === "SYSTEM";
 
-    const prevMsg = index > 0 ? messages[index - 1] : null;
-    const nextMsg = index < messages.length - 1 ? messages[index + 1] : null;
+    // In inverted list, index 0 is newest.
+    const prevMsg = index > 0 ? messages[index - 1] : null; // Newer message
+    const nextMsg = index < messages.length - 1 ? messages[index + 1] : null; // Older message
 
-    // Date divider
+    // Date divider should show before the chronologically first message of the day
+    // In inverted layout, this means when nextMsg (older) has a different date
     const showDateBreak =
-      !prevMsg ||
+      !nextMsg ||
       (msg.sentAt &&
-        prevMsg.sentAt &&
-        new Date(msg.sentAt).toDateString() !== new Date(prevMsg.sentAt).toDateString());
+        nextMsg.sentAt &&
+        new Date(msg.sentAt).toDateString() !== new Date(nextMsg.sentAt).toDateString());
 
     const dateStr = msg.sentAt
       ? new Date(msg.sentAt).toLocaleDateString(undefined, {
@@ -260,11 +279,14 @@ export default function ChatRoom() {
         })
       : "";
 
-    // Grouping flags
-    const isFirstInGroup = !prevMsg || !sameGroup(prevMsg, msg);
-    const isLastInGroup = !nextMsg || !sameGroup(msg, nextMsg);
+    // Grouping flags chronologically
+    const isFirstInGroup = !nextMsg || !sameGroup(nextMsg, msg);
+    const isLastInGroup = !prevMsg || !sameGroup(prevMsg, msg);
 
-    // How much space between bubbles (less within a group, more between groups)
+    // Margin bottom affects spacing to the older message (which is above it in the screen)
+    // Wait, in inverted list, margin bottom adds space below the item (towards the bottom of the screen).
+    // The bottom of the screen is the NEWER direction.
+    // So if it's the last in group (closest to bottom of screen), we add margin below it to separate it from the next group's first message.
     const marginBottom = isLastInGroup ? 12 : 2;
 
     if (isSystem) {
@@ -286,7 +308,7 @@ export default function ChatRoom() {
       ? new Date(msg.sentAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
       : "";
 
-    // Bubble tail shape — only last in group gets a "pointed" corner
+    // Bubble tail shape
     const bubbleRadius = isLastInGroup
       ? isMe
         ? "rounded-2xl rounded-tr-none"
@@ -308,7 +330,7 @@ export default function ChatRoom() {
         <VStack
           className={`max-w-[80%] ${isMe ? "self-end items-end" : "self-start items-start"}`}
         >
-          {/* Sender label — only first bubble in a group from the other person */}
+          {/* Sender label — only chronologically first bubble in a group from the other person */}
           {!isMe && isFirstInGroup && (
             <Text className="text-[10px] text-orange-400 font-semibold mb-1 px-1">
               {displayName}
@@ -371,15 +393,18 @@ export default function ChatRoom() {
 
       {/* Messages */}
       <View style={{ flex: 1 }}>
-        <ScrollView
-          ref={scrollViewRef}
+        <FlatList
+          ref={flatListRef}
           className="flex-1 px-4"
-          onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: false })}
-        >
-          <VStack className="py-4">
-            {messages.map((msg, idx) => renderMessage(msg, idx))}
-          </VStack>
-        </ScrollView>
+          data={messages}
+          keyExtractor={(item) => item.messageId}
+          renderItem={renderMessage}
+          inverted
+          contentContainerStyle={{ paddingVertical: 16 }}
+          onEndReached={loadMore}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={fetchingMore ? <Spinner size="small" color="#fab260ff" /> : null}
+        />
       </View>
 
       <KeyboardAvoidingView
@@ -412,4 +437,4 @@ export default function ChatRoom() {
       </KeyboardAvoidingView>
     </Box>
   );
-};
+}

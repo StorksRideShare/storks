@@ -72,7 +72,9 @@ func (p *Producer) PublishJSONEvent(ctx context.Context, eventType string, paylo
 		log.Printf("Failed to marshal kafka event: %v", err)
 		return
 	}
-	_ = p.ProduceEvent(ctx, eventType, b)
+	if err := p.ProduceEvent(ctx, eventType, b); err != nil {
+		log.Printf("CRITICAL: Failed to publish Kafka event %s: %v", eventType, err)
+	}
 }
 
 func (p *Producer) Close() error {

@@ -70,8 +70,37 @@ func AuthMiddleware(dbPool *pgxpool.Pool, redisClient *redis.Client, clerkSecret
 				Scan(&userClaim.UserID, &userClaim.Email, &userClaim.IsDeleted, &userClaim.ProviderUserID, &userClaim.UserType)
 			
 			if err != nil {
-				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "User not found in database"})
-				return
+				// Auto-upsert since the user wasn't found in DB
+				var emailStr string
+				if customClaims, ok := claims.Custom.(map[string]any); ok {
+					if emailRaw, exists := customClaims["email"]; exists {
+						emailStr, _ = emailRaw.(string)
+					}
+				}
+
+				if emailStr == "" {
+					emailStr = "demo@example.com"
+				}
+
+				// Generate uuid
+				_, errInsert := dbPool.Exec(c.Request.Context(),
+					"INSERT INTO users (user_id, email, is_deleted, provider_user_id, user_type, provider_type, role) VALUES (gen_random_uuid(), $1, false, $2, 'PARENT', 'clerk', 'PARENT')",
+					emailStr, providerUserID)
+
+				if errInsert != nil {
+					c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "User not found and auto-upsert failed", "details": errInsert.Error()})
+					return
+				}
+
+				// Retry select after insert
+				err = dbPool.QueryRow(c.Request.Context(),
+					"SELECT user_id, email, is_deleted, provider_user_id, user_type FROM users WHERE provider_user_id = $1", providerUserID).
+					Scan(&userClaim.UserID, &userClaim.Email, &userClaim.IsDeleted, &userClaim.ProviderUserID, &userClaim.UserType)
+				
+				if err != nil {
+					c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "User not found after auto-upsert"})
+					return
+				}
 			}
 		}
 

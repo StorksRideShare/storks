@@ -22,8 +22,16 @@ public class Card {
     @Column(nullable = false)
     private String cardHolderName;
 
-    private boolean active;
-    private boolean isPrimary;
+    private Boolean active = true;
+    private Boolean isPrimary = false;
+
+    public Boolean isActive() {
+        return active;
+    }
+
+    public Boolean isPrimary() {
+        return isPrimary;
+    }
 
     @ManyToOne
     @JoinColumn(name = "parent_id")

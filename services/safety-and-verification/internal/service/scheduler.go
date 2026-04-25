@@ -51,7 +51,7 @@ func (s *Scheduler) Start(ctx context.Context) {
 
 func (s *Scheduler) RunBatchGeneration(ctx context.Context) {
 	// Tomorrow's date
-	now := getIST()
+	now := GetIST()
 	tomorrow := now.AddDate(0, 0, 1).Format("2006-01-02")
 
 	// Find all child_groups that have a ride tomorrow

@@ -14,6 +14,7 @@ type Config struct {
 	KafkaBrokers   string
 	QRSecret       string
 	ClerkSecretKey string
+	DemoMode       bool
 }
 
 func LoadConfig() (*Config, error) {
@@ -27,6 +28,11 @@ func LoadConfig() (*Config, error) {
 		port = "8085"
 	}
 
+	demoMode := false
+	if os.Getenv("DEMO_MODE") == "true" {
+		demoMode = true
+	}
+
 	cfg := &Config{
 		Port:           port,
 		DatabaseURL:    os.Getenv("DATABASE_URL"),
@@ -34,6 +40,7 @@ func LoadConfig() (*Config, error) {
 		KafkaBrokers:   os.Getenv("KAFKA_BROKERS"),
 		QRSecret:       os.Getenv("QR_SECRET"),
 		ClerkSecretKey: os.Getenv("CLERK_SECRET_KEY"),
+		DemoMode:       demoMode,
 	}
 
 	return cfg, nil

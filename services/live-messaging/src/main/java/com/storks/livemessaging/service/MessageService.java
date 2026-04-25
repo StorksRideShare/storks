@@ -34,36 +34,34 @@ public class MessageService {
     
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final RedisTemplate<String, Object> redisTemplate;
+    private final org.springframework.messaging.simp.SimpMessagingTemplate messagingTemplate;
     
-    private static final String CHAT_MESSAGES_TOPIC = com.storks.livemessaging.config.KafkaConfig.CHAT_MESSAGES_TOPIC;
     private static final String REDIS_RECENT_MESSAGES_KEY_PREFIX = "room:messages:";
-    
-    public void publishMessageToKafka(ChatMessagePayload payload) {
+
+    @org.springframework.transaction.annotation.Transactional
+    public void processAndBroadcastMessage(ChatMessagePayload payload) {
         if (payload.getMessageId() == null) {
             payload.setMessageId(UUID.randomUUID());
         }
         if (payload.getSentAt() == null) {
             payload.setSentAt(OffsetDateTime.now());
         }
-        
-        kafkaTemplate.send(CHAT_MESSAGES_TOPIC, payload.getRoomId().toString(), payload)
-                     .whenComplete((result, ex) -> {
-                         if (ex != null) {
-                             log.error("Failed to publish message: {}", payload.getMessageId(), ex);
-                         } else {
-                             log.info("Message published to Kafka. ID: {}", payload.getMessageId());
-                         }
-                     });
-    }
 
-    public void persistAndCacheMessage(ChatMessagePayload payload) {
+        log.info("Attempting to persist and cache message: {} for room: {} from sender: {}", 
+                payload.getMessageId(), payload.getRoomId(), payload.getSenderId());
+        
         try {
             ChatRoom room = chatRoomRepository.findById(payload.getRoomId())
-                    .orElseThrow(() -> new IllegalArgumentException("Room not found"));
+                    .orElse(null);
+            
+            if (room == null) {
+                log.error("CANNOT SAVE MESSAGE: Room not found for ID: {}. Payload: {}", payload.getRoomId(), payload);
+                return;
+            }
                     
-            User sender = userRepository.findByUserId(payload.getSenderId());
+            User sender = userRepository.findById(payload.getSenderId()).orElse(null);
             if (sender == null) {
-                log.error("Sender not found for message: {}", payload.getMessageId());
+                log.error("CANNOT SAVE MESSAGE: Sender not found for ID: {}. Payload: {}", payload.getSenderId(), payload);
                 return;
             }
 
@@ -77,15 +75,21 @@ public class MessageService {
             message.setDeleted(false);
             
             messageRepository.save(message);
+            log.info("Successfully persisted message: {} to database", payload.getMessageId());
             
             // Cache in Redis (store as list, trim to keep last 50)
             String redisKey = REDIS_RECENT_MESSAGES_KEY_PREFIX + payload.getRoomId();
             redisTemplate.opsForList().leftPush(redisKey, payload);
             redisTemplate.opsForList().trim(redisKey, 0, 49); // Keep latest 50
             redisTemplate.expire(redisKey, 7, TimeUnit.DAYS);
+            log.debug("Message cached in Redis: {}", payload.getMessageId());
+
+            // Broadcast directly to WebSocket clients
+            log.debug("Broadcasting message {} to /topic/room/{}", payload.getMessageId(), payload.getRoomId());
+            messagingTemplate.convertAndSend("/topic/room/" + payload.getRoomId(), payload);
 
         } catch (Exception e) {
-            log.error("Error persisting message from Kafka: {}", payload.getMessageId(), e);
+            log.error("Unexpected error processing message: {}", payload.getMessageId(), e);
         }
     }
 
@@ -97,17 +101,86 @@ public class MessageService {
             if (!message.getReadBy().contains(user)) {
                 message.getReadBy().add(user);
                 messageRepository.save(message);
+                
+                // Try to update it in Redis cache as well
+                updateReadReceiptInRedis(message.getRoom().getRoomId(), messageId, userId);
             }
         }
     }
-
-    public Page<Message> getMessageHistoryFromDb(UUID roomId, Pageable pageable) {
-        return messageRepository.findByRoom_RoomIdAndIsDeletedFalseOrderBySentAtDesc(roomId, pageable);
+    
+    private void updateReadReceiptInRedis(UUID roomId, UUID messageId, UUID userId) {
+        String redisKey = REDIS_RECENT_MESSAGES_KEY_PREFIX + roomId;
+        List<Object> cached = redisTemplate.opsForList().range(redisKey, 0, -1);
+        if (cached != null) {
+            for (int i = 0; i < cached.size(); i++) {
+                Object obj = cached.get(i);
+                if (obj instanceof ChatMessagePayload payload) {
+                    if (payload.getMessageId().equals(messageId)) {
+                        if (payload.getReadBy() == null) {
+                            payload.setReadBy(new java.util.ArrayList<>());
+                        }
+                        if (!payload.getReadBy().contains(userId)) {
+                            payload.getReadBy().add(userId);
+                            redisTemplate.opsForList().set(redisKey, i, payload);
+                        }
+                        break;
+                    }
+                }
+            }
+        }
     }
     
-    public List<Object> getRecentMessagesFromRedis(UUID roomId) {
-        String redisKey = REDIS_RECENT_MESSAGES_KEY_PREFIX + roomId;
-        return redisTemplate.opsForList().range(redisKey, 0, -1);
+    public void broadcastMessageOnly(ChatMessagePayload payload) {
+        if (payload.getSentAt() == null) {
+            payload.setSentAt(OffsetDateTime.now());
+        }
+        log.debug("Broadcasting read receipt {} to /topic/room/{}", payload.getMessageId(), payload.getRoomId());
+        messagingTemplate.convertAndSend("/topic/room/" + payload.getRoomId(), payload);
+    }
+
+    public Page<ChatMessagePayload> getMessageHistory(UUID roomId, Pageable pageable) {
+        // If requesting the first page, try Redis first
+        if (pageable.getPageNumber() == 0) {
+            String redisKey = REDIS_RECENT_MESSAGES_KEY_PREFIX + roomId;
+            List<Object> cached = redisTemplate.opsForList().range(redisKey, 0, -1);
+            if (cached != null && !cached.isEmpty()) {
+                List<ChatMessagePayload> cachedPayloads = cached.stream()
+                        .filter(obj -> obj instanceof ChatMessagePayload)
+                        .map(obj -> (ChatMessagePayload) obj)
+                        .collect(java.util.stream.Collectors.toList());
+                
+                if (!cachedPayloads.isEmpty()) {
+                    log.info("Returning {} messages from Redis cache for room {}", cachedPayloads.size(), roomId);
+                    int start = 0;
+                    int end = Math.min((start + pageable.getPageSize()), cachedPayloads.size());
+                    List<ChatMessagePayload> subList = cachedPayloads.subList(start, end);
+                    // Since it's from cache, we might not know total elements, but we fake it or use size
+                    return new org.springframework.data.domain.PageImpl<>(subList, pageable, cachedPayloads.size());
+                }
+            }
+        }
+        
+        // Fallback to database
+        log.info("Fetching messages from DB for room {}", roomId);
+        Page<Message> messages = messageRepository.findByRoom_RoomIdAndDeletedFalseOrderBySentAtDesc(roomId, pageable);
+        return messages.map(this::toPayload);
+    }
+    
+    private ChatMessagePayload toPayload(Message message) {
+        ChatMessagePayload payload = new ChatMessagePayload();
+        payload.setMessageId(message.getMessageId());
+        payload.setRoomId(message.getRoom().getRoomId());
+        payload.setSenderId(message.getSender().getUserId());
+        payload.setContent(message.getContent());
+        payload.setSentAt(message.getSentAt());
+        payload.setType(message.getType());
+        
+        if (message.getReadBy() != null) {
+            payload.setReadBy(message.getReadBy().stream()
+                    .map(User::getUserId)
+                    .collect(java.util.stream.Collectors.toList()));
+        }
+        return payload;
     }
 }
 

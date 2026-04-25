@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"log"
 	"time"
 
 	"safety-and-verification/internal/kafka"
@@ -20,19 +21,21 @@ type QRService struct {
 	redisClient *redis.Client
 	qrSecret    string
 	producer    *kafka.Producer
+	demoMode    bool
 }
 
-func NewQRService(dbPool *pgxpool.Pool, redisClient *redis.Client, qrSecret string, producer *kafka.Producer) *QRService {
+func NewQRService(dbPool *pgxpool.Pool, redisClient *redis.Client, qrSecret string, producer *kafka.Producer, demoMode bool) *QRService {
 	return &QRService{
 		dbPool:      dbPool,
 		redisClient: redisClient,
 		qrSecret:    qrSecret,
 		producer:    producer,
+		demoMode:    demoMode,
 	}
 }
 
 type QRPayload struct {
-	Type      string `json:"type"`      // morning or afternoon
+	Type      string `json:"type"` // morning or afternoon
 	RideID    string `json:"ride_id"`
 	GroupID   string `json:"group_id"`
 	ChildID   string `json:"child_id,omitempty"` // populated for afternoon
@@ -63,10 +66,12 @@ func (s *QRService) verifySignature(payload *QRPayload) bool {
 }
 
 func (s *QRService) GenerateMorningQR(ctx context.Context, rideID, groupID string) (*QRPayload, error) {
-	now := getIST()
-	limit := time.Date(now.Year(), now.Month(), now.Day(), 7, 30, 0, 0, now.Location())
-	if now.After(limit) {
-		return nil, fmt.Errorf("morning QRs can only be requested before 7:30 AM")
+	now := GetIST()
+	if !s.demoMode {
+		limit := time.Date(now.Year(), now.Month(), now.Day(), 7, 30, 0, 0, now.Location())
+		if now.After(limit) {
+			return nil, fmt.Errorf("morning QRs can only be requested before 7:30 AM")
+		}
 	}
 
 	// Support 'ride-today' placeholder
@@ -100,10 +105,12 @@ func (s *QRService) GenerateMorningQR(ctx context.Context, rideID, groupID strin
 }
 
 func (s *QRService) VerifyMorningQR(ctx context.Context, driverID string, payload *QRPayload) error {
-	now := getIST()
-	limit := time.Date(now.Year(), now.Month(), now.Day(), 7, 30, 0, 0, now.Location())
-	if now.After(limit) {
-		return fmt.Errorf("morning QRs can only be verified before 7:30 AM")
+	now := GetIST()
+	if !s.demoMode {
+		limit := time.Date(now.Year(), now.Month(), now.Day(), 7, 30, 0, 0, now.Location())
+		if now.After(limit) {
+			return fmt.Errorf("morning QRs can only be verified before 7:30 AM")
+		}
 	}
 
 	if payload.ExpiresAt < now.Unix() {
@@ -128,8 +135,8 @@ func (s *QRService) VerifyMorningQR(ctx context.Context, driverID string, payloa
 
 	if s.producer != nil {
 		s.producer.PublishJSONEvent(ctx, "morning_qr_verified", map[string]string{
-			"ride_id":  payload.RideID,
-			"group_id": payload.GroupID,
+			"ride_id":   payload.RideID,
+			"group_id":  payload.GroupID,
 			"driver_id": driverID,
 		})
 	}
@@ -148,6 +155,23 @@ func (s *QRService) GenerateAfternoonQR(ctx context.Context, groupID, childID st
 	}
 	s.signPayload(payload)
 
+	// Save to child_afternoon_qrs
+	_, err := s.dbPool.Exec(ctx, `
+		INSERT INTO child_afternoon_qrs (id, child_id, group_id, qr_hash, created_at)
+		VALUES (gen_random_uuid(), $1, $2, $3, $4)
+	`, childID, groupID, payload.Hash, GetIST())
+	if err != nil {
+		log.Printf("Warning: Failed to save QR to database: %v", err)
+	}
+
+	// Save to verification_logs
+	_, err = s.dbPool.Exec(ctx, `
+		INSERT INTO verification_logs (id, verification_type, group_id, child_id, status, verified_at)
+		VALUES (gen_random_uuid(), 'afternoon_qr_generated', $1, $2, 'generated', $3)
+	`, groupID, childID, GetIST())
+	if err != nil {
+		log.Printf("Warning: Failed to log QR generation: %v", err)
+	}
 	if s.producer != nil {
 		s.producer.PublishJSONEvent(ctx, "afternoon_qr_generated", map[string]string{
 			"group_id": groupID,
@@ -155,12 +179,11 @@ func (s *QRService) GenerateAfternoonQR(ctx context.Context, groupID, childID st
 		})
 	}
 
-	// In the real system, you might save this in the database permanently to track generation
 	return payload, nil
 }
 
 func (s *QRService) VerifyAfternoonQR(ctx context.Context, driverID string, payload *QRPayload) error {
-	now := getIST()
+	now := GetIST()
 	today := now.Format("2006-01-02")
 
 	if payload.Type != "afternoon" {
@@ -179,7 +202,7 @@ func (s *QRService) VerifyAfternoonQR(ctx context.Context, driverID string, payl
 		JOIN child_groups cg ON cg.ride_id = r.ride_id
 		WHERE r.driver_id = $1 AND cg.group_id = $2
 	`, driverID, payload.GroupID).Scan(&rideID)
-	
+
 	if err != nil {
 		return fmt.Errorf("unauthorized driver or ride not found")
 	}
@@ -191,7 +214,7 @@ func (s *QRService) VerifyAfternoonQR(ctx context.Context, driverID string, payl
 		FROM ride_passengers 
 		WHERE ride_id = $1 AND child_id = $2 AND date = $3
 	`, rideID, payload.ChildID, today).Scan(&isAbsent)
-	
+
 	if absentErr == nil && !isAbsent {
 		return fmt.Errorf("child is marked absent for the afternoon")
 	}
@@ -203,9 +226,9 @@ func (s *QRService) VerifyAfternoonQR(ctx context.Context, driverID string, payl
 
 	if s.producer != nil {
 		s.producer.PublishJSONEvent(ctx, "afternoon_qr_verified", map[string]string{
-			"ride_id":  rideID,
-			"group_id": payload.GroupID,
-			"child_id": payload.ChildID,
+			"ride_id":   rideID,
+			"group_id":  payload.GroupID,
+			"child_id":  payload.ChildID,
 			"driver_id": driverID,
 		})
 	}

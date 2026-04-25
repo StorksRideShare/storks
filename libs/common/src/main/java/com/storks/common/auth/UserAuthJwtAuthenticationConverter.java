@@ -42,7 +42,7 @@ public class UserAuthJwtAuthenticationConverter implements Converter<Jwt, Abstra
             Collection<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_" + claim.role()));
             log.debug("Authenticated user {} with role {}", claim.providerUserId(), claim.role());
             
-            return new JwtAuthenticationToken(jwt, authorities, claim.providerUserId());
+            return new UserAuthClaimToken(claim, authorities);
         } catch (Exception e) {
             log.error("Error during JWT authentication conversion: {}", e.getMessage(), e);
             throw e;

@@ -17,7 +17,11 @@ public class Location {
     private UUID locationId;
 
     private String address;
-    private boolean isVerified;
+    private Boolean isVerified = false;
+
+    public Boolean isVerified() {
+        return isVerified;
+    }
 
     @Column(nullable = false)
     private BigDecimal latitude;

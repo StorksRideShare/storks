@@ -9,6 +9,9 @@ const SERVER_IP =
 
 export const API_BASE_URL = `http://${SERVER_IP}:8080`;
 
+/** WebSocket base URL for the live-messaging service */
+export const WS_BASE_URL = `ws://${SERVER_IP}:8086/ws`;
+
 export type ServiceName =
   | "admin-and-analytics"
   | "booking-and-payment"
@@ -24,7 +27,7 @@ const SERVICE_PORTS: Record<ServiceName, number> = {
   "location-and-navigation": 8082,
   "user-service": 8083,
   "matching-searching": 8084,
-  "live-messaging": 8085,
+  "live-messaging": 8086,
   "safety-and-verification": 8089,
 };
 

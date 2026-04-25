@@ -24,8 +24,8 @@ public class Parent extends User {
     @AttributeOverrides({
         @AttributeOverride(name = "countryCode",column = @Column(name = "primary_country_code")),
         @AttributeOverride(name = "number",column = @Column(name = "primary_number")),
-        @AttributeOverride(name = "isPrimaryContact", column = @Column(name = "primary_is_primary")),
-        @AttributeOverride(name = "validated",column = @Column(name = "primary_validated")),
+        @AttributeOverride(name = "primary", column = @Column(name = "primary_is_primary")),
+        @AttributeOverride(name = "isValidated", column = @Column(name = "primary_validated")),
         @AttributeOverride(name = "addedAt",column = @Column(name = "primary_added_at")),
         @AttributeOverride(name = "updatedAt",column = @Column(name = "primary_updated_at"))
     })

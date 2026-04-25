@@ -53,19 +53,24 @@ export default function SearchAccountScreen() {
     }
   };
 
-  const handleSelectUser = (user: UserSearchResult) => {
-    // Generate a consistent dummy roomId or let the chat page create it
-    // Wait, the API for creating a chat room?
-    // Let's just push to /chats/[id] with the providerUserId as ID, or we need to create it.
-    // If we look at chat.tsx, the roomId is used.
-    // If we just pass the user's providerUserId as the chat ID, the backend can create a 1-on-1 chat if it doesn't exist.
-    // Actually, live-messaging usually handles creating a room. Let's assume the router expects the partner's ID or room ID.
-    // In chat.tsx, `room.roomId` is passed. If we don't have a room ID yet, we might need an endpoint to create it.
-    // Let's just pass the providerUserId for now. The backend likely resolves it if it's a 1on1 chat.
-    router.replace({
-      pathname: "/chats/[id]",
-      params: { id: user.providerUserId, name: `${user.firstName} ${user.lastName}` },
-    });
+  const handleSelectUser = async (user: UserSearchResult) => {
+    try {
+      setLoading(true);
+      // POST to /chats with the targetUserId to get/create a 1-on-1 room
+      const room = await api.post<any>("/chats", {
+        targetUserId: user.providerUserId,
+      });
+      
+      router.replace({
+        pathname: "/chats/[id]",
+        params: { id: room.roomId, name: `${user.firstName} ${user.lastName}` },
+      });
+    } catch (err: any) {
+      console.error("Failed to initiate chat:", err);
+      setError("Failed to start conversation. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

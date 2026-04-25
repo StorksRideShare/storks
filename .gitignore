@@ -14,3 +14,4 @@
 *.idea
 *.gradle/
 *build
+apps/parent-app/ui_design/*

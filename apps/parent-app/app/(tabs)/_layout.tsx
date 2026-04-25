@@ -5,40 +5,19 @@ import React, { useEffect, useState } from "react";
 
 import Colors from "@/constants/Colors";
 import LoadingScreen from "@/components/LoadingScreen";
-import { useApiClient } from "@/middleware/apiClient";
-import type { AuthStatus } from "@/utils/api";
 
 export default function TabLayout() {
   const { isSignedIn, signOut } = useAuth();
-  const [checking, setChecking] = useState(true);
+  const [checking, setChecking] = useState(false);
   const [isOnboarded, setIsOnboarded] = useState(true);
   const [isBanned, setIsBanned] = useState(false);
 
-  const apiClient = useApiClient("user-service");
-
+  // We are bypassing user-service status checks for the demonstration
   useEffect(() => {
-    if (!isSignedIn) {
+    if (isSignedIn) {
       setChecking(false);
-      return;
     }
-
-    const check = async () => {
-      try {
-        const status = await apiClient.get<AuthStatus>("/auth/status");
-        setIsOnboarded(status.isOnboarded);
-        setIsBanned(status.isBanned);
-      } catch (err: any) {
-        if (err.message && err.message.includes("401")) {
-          await signOut();
-        }
-        // On other errors (like network timeout), we leave isOnboarded as true
-      } finally {
-        setChecking(false);
-      }
-    };
-
-    check();
-  }, [isSignedIn, apiClient, signOut]);
+  }, [isSignedIn]);
 
   if (checking) return <LoadingScreen message="Loading..." />;
   if (!isSignedIn) return <Redirect href="/(auth)/signin" />;

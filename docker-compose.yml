@@ -25,7 +25,7 @@ services:
       test:
         [
           "CMD",
-          "kafka-topics",
+          "/opt/kafka/bin/kafka-topics.sh",
           "--bootstrap-server",
           "localhost:9092",
           "--list",
@@ -95,111 +95,111 @@ services:
   # ==========================================
   # BACKEND SERVICES
   # ==========================================
-  admin-service:
-    container_name: storks-admin-service
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: admin-service
-    ports:
-      - "8085:8085"
-    environment:
-      - SPRING_PROFILES_ACTIVE=neon
-      - SERVER_PORT=8085
-      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-      - SPRING_DATA_REDIS_URL=${REDIS_URL}
-      - INTERNAL_API_KEY=${INTERNAL_API_KEY}
-      - NEON_DB_URL=jdbc:postgresql://${NEON_HOST}/storks_admin?sslmode=require
-      - NEON_DB_USERNAME=${ADMIN_SERVICE_DB_USERNAME}
-      - NEON_DB_PASSWORD=${ADMIN_SERVICE_DB_PASSWORD}
-    networks:
-      - microservices-network
-    depends_on:
-      - kafka
+#   admin-service:
+#     container_name: storks-admin-service
+#     build:
+#       context: .
+#       dockerfile: Dockerfile
+#       target: admin-service
+#     ports:
+#       - "8085:8085"
+#     environment:
+#       - SPRING_PROFILES_ACTIVE=neon
+#       - SERVER_PORT=8085
+#       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+#       - SPRING_DATA_REDIS_URL=${REDIS_URL}
+#       - INTERNAL_API_KEY=${INTERNAL_API_KEY}
+#       - NEON_DB_URL=jdbc:postgresql://${NEON_HOST}/storks_admin?sslmode=require
+#       - NEON_DB_USERNAME=${ADMIN_SERVICE_DB_USERNAME}
+#       - NEON_DB_PASSWORD=${ADMIN_SERVICE_DB_PASSWORD}
+#     networks:
+#       - microservices-network
+#     depends_on:
+#       - kafka
 
-  booking-service:
-    container_name: storks-booking-service
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: booking-service
-    ports:
-      - "8088:8088"
-    environment:
-      - SPRING_PROFILES_ACTIVE=neon
-      - SERVER_PORT=8088
-      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-      - SPRING_DATA_REDIS_URL=${REDIS_URL}
-      - INTERNAL_API_KEY=${INTERNAL_API_KEY}
-      - NEON_DB_URL=jdbc:postgresql://${NEON_HOST}/storks_booking?sslmode=require
-      - NEON_DB_USERNAME=${BOOKING_SERVICE_DB_USERNAME}
-      - NEON_DB_PASSWORD=${BOOKING_SERVICE_DB_PASSWORD}
-    networks:
-      - microservices-network
-    depends_on:
-      - kafka
+#   booking-service:
+#     container_name: storks-booking-service
+#     build:
+#       context: .
+#       dockerfile: Dockerfile
+#       target: booking-service
+#     ports:
+#       - "8088:8088"
+#     environment:
+#       - SPRING_PROFILES_ACTIVE=neon
+#       - SERVER_PORT=8088
+#       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+#       - SPRING_DATA_REDIS_URL=${REDIS_URL}
+#       - INTERNAL_API_KEY=${INTERNAL_API_KEY}
+#       - NEON_DB_URL=jdbc:postgresql://${NEON_HOST}/storks_booking?sslmode=require
+#       - NEON_DB_USERNAME=${BOOKING_SERVICE_DB_USERNAME}
+#       - NEON_DB_PASSWORD=${BOOKING_SERVICE_DB_PASSWORD}
+#     networks:
+#       - microservices-network
+#     depends_on:
+#       - kafka
 
-  location-service:
-    container_name: storks-location-service
-    build:
-      context: .
-      dockerfile: services/location-and-navigation/Dockerfile
-    ports:
-      - "8082:8082"
-    environment:
-      - PORT=8082
-      - DATABASE_URL=postgresql://${LOCATION_SERVICE_DB_USERNAME}:${LOCATION_SERVICE_DB_PASSWORD}@${NEON_HOST}/storks_location?sslmode=require&channel_binding=require
-      - KAFKA_BROKERS=kafka:9092
-      - REDIS_URL=${REDIS_URL}
-    networks:
-      - microservices-network
-    depends_on:
-      - kafka
+#   location-service:
+#     container_name: storks-location-service
+#     build:
+#       context: .
+#       dockerfile: services/location-and-navigation/Dockerfile
+#     ports:
+#       - "8082:8082"
+#     environment:
+#       - PORT=8082
+#       - DATABASE_URL=postgresql://${LOCATION_SERVICE_DB_USERNAME}:${LOCATION_SERVICE_DB_PASSWORD}@${NEON_HOST}/storks_location?sslmode=require&channel_binding=require
+#       - KAFKA_BROKERS=kafka:9092
+#       - REDIS_URL=${REDIS_URL}
+#     networks:
+#       - microservices-network
+#     depends_on:
+#       - kafka
 
-  user-service:
-    container_name: storks-user-service
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: user-service
-    ports:
-      - "8083:8083"
-    environment:
-      - SPRING_PROFILES_ACTIVE=neon
-      - SERVER_PORT=8083
-      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-      - SPRING_DATA_REDIS_URL=${REDIS_URL}
-      - INTERNAL_API_KEY=${INTERNAL_API_KEY}
-      - NEON_DB_URL=jdbc:postgresql://${NEON_HOST}/storks_users?sslmode=require
-      - NEON_DB_USERNAME=${USER_SERVICE_DB_USERNAME}
-      - NEON_DB_PASSWORD=${USER_SERVICE_DB_PASSWORD}
-      - CLERK_SECRET_KEY=sk_test_Oj5jKnaK9g46e8B9My07ySsPbJ0Bf7umAACgXWxwKh
-    networks:
-      - microservices-network
-    depends_on:
-      - kafka
+#   user-service:
+#     container_name: storks-user-service
+#     build:
+#       context: .
+#       dockerfile: Dockerfile
+#       target: user-service
+#     ports:
+#       - "8083:8083"
+#     environment:
+#       - SPRING_PROFILES_ACTIVE=neon
+#       - SERVER_PORT=8083
+#       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+#       - SPRING_DATA_REDIS_URL=${REDIS_URL}
+#       - INTERNAL_API_KEY=${INTERNAL_API_KEY}
+#       - NEON_DB_URL=jdbc:postgresql://${NEON_HOST}/storks_users?sslmode=require
+#       - NEON_DB_USERNAME=${USER_SERVICE_DB_USERNAME}
+#       - NEON_DB_PASSWORD=${USER_SERVICE_DB_PASSWORD}
+#       - CLERK_SECRET_KEY=sk_test_Oj5jKnaK9g46e8B9My07ySsPbJ0Bf7umAACgXWxwKh
+#     networks:
+#       - microservices-network
+#     depends_on:
+#       - kafka
 
-  matching-intelligence:
-    container_name: storks-matching-intelligence
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: matching-intelligence
-    ports:
-      - "8084:8084"
-    environment:
-      - SPRING_PROFILES_ACTIVE=neon
-      - SERVER_PORT=8084
-      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-      - SPRING_DATA_REDIS_URL=${REDIS_URL}
-      - INTERNAL_API_KEY=${INTERNAL_API_KEY}
-      - NEON_DB_URL=jdbc:postgresql://${NEON_HOST}/storks_matching?sslmode=require
-      - NEON_DB_USERNAME=${MATCHING_SERVICE_DB_USERNAME}
-      - NEON_DB_PASSWORD=${MATCHING_SERVICE_DB_PASSWORD}
-    networks:
-      - microservices-network
-    depends_on:
-      - kafka
+#   matching-intelligence:
+#     container_name: storks-matching-intelligence
+#     build:
+#       context: .
+#       dockerfile: Dockerfile
+#       target: matching-intelligence
+#     ports:
+#       - "8084:8084"
+#     environment:
+#       - SPRING_PROFILES_ACTIVE=neon
+#       - SERVER_PORT=8084
+#       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+#       - SPRING_DATA_REDIS_URL=${REDIS_URL}
+#       - INTERNAL_API_KEY=${INTERNAL_API_KEY}
+#       - NEON_DB_URL=jdbc:postgresql://${NEON_HOST}/storks_matching?sslmode=require
+#       - NEON_DB_USERNAME=${MATCHING_SERVICE_DB_USERNAME}
+#       - NEON_DB_PASSWORD=${MATCHING_SERVICE_DB_PASSWORD}
+#     networks:
+#       - microservices-network
+#     depends_on:
+#       - kafka
 
   live-messaging:
     container_name: storks-live-messaging
@@ -218,6 +218,8 @@ services:
       - NEON_DB_URL=jdbc:postgresql://${NEON_HOST}/storks_messaging?sslmode=require
       - NEON_DB_USERNAME=${MESSAGING_SERVICE_DB_USERNAME}
       - NEON_DB_PASSWORD=${MESSAGING_SERVICE_DB_PASSWORD}
+      - STORKS_INTERNAL_USER_SERVICE_URL=http://localhost:8083
+      - STORKS_INTERNAL_API_KEY=demo-key
     networks:
       - microservices-network
     depends_on:
@@ -232,9 +234,11 @@ services:
       - "8089:8089"
     environment:
       - PORT=8089
-      - DATABASE_URL=postgresql://${SAFETY_SERVICE_DB_USERNAME}:${SAFETY_SERVICE_DB_PASSWORD}@${NEON_HOST}/storks_verification?sslmode=require&channel_binding=require
+      - DATABASE_URL=postgresql://${SAFETY_SERVICE_DB_USERNAME}:${SAFETY_SERVICE_DB_PASSWORD}@${NEON_HOST}/storks_messaging?sslmode=require&channel_binding=require
       - KAFKA_BROKERS=kafka:9092
       - REDIS_URL=${REDIS_URL}
+      - DEMO_MODE=true
+      - CLERK_SECRET_KEY=sk_test_Oj5jKnaK9g46e8B9My07ySsPbJ0Bf7umAACgXWxwKh
     networks:
       - microservices-network
     depends_on:

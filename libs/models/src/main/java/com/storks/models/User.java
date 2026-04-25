@@ -38,13 +38,25 @@ public abstract class User {
     private RoleType role;
 
     @Column(nullable = false)
-    private boolean onboarded = false;
+    private Boolean onboarded = false;
+
+    public Boolean isOnboarded() {
+        return onboarded;
+    }
 
     @Column(nullable = false)
-    private boolean banned = false;
+    private Boolean banned = false;
 
-    @Column(nullable = false)
-    private boolean deleted = false;
+    public Boolean isBanned() {
+        return banned;
+    }
+
+    @Column(name = "is_deleted", nullable = false)
+    private Boolean deleted = false;
+
+    public Boolean isDeleted() {
+        return deleted;
+    }
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)

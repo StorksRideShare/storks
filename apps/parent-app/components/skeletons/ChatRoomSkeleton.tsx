@@ -5,7 +5,7 @@ import { Skeleton, SkeletonText } from "@/components/ui/skeleton";
 
 function IncomingBubble({ wide = false }: { wide?: boolean }) {
   return (
-    <HStack space="sm" className="items-end self-start mb-3">
+    <HStack space="sm" className="items-end self-start mb-3 bg-gray-800">
       <Skeleton variant="circular" className="h-8 w-8 mb-1" />
       <Skeleton
         variant="rounded"
@@ -31,7 +31,7 @@ export function ChatRoomSkeleton() {
     <Box className="flex-1 bg-black">
       {/* Header */}
       <HStack
-        className="px-4 py-3 items-center border-b border-outline-800 bg-black"
+        className="px-4 py-3 items-center border-b border-gray-800 bg-black"
         space="md"
       >
         <Skeleton className="h-6 w-6 rounded" />
@@ -53,8 +53,8 @@ export function ChatRoomSkeleton() {
       </VStack>
 
       {/* Input bar */}
-      <HStack className="p-4 bg-black border-t border-outline-800 items-center" space="sm">
-        <Box className="flex-1 rounded-2xl border border-outline-700 h-12">
+      <HStack className="p-4 bg-black border-t border-gray-800 items-center" space="sm">
+        <Box className="flex-1 rounded-2xl border border-gray-800 h-12">
           <Skeleton variant="rounded" className="h-full w-full rounded-2xl" />
         </Box>
         <Skeleton variant="circular" className="h-10 w-10" />

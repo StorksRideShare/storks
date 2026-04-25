@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"crypto/rand"
+	"errors"
 	"fmt"
 	"math/big"
 	"time"
@@ -18,14 +19,16 @@ type VerificationService struct {
 	redisClient *redis.Client
 	qrSecret    string
 	producer    *kafka.Producer
+	demoMode    bool
 }
 
-func NewVerificationService(dbPool *pgxpool.Pool, redisClient *redis.Client, qrSecret string, producer *kafka.Producer) *VerificationService {
+func NewVerificationService(dbPool *pgxpool.Pool, redisClient *redis.Client, qrSecret string, producer *kafka.Producer, demoMode bool) *VerificationService {
 	return &VerificationService{
 		dbPool:      dbPool,
 		redisClient: redisClient,
 		qrSecret:    qrSecret,
 		producer:    producer,
+		demoMode:    demoMode,
 	}
 }
 
@@ -38,8 +41,8 @@ func GeneratePIN() (string, error) {
 	return fmt.Sprintf("%06d", n.Int64()), nil
 }
 
-// EnsureTimezone returns the time in IST (+05:30)
-func getIST() time.Time {
+// GetIST EnsureTimezone returns the time in IST (+05:30)
+func GetIST() time.Time {
 	// Attempt to load Indian Standard Time
 	loc, err := time.LoadLocation("Asia/Colombo")
 	if err != nil {
@@ -50,12 +53,14 @@ func getIST() time.Time {
 }
 
 func (s *VerificationService) HandleMorningOTPRequest(ctx context.Context, userID, rideID, groupID string) (string, error) {
-	now := getIST()
-	
+	now := GetIST()
+
 	// Check if time is before 7:30 AM
-	limit := time.Date(now.Year(), now.Month(), now.Day(), 7, 30, 0, 0, now.Location())
-	if now.After(limit) {
-		return "", fmt.Errorf("morning OTPs can only be requested before 7:30 AM")
+	if !s.demoMode {
+		limit := time.Date(now.Year(), now.Month(), now.Day(), 7, 30, 0, 0, now.Location())
+		if now.After(limit) {
+			return "", fmt.Errorf("morning OTPs can only be requested before 7:30 AM")
+		}
 	}
 
 	// Support 'ride-today' placeholder for testing/dev
@@ -77,7 +82,7 @@ func (s *VerificationService) HandleMorningOTPRequest(ctx context.Context, userI
 			WHERE r.ride_id = $1 AND cg.group_id = $2
 		`, rideID, groupID).Scan(&driverID)
 	}
-	
+
 	if err != nil {
 		return "", fmt.Errorf("failed to validate ride and group: %v (rideID: %s, groupID: %s)", err, rideID, groupID)
 	}
@@ -96,7 +101,7 @@ func (s *VerificationService) HandleMorningOTPRequest(ctx context.Context, userI
 
 	if s.producer != nil {
 		s.producer.PublishJSONEvent(ctx, "morning_otp_generated", map[string]string{
-			"ride_id": rideID,
+			"ride_id":  rideID,
 			"group_id": groupID,
 		})
 	}
@@ -105,10 +110,12 @@ func (s *VerificationService) HandleMorningOTPRequest(ctx context.Context, userI
 }
 
 func (s *VerificationService) VerifyMorningOTP(ctx context.Context, userID, rideID, groupID, pin string) error {
-	now := getIST()
-	limit := time.Date(now.Year(), now.Month(), now.Day(), 7, 30, 0, 0, now.Location())
-	if now.After(limit) {
-		return fmt.Errorf("morning OTPs can only be verified before 7:30 AM")
+	now := GetIST()
+	if !s.demoMode {
+		limit := time.Date(now.Year(), now.Month(), now.Day(), 7, 30, 0, 0, now.Location())
+		if now.After(limit) {
+			return fmt.Errorf("morning OTPs can only be verified before 7:30 AM")
+		}
 	}
 
 	// Verify the requester (Driver) has this ride
@@ -116,7 +123,7 @@ func (s *VerificationService) VerifyMorningOTP(ctx context.Context, userID, ride
 	err := s.dbPool.QueryRow(ctx, `
 		SELECT EXISTS(SELECT 1 FROM rides WHERE ride_id = $1 AND driver_id = $2)
 	`, rideID, userID).Scan(&isValidDriver)
-	
+
 	if err != nil || !isValidDriver {
 		return fmt.Errorf("unauthorized driver for this ride")
 	}
@@ -133,7 +140,7 @@ func (s *VerificationService) VerifyMorningOTP(ctx context.Context, userID, ride
 
 	key := fmt.Sprintf("morning:%s:%s:%s", rideID, groupID, userID)
 	cachedPin, err := s.redisClient.Get(ctx, key).Result()
-	if err == redis.Nil {
+	if errors.Is(err, redis.Nil) {
 		return fmt.Errorf("pin expired or not found")
 	} else if err != nil {
 		return fmt.Errorf("failed to retrieve pin")
@@ -148,11 +155,11 @@ func (s *VerificationService) VerifyMorningOTP(ctx context.Context, userID, ride
 		INSERT INTO verification_logs (id, verification_type, ride_id, group_id, status, verified_at)
 		VALUES (gen_random_uuid(), 'morning_otp', $1, $2, 'success', $3)
 	`, rideID, groupID, now)
-	
+
 	if s.producer != nil {
 		s.producer.PublishJSONEvent(ctx, "morning_otp_verified", map[string]string{
-			"ride_id": rideID,
-			"group_id": groupID,
+			"ride_id":   rideID,
+			"group_id":  groupID,
 			"driver_id": userID,
 		})
 	}
@@ -166,17 +173,17 @@ type ChildPin struct {
 }
 
 func (s *VerificationService) HandleAfternoonOTPRequest(ctx context.Context, userID, groupID string, reroll bool) ([]ChildPin, error) {
-	now := getIST()
-	
+	now := GetIST()
+
 	limitStart := time.Date(now.Year(), now.Month(), now.Day(), 18, 0, 0, 0, now.Location())
 	limitEnd := time.Date(now.Year(), now.Month(), now.Day(), 21, 0, 0, 0, now.Location())
-	if now.Before(limitStart) || now.After(limitEnd) {
+	if !s.demoMode && (now.Before(limitStart) || now.After(limitEnd)) {
 		return nil, fmt.Errorf("afternoon OTPs can only be requested between 6 PM and 9 PM")
 	}
 
 	// Active ride tomorrow
 	tomorrow := now.AddDate(0, 0, 1).Format("2006-01-02")
-	
+
 	// Fetch children in the group that have a schedule/ride for tomorrow
 	rows, err := s.dbPool.Query(ctx, `
 		SELECT c.child_id 
@@ -221,12 +228,12 @@ func (s *VerificationService) HandleAfternoonOTPRequest(ctx context.Context, use
 			`, groupID, cid, pin, now, tomorrow)
 		}
 	}
-	
+
 	if s.producer != nil {
 		s.producer.PublishJSONEvent(ctx, "afternoon_otp_batch_generated", map[string]interface{}{
-			"group_id": groupID,
+			"group_id":       groupID,
 			"children_count": len(childPins),
-			"active_date": tomorrow,
+			"active_date":    tomorrow,
 		})
 	}
 
@@ -234,10 +241,12 @@ func (s *VerificationService) HandleAfternoonOTPRequest(ctx context.Context, use
 }
 
 func (s *VerificationService) VerifyAfternoonOTP(ctx context.Context, userID, rideID, groupID string, pins []ChildPin) error {
-	now := getIST()
-	limit := time.Date(now.Year(), now.Month(), now.Day(), 18, 30, 0, 0, now.Location())
-	if now.After(limit) {
-		return fmt.Errorf("afternoon OTPs can only be verified before 6:30 PM")
+	now := GetIST()
+	if !s.demoMode {
+		limit := time.Date(now.Year(), now.Month(), now.Day(), 18, 30, 0, 0, now.Location())
+		if now.After(limit) {
+			return fmt.Errorf("afternoon OTPs can only be verified before 6:30 PM")
+		}
 	}
 
 	// Validate driver has ride
@@ -258,7 +267,7 @@ func (s *VerificationService) VerifyAfternoonOTP(ctx context.Context, userID, ri
 			FROM ride_passengers 
 			WHERE ride_id = $1 AND child_id = $2 AND date = $3
 		`, rideID, cp.ChildID, today).Scan(&isAbsent)
-		
+
 		// If record exists and isAbsent (false means marked absent according to domain logic, or depends on wording. Assuming false = not attended/absent)
 		// Assuming afternoon_attendance false = absent for the afternoon. We'll skip verification if true or just proceed to pin check.
 		if absentErr == nil && !isAbsent {
@@ -280,12 +289,12 @@ func (s *VerificationService) VerifyAfternoonOTP(ctx context.Context, userID, ri
 			INSERT INTO verification_logs (id, verification_type, ride_id, group_id, child_id, status, verified_at)
 			VALUES (gen_random_uuid(), 'afternoon_otp', $1, $2, $3, 'success', $4)
 		`, rideID, groupID, cp.ChildID, now)
-		
+
 		if s.producer != nil {
 			s.producer.PublishJSONEvent(ctx, "afternoon_otp_verified", map[string]string{
-				"ride_id": rideID,
-				"group_id": groupID,
-				"child_id": cp.ChildID,
+				"ride_id":   rideID,
+				"group_id":  groupID,
+				"child_id":  cp.ChildID,
 				"driver_id": userID,
 			})
 		}

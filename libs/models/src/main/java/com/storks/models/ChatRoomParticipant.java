@@ -26,7 +26,7 @@ public class ChatRoomParticipant {
 
     private OffsetDateTime joinedAt = OffsetDateTime.now();
 
-    private boolean isRemoved = false;
+    private Boolean isRemoved = false;
     
     public ChatRoomParticipant() {}
     
@@ -42,6 +42,6 @@ public class ChatRoomParticipant {
     public OffsetDateTime getJoinedAt() { return joinedAt; }
     public void setJoinedAt(OffsetDateTime joinedAt) { this.joinedAt = joinedAt; }
     
-    public boolean isRemoved() { return isRemoved; }
-    public void setRemoved(boolean isRemoved) { this.isRemoved = isRemoved; }
+    public Boolean isRemoved() { return isRemoved; }
+    public void setRemoved(Boolean isRemoved) { this.isRemoved = isRemoved; }
 }

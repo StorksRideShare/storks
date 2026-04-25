@@ -169,7 +169,7 @@ public class ChatRoomService {
         OffsetDateTime lastMessageSentAt = null;
 
         org.springframework.data.domain.Page<com.storks.models.Message> lastMessagePage = 
-            messageRepository.findByRoom_RoomIdAndIsDeletedFalseOrderBySentAtDesc(
+            messageRepository.findByRoom_RoomIdAndDeletedFalseOrderBySentAtDesc(
                 room.getRoomId(), 
                 org.springframework.data.domain.PageRequest.of(0, 1)
             );

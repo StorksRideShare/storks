@@ -24,21 +24,24 @@ public class ChatWebSocketController {
 
     @MessageMapping("/chat.sendMessage")
     public void sendMessage(@Payload ChatMessagePayload chatMessage, Principal principal) {
-        if (principal instanceof UsernamePasswordAuthenticationToken auth) {
+        if (principal instanceof org.springframework.security.authentication.AbstractAuthenticationToken auth) {
             if (auth.getPrincipal() instanceof UserAuthClaim claim) {
                 UUID senderId = claim.userId();
                 chatMessage.setSenderId(senderId);
                 
                 if (chatMessage.getType() == com.storks.models.types.MessageType.READ_RECEIPT) {
                     messageService.markMessageAsRead(chatMessage.getMessageId(), senderId);
+                    messageService.broadcastMessageOnly(chatMessage);
+                    return;
                 }
                 
-                // Publish to Kafka queue (Kafka consumer will broadcast it)
-                messageService.publishMessageToKafka(chatMessage);
+                // Save to DB/Redis and broadcast directly (bypassing Kafka)
+                messageService.processAndBroadcastMessage(chatMessage);
                 return;
             }
         }
-        log.warn("Unauthorized message attempt over WebSocket");
+        log.warn("Unauthorized message attempt over WebSocket: principal class is {}", 
+                principal != null ? principal.getClass().getName() : "null");
     }
 }
 

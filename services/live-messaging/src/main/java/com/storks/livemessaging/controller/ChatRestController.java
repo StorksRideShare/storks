@@ -48,26 +48,15 @@ public class ChatRestController {
     }
 
     @GetMapping("/{roomId}/messages")
-    public ResponseEntity<Page<Message>> getRoomMessages(
+    public ResponseEntity<Page<com.storks.livemessaging.dto.ChatMessagePayload>> getRoomMessages(
             @PathVariable UUID roomId,
             @PageableDefault(size = 50, sort = "sentAt", direction = Sort.Direction.DESC) Pageable pageable,
             @AuthenticationPrincipal UserAuthClaim claim) {
         log.info("REST: getRoomMessages - Room: {} | Claim: {}", roomId, claim != null ? claim.userId() : "NULL");
         if (claim == null || claim.userId() == null) return ResponseEntity.status(401).build();
         
-        Page<Message> messages = messageService.getMessageHistoryFromDb(roomId, pageable);
+        Page<com.storks.livemessaging.dto.ChatMessagePayload> messages = messageService.getMessageHistory(roomId, pageable);
         return ResponseEntity.ok(messages);
-    }
-    
-    @GetMapping("/{roomId}/messages/recent")
-    public ResponseEntity<List<Message>> getRecentMessagesCache(@PathVariable UUID roomId, @AuthenticationPrincipal UserAuthClaim claim) {
-        if (claim == null || claim.userId() == null) return ResponseEntity.status(401).build();
-        
-        List<Message> recentMessages = messageService.getRecentMessagesFromRedis(roomId).stream()
-                .filter(obj -> obj instanceof Message)
-                .map(obj -> (Message) obj)
-                .collect(java.util.stream.Collectors.toList());
-        return ResponseEntity.ok(recentMessages);
     }
 
     @PostMapping

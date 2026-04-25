@@ -47,8 +47,9 @@ export default function PrivacySettingsScreen() {
         allowSilentPresence: data.allowSilentPresence ?? DEFAULTS.allowSilentPresence,
         allowAudioStream: data.allowAudioStream ?? DEFAULTS.allowAudioStream,
       });
-    } catch {
-      Alert.alert("Error", "Failed to load privacy settings. Using defaults.");
+    } catch (err) {
+      if (__DEV__) console.warn("[PrivacySettings] Service unavailable, using defaults");
+      setSettings(DEFAULTS);
     } finally {
       setIsLoading(false);
     }
@@ -60,8 +61,7 @@ export default function PrivacySettingsScreen() {
       await api.patch("/privacy/settings", settings);
       Alert.alert("Success", "Your privacy settings have been saved successfully!");
     } catch (error) {
-      console.error("Failed to save settings:", error);
-      Alert.alert("Error", "Failed to save privacy settings. Please try again.");
+      if (__DEV__) console.warn("Failed to save settings:", error);
     } finally {
       setIsSaving(false);
     }

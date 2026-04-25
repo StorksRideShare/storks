@@ -37,8 +37,11 @@ export default function HomeScreen() {
   const [eta, setEta] = useState('');
   const apiClient = useApiClient("location-and-navigation");
 
+  const [error, setError] = useState<string | null>(null);
+
   const fetchRoute = async () => {
     try {
+      setError(null);
       const data = await apiClient.get<any>(
         '/navigation/route?origin=6.9271,79.8612&destination=6.9067,79.8707'
       );
@@ -53,12 +56,24 @@ export default function HomeScreen() {
       setEta(data.duration);
     } catch (error) {
       console.error(error);
+      setError("Location service offline during demo");
     }
   };
 
   useEffect(() => {
     fetchRoute();
   }, []);
+
+  if (error) {
+    return (
+      <View style={[styles.container, { backgroundColor: "#121212", padding: 20, flexDirection: 'column' }]}>
+        <ThemedText style={{ color: "#ff9800", fontSize: 18, marginBottom: 20, marginTop: 40 }}>
+          {error}
+        </ThemedText>
+        <View style={{ flex: 1, backgroundColor: "#1e1e1e", borderRadius: 12, opacity: 0.6 }} />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>

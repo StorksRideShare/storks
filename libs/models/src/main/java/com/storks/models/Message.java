@@ -60,7 +60,16 @@ public class Message implements Persistable<UUID> {
     )
     private List<User> readBy;
 
-    private boolean isDeleted;
+    @Column(name = "is_deleted")
+    private Boolean deleted = false;
+
+    public Boolean isDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(Boolean deleted) {
+        this.deleted = deleted;
+    }
     private OffsetDateTime deletedAt;
 }
 

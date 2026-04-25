@@ -51,3 +51,13 @@ CREATE TABLE IF NOT EXISTS verification_logs
     location_lat DECIMAL,
     location_lng DECIMAL
 );
+
+-- 5. Child Afternoon QRs Table
+CREATE TABLE IF NOT EXISTS child_afternoon_qrs
+(
+    id UUID NOT NULL PRIMARY KEY,
+    child_id UUID NOT NULL,
+    group_id UUID NOT NULL,
+    qr_hash TEXT NOT NULL,
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);

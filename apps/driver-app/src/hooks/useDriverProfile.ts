@@ -1,10 +1,9 @@
 import { useCallback, useEffect } from "react";
-import { useApiClient } from "../middleware/apiClient";
+import { useUser } from "@clerk/expo";
 import { useDriverAuthStore } from "../store/driverAuthStore";
-import { driverApi } from "../services/api";
 
 export function useDriverProfile() {
-  const apiClient = useApiClient("user-service");
+  const { user, isLoaded } = useUser();
   const {
     driverProfile,
     authStatus,
@@ -17,27 +16,45 @@ export function useDriverProfile() {
   const fetchProfileAndStatus = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [profile, status] = await Promise.all([
-        driverApi.getProfile(apiClient),
-        driverApi.getAuthStatus(apiClient),
-      ]);
-      setDriverProfile(profile);
-      setAuthStatus(status);
+      if (user) {
+        // Mock driver profile using Clerk data
+        setDriverProfile({
+          id: user.id,
+          userId: user.id,
+          fullName: user.fullName || "Driver",
+          firstName: user.firstName || "Driver",
+          lastName: user.lastName || "",
+          email: user.primaryEmailAddress?.emailAddress || "",
+          phone: "+1234567890",
+          profilePictureUrl: user.imageUrl,
+          role: "DRIVER",
+          onboarded: true,
+        });
+
+        setAuthStatus({
+          isBanned: false,
+          isOnboarded: true,
+          userId: user.id,
+          role: "DRIVER",
+        });
+      }
     } catch (err) {
       console.error("Failed to fetch driver profile or status:", err);
     } finally {
       setIsLoading(false);
     }
-  }, [apiClient, setDriverProfile, setAuthStatus, setIsLoading]);
+  }, [user, setDriverProfile, setAuthStatus, setIsLoading]);
 
   useEffect(() => {
-    fetchProfileAndStatus();
-  }, [fetchProfileAndStatus]);
+    if (isLoaded) {
+      fetchProfileAndStatus();
+    }
+  }, [isLoaded, fetchProfileAndStatus]);
 
   return {
     driverProfile,
     authStatus,
-    isLoading,
+    isLoading: isLoading || !isLoaded,
     refresh: fetchProfileAndStatus,
   };
 }

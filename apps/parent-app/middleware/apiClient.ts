@@ -9,8 +9,8 @@ const SERVER_IP =
 
 export const API_BASE_URL = `http://${SERVER_IP}:8080`;
 
-/** WebSocket base URL for the live-messaging service (port 8085) */
-export const WS_BASE_URL = `ws://${SERVER_IP}:8085/ws`;
+/** WebSocket base URL for the live-messaging service (port 8086) */
+export const WS_BASE_URL = `ws://${SERVER_IP}:8086/ws`;
 
 export type ServiceName =
   | "admin-and-analytics"

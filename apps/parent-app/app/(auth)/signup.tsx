@@ -9,7 +9,7 @@ import { useSignUp, useAuth } from "@clerk/expo";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AuthContainer, AuthLogo, OAuthButtons } from "@/components/auth/AuthComponents";
-import { Eye, EyeOff, ShieldCheck } from "lucide-react-native";
+import { Eye, EyeOff } from "lucide-react-native";
 
 import { VStack } from "@/components/ui/vstack";
 import { HStack } from "@/components/ui/hstack";
@@ -19,27 +19,8 @@ import { Text } from "@/components/ui/text";
 import { Box } from "@/components/ui/box";
 import { FormControl, FormControlLabel, FormControlLabelText, FormControlError, FormControlErrorText } from "@/components/ui/form-control";
 
-type SignUpStep = "form" | "verify" | "tos";
+type SignUpStep = "form" | "verify";
 
-const TOS_TEXT = `Terms of Service & Privacy Policy
-
-By creating an account with Storks, you agree to our Terms of Service and acknowledge our Privacy Policy.
-
-Last updated: April 2025
-
-1. Acceptance of Terms
-By accessing or using the Storks platform, you agree to be bound by these Terms of Service.
-
-2. Use of Service
-You agree to use Storks only for lawful purposes and in accordance with these Terms.
-
-3. Privacy Policy
-We collect and process personal data as described in our Privacy Policy. Your data is used to provide and improve our services.
-
-4. Children's Safety
-Storks is committed to the safety of children. All drivers are background-checked and verified.
-
-For questions, please contact us at legal@storks.app`;
 
 export default function SignUpPage() {
   // v3: useSignUp no longer returns setActive — session activation happens via signUp.finalize().
@@ -57,7 +38,6 @@ export default function SignUpPage() {
   const [code, setCode] = useState("");
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
-  const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
 
   // Local validation error state
   const [localError, setLocalError] = useState("");
@@ -113,7 +93,7 @@ export default function SignUpPage() {
     await signUp.verifications.verifyEmailCode({ code });
 
     if (signUp.status === "complete") {
-      setStep("tos");
+      await onAcceptTOS();
     } else {
       console.error("[Verify Error] Sign-up attempt not complete:", signUp);
     }
@@ -147,55 +127,6 @@ export default function SignUpPage() {
   // v3: fetchStatus === 'loading' replaces the old 'fetching' value
   const isFetching = fetchStatus === "fetching";
 
-  // ── Step 3: Terms of Service ─────────────────────────────────────────────────
-  if (step === "tos") {
-    return (
-      <AuthContainer>
-        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
-          <VStack style={[styles.card, { paddingTop: insets.top + 16 }]} space="md">
-            <Box style={styles.iconRing}>
-              <ShieldCheck color="#22c55e" size={32} />
-            </Box>
-            <Text style={styles.title}>Almost there!</Text>
-            <Text style={styles.subtitle}>
-              Please review and accept our Terms of Service to complete registration.
-            </Text>
-
-            {localError ? (
-              <Box className="bg-red-400/10 border border-red-400/30 rounded-xl p-3 mb-2">
-                <Text className="text-red-400 text-sm text-center">{localError}</Text>
-              </Box>
-            ) : null}
-
-            <ScrollView
-              style={styles.tosBox}
-              onScroll={({ nativeEvent }) => {
-                const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
-                const isAtBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - 40;
-                if (isAtBottom) setHasScrolledToBottom(true);
-              }}
-              scrollEventThrottle={16}
-            >
-              <Text style={styles.tosText}>{TOS_TEXT}</Text>
-            </ScrollView>
-
-            {!hasScrolledToBottom && (
-              <Text style={styles.scrollHint}>↓ Scroll to bottom to accept</Text>
-            )}
-
-            <Button
-              className="mt-2 h-14 rounded-full bg-orange-600"
-              isDisabled={!hasScrolledToBottom || isFetching}
-              disabled={!hasScrolledToBottom || isFetching}
-              onPress={onAcceptTOS}
-            >
-              {isFetching ? <ButtonSpinner color="white" /> : <ButtonText className="font-bold text-white text-base tracking-wide">I Accept & Create Account</ButtonText>}
-            </Button>
-          </VStack>
-        </KeyboardAvoidingView>
-      </AuthContainer>
-    );
-  }
 
   // ── Step 2: Verify email code ─────────────────────────────────────────────────
   if (step === "verify" || (signUp?.status === "missing_requirements" && signUp?.unverifiedFields?.includes("email_address"))) {

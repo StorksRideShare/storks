@@ -10,7 +10,7 @@ import java.util.UUID;
 
 @Repository
 public interface MessageRepository extends JpaRepository<Message, UUID> {
-    Page<Message> findByRoom_RoomIdAndIsDeletedFalseOrderBySentAtDesc(UUID roomId, Pageable pageable);
+    Page<Message> findByRoom_RoomIdAndDeletedFalseOrderBySentAtDesc(UUID roomId, Pageable pageable);
 }
 
 

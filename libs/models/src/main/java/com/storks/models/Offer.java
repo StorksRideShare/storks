@@ -28,10 +28,14 @@ public class Offer {
     @OneToMany(mappedBy = "offer", cascade = CascadeType.ALL)
     private List<Ride> rides = new ArrayList<>();
 
-    private boolean isUsingIntelligentPricing;
+    private Boolean isUsingIntelligentPricing = false;
 
-    private double pricePerMonth;
-    private double pricePerDay;
+    public Boolean isUsingIntelligentPricing() {
+        return isUsingIntelligentPricing;
+    }
+
+    private Double pricePerMonth = 0.0;
+    private Double pricePerDay = 0.0;
 
     @OneToMany
     @JoinTable(
