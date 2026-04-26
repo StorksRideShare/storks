@@ -2,10 +2,13 @@ package kafka
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"strings"
+	"time"
 
 	kafka "github.com/segmentio/kafka-go"
+	"github.com/segmentio/kafka-go/sasl/plain"
 )
 
 type Consumer struct {
@@ -17,7 +20,21 @@ func NewConsumer(brokers, user, pass string) *Consumer {
 		return nil
 	}
 
-	dialer := getDialer(user, pass)
+	dialer := &kafka.Dialer{
+		Timeout:   10 * time.Second,
+		DualStack: true,
+	}
+
+	if user != "" && pass != "" {
+		dialer.SASLMechanism = plain.Mechanism{
+			Username: user,
+			Password: pass,
+		}
+		dialer.TLS = &tls.Config{
+			InsecureSkipVerify: false,
+		}
+	}
+
 	brokerList := strings.Split(brokers, ",")
 	r := kafka.NewReader(kafka.ReaderConfig{
 		Brokers:   brokerList,

@@ -2,14 +2,15 @@ package kafka
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"log"
-	"net"
 	"strings"
 	"time"
 
 	kafka "github.com/segmentio/kafka-go"
+	"github.com/segmentio/kafka-go/sasl/plain"
 )
 
 type Producer struct {
@@ -21,18 +22,27 @@ func NewProducer(brokers, user, pass string) *Producer {
 		return nil
 	}
 
-	dialer := getDialer(user, pass)
 	brokerList := strings.Split(brokers, ",")
-	w := &kafka.Writer{
-		Addr:     kafka.TCP(brokerList...),
-		Topic:    "storks.safety.verification.events",
-		Balancer: &kafka.LeastBytes{},
-		Transport: &kafka.Transport{
-			Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
-				return dialer.DialContext(ctx, network, address)
-			},
-			TLS: dialer.TLS,
+
+	transport := &kafka.Transport{
+		TLS: &tls.Config{
+			InsecureSkipVerify: false,
 		},
+	}
+
+	if user != "" && pass != "" {
+		transport.SASL = plain.Mechanism{
+			Username: user,
+			Password: pass,
+		}
+	}
+
+	w := &kafka.Writer{
+		Addr:      kafka.TCP(brokerList...),
+		Topic:     "storks.safety.verification.events",
+		Balancer:  &kafka.LeastBytes{},
+		Transport: transport,
+		Async:     false,
 	}
 
 	return &Producer{
