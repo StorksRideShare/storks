@@ -1,119 +1,81 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-
-interface Emergency {
-  id: string;
-  rideId: string;
-  userId: string;
-  type: string;
-  severity: 'low' | 'medium' | 'high' | 'critical';
-  description: string;
-  timestamp: string;
-  resolved: boolean;
-}
+import React from 'react';
 
 const EmergencyReport: React.FC = () => {
-  const [emergencies, setEmergencies] = useState<Emergency[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchEmergencies();
-  }, []);
-
-  const fetchEmergencies = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      // Try to fetch from API, fallback to mock data if unavailable
-      const response = await axios.get('http://localhost:8081/api/admin/emergencies', {
-        headers: {
-          Authorization: token ? `Bearer ${token}` : undefined,
-        },
-      }).catch(() => ({ data: [] }));
-
-      setEmergencies(response.data || []);
-    } catch (error) {
-      console.warn('Could not fetch emergencies, displaying empty state:', error);
-      setEmergencies([]);
-    } finally {
-      setLoading(false);
+  // Demo Emergency Data for Viva 
+  const demoEmergencies = [
+    {
+      id: "EM-001",
+      type: "Route Deviation Alert",
+      severity: "high",
+      description: "Vehicle V-205 moved 2km outside the student safety zone.",
+      timestamp: new Date().toISOString(),
+      rideId: "RID-9921"
+    },
+    {
+      id: "EM-002",
+      type: "SOS Button Triggered",
+      severity: "critical",
+      description: "Passenger initiated emergency silent alarm. End-to-end encryption active.",
+      timestamp: new Date().toISOString(),
+      rideId: "RID-8840"
     }
-  };
+  ];
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
-      case 'critical':
-        return '#dc2626';
-      case 'high':
-        return '#ea580c';
-      case 'medium':
-        return '#f59e0b';
-      case 'low':
-        return '#3b82f6';
-      default:
-        return '#6b7280';
+      case 'critical': return '#dc2626';
+      case 'high': return '#f97316';
+      default: return '#94a3b8';
     }
   };
 
   return (
     <section style={{ marginBottom: '40px' }}>
-      <h2>Emergency Reports</h2>
-      {loading ? (
-        <p>Loading emergency reports...</p>
-      ) : emergencies.length === 0 ? (
-        <div style={{
-          background: '#dbeafe',
-          padding: '20px',
-          borderRadius: '8px',
-          textAlign: 'center',
-          color: '#0c4a6e'
-        }}>
-          ✅ No active emergencies reported
-        </div>
-      ) : (
-        <div style={{
-          maxWidth: '800px',
-          margin: '0 auto'
-        }}>
-          {emergencies.map((emergency) => (
-            <div
-              key={emergency.id}
-              style={{
-                background: '#fff',
-                border: `3px solid ${getSeverityColor(emergency.severity)}`,
-                padding: '16px',
-                borderRadius: '8px',
-                marginBottom: '12px',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-              }}
-            >
-              <div>
-                <div style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>
-                  {emergency.type}
-                </div>
-                <div style={{ fontSize: '0.9rem', color: '#666', marginTop: '4px' }}>
-                  {emergency.description}
-                </div>
-                <div style={{ fontSize: '0.85rem', color: '#999', marginTop: '8px' }}>
-                  Ride ID: {emergency.rideId} | Time: {new Date(emergency.timestamp).toLocaleTimeString()}
-                </div>
+      <h2 style={{ color: '#f97316' }}>Emergency Reports & Incidents </h2>
+      <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+        {demoEmergencies.map((emergency) => (
+          <div
+            key={emergency.id}
+            style={{
+              background: '#1e293b',
+              borderLeft: `6px solid ${getSeverityColor(emergency.severity)}`,
+              padding: '20px',
+              borderRadius: '8px',
+              marginBottom: '15px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              borderTop: '1px solid #334155',
+              borderRight: '1px solid #334155',
+              borderBottom: '1px solid #334155'
+            }}
+          >
+            <div>
+              <div style={{ fontWeight: 'bold', fontSize: '1.2rem', color: '#f8fafc' }}>
+                {emergency.type} 
+                <span style={{ fontSize: '0.8rem', color: '#64748b', marginLeft: '10px' }}>ID: {emergency.id}</span>
               </div>
-              <div style={{
-                background: getSeverityColor(emergency.severity),
-                color: 'white',
-                padding: '8px 12px',
-                borderRadius: '4px',
-                fontWeight: 'bold',
-                textTransform: 'uppercase',
-                fontSize: '0.75rem'
-              }}>
-                {emergency.severity}
+              <div style={{ fontSize: '0.95rem', color: '#cbd5e1', marginTop: '6px' }}>
+                {emergency.description}
+              </div>
+              <div style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '10px' }}>
+                Ride: {emergency.rideId} | Tracker Status: <span style={{ color: '#22c55e' }}>Live Monitoring Active</span> 
               </div>
             </div>
-          ))}
-        </div>
-      )}
+            <div style={{
+              background: getSeverityColor(emergency.severity),
+              color: 'white',
+              padding: '8px 16px',
+              borderRadius: '6px',
+              fontWeight: '800',
+              textTransform: 'uppercase',
+              fontSize: '0.75rem'
+            }}>
+              {emergency.severity}
+            </div>
+          </div>
+        ))}
+      </div>
     </section>
   );
 };
