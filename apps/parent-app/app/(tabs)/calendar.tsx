@@ -1,12 +1,28 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
+import { Button, ButtonText } from "@/components/ui/button";
 
 export default function CalendarScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Schedule</Text>
+        <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
+          <Button 
+            onPress={() => router.push('/verification-demo')}
+            style={{ flex: 1, backgroundColor: '#F97316', height: 48, borderRadius: 24 }}
+          >
+            <ButtonText style={{ color: 'white', fontWeight: 'bold' }}>Verification Demo</ButtonText>
+          </Button>
+          <Button 
+            onPress={() => router.push('/emergency-demo')}
+            style={{ flex: 1, backgroundColor: '#DC2626', height: 48, borderRadius: 24 }}
+          >
+            <ButtonText style={{ color: 'white', fontWeight: 'bold' }}>Emergency Demo</ButtonText>
+          </Button>
+        </View>
       </View>
       
       <View style={styles.alertCard}>

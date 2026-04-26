@@ -46,7 +46,20 @@ export default function VerifyScreen() {
     <SafeAreaView style={{ flex: 1, backgroundColor: "#0F0E0E" }}>
       <HStack style={{ paddingHorizontal: 20, paddingVertical: 16, alignItems: "center", justifyContent: "space-between" }}>
         <Text style={{ color: "#F97316", fontWeight: "bold", fontSize: 20 }}>Verification</Text>
-        <Box style={{ width: 28 }} />
+        <HStack style={{ gap: 8 }}>
+          <Button 
+            onPress={() => router.push('/verification-demo')}
+            style={{ backgroundColor: 'transparent', borderWidth: 1, borderColor: '#F97316', borderRadius: 16, paddingHorizontal: 12, height: 32 }}
+          >
+            <ButtonText style={{ color: '#F97316', fontSize: 12, fontWeight: 'bold' }}>Verify</ButtonText>
+          </Button>
+          <Button 
+            onPress={() => router.push('/emergency-demo')}
+            style={{ backgroundColor: 'transparent', borderWidth: 1, borderColor: '#DC2626', borderRadius: 16, paddingHorizontal: 12, height: 32 }}
+          >
+            <ButtonText style={{ color: '#DC2626', fontSize: 12, fontWeight: 'bold' }}>SOS</ButtonText>
+          </Button>
+        </HStack>
       </HStack>
 
       <ScrollView style={{ flex: 1, paddingHorizontal: 20 }} showsVerticalScrollIndicator={false}>

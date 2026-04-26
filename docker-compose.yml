@@ -244,18 +244,18 @@ services:
     depends_on:
       - kafka
 
-  storks-postgres:
-    image: postgres:16-alpine
-    container_name: storks-postgres
-    ports:
-      - "5432:5432"
-    environment:
-      - POSTGRES_PASSWORD=storks
-      - POSTGRES_USER=storks
-    volumes:
-      - ./infrastructure/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
-    networks:
-      - microservices-network
+  # storks-postgres:
+  #   image: postgres:16-alpine
+  #   container_name: storks-postgres
+  #   ports:
+  #     - "5432:5432"
+  #   environment:
+  #     - POSTGRES_PASSWORD=storks
+  #     - POSTGRES_USER=storks
+  #   volumes:
+  #     - ./infrastructure/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+  #   networks:
+  #     - microservices-network
 
 networks:
   microservices-network:
