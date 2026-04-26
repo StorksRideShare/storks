@@ -14,6 +14,8 @@ import (
 	"safety-and-verification/internal/kafka"
 	"safety-and-verification/internal/repository"
 	"safety-and-verification/internal/service"
+
+	"github.com/gin-contrib/cors"
 )
 
 func main() {
@@ -21,6 +23,17 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)
 	}
+
+	// Cors
+	r := gin.Default()
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"*"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Content-Type", "Authorization", "Content-Length", "Accept-Encoding", "X-CSRF-Token", "Origin", "Accept"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           604800, // 1 week
+	}))
 
 	// Init DB
 	dbPool, err := repository.NewPostgresPool(context.Background(), cfg.DatabaseURL)
@@ -47,8 +60,6 @@ func main() {
 			_ = kafkaProducer.Close()
 		}
 	}()
-
-	r := gin.Default()
 
 	r.GET("/api/v1/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"})
