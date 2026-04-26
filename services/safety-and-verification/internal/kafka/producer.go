@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net"
 	"strings"
 	"time"
 
@@ -15,16 +16,23 @@ type Producer struct {
 	writer *kafka.Writer
 }
 
-func NewProducer(brokers string) *Producer {
+func NewProducer(brokers, user, pass string) *Producer {
 	if brokers == "" {
 		return nil
 	}
 
+	dialer := getDialer(user, pass)
 	brokerList := strings.Split(brokers, ",")
 	w := &kafka.Writer{
 		Addr:     kafka.TCP(brokerList...),
 		Topic:    "storks.safety.verification.events",
 		Balancer: &kafka.LeastBytes{},
+		Transport: &kafka.Transport{
+			Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
+				return dialer.DialContext(ctx, network, address)
+			},
+			TLS: dialer.TLS,
+		},
 	}
 
 	return &Producer{

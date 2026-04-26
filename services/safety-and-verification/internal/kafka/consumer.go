@@ -12,11 +12,12 @@ type Consumer struct {
 	reader *kafka.Reader
 }
 
-func NewConsumer(brokers string) *Consumer {
+func NewConsumer(brokers, user, pass string) *Consumer {
 	if brokers == "" {
 		return nil
 	}
 
+	dialer := getDialer(user, pass)
 	brokerList := strings.Split(brokers, ",")
 	r := kafka.NewReader(kafka.ReaderConfig{
 		Brokers:   brokerList,
@@ -24,6 +25,7 @@ func NewConsumer(brokers string) *Consumer {
 		Topic:     "storks.safety.verification.requests",
 		MinBytes:  10e3, // 10KB
 		MaxBytes:  10e6, // 10MB
+		Dialer:    dialer,
 	})
 
 	return &Consumer{reader: r}

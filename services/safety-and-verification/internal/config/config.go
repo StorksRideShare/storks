@@ -12,6 +12,8 @@ type Config struct {
 	DatabaseURL    string
 	RedisURL       string
 	KafkaBrokers   string
+	KafkaUser      string
+	KafkaPass      string
 	QRSecret       string
 	ClerkSecretKey string
 	DemoMode       bool
@@ -38,6 +40,8 @@ func LoadConfig() (*Config, error) {
 		DatabaseURL:    os.Getenv("DATABASE_URL"),
 		RedisURL:       os.Getenv("REDIS_URL"),
 		KafkaBrokers:   os.Getenv("KAFKA_BROKERS"),
+		KafkaUser:      os.Getenv("KAFKA_USER"),
+		KafkaPass:      os.Getenv("KAFKA_PASS"),
 		QRSecret:       os.Getenv("QR_SECRET"),
 		ClerkSecretKey: os.Getenv("CLERK_SECRET_KEY"),
 		DemoMode:       demoMode,

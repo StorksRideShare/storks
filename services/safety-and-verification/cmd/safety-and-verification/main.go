@@ -54,7 +54,7 @@ func main() {
 	}(redisClient)
 
 	// Initialize Kafka Producer
-	kafkaProducer := kafka.NewProducer(cfg.KafkaBrokers)
+	kafkaProducer := kafka.NewProducer(cfg.KafkaBrokers, cfg.KafkaUser, cfg.KafkaPass)
 	defer func() {
 		if kafkaProducer != nil {
 			_ = kafkaProducer.Close()
@@ -99,7 +99,7 @@ func main() {
 	apiGrp.POST("/emergency/new", emHandler.HandleEmergency)
 
 	// Initialize Kafka Consumer
-	kafkaConsumer := kafka.NewConsumer(cfg.KafkaBrokers)
+	kafkaConsumer := kafka.NewConsumer(cfg.KafkaBrokers, cfg.KafkaUser, cfg.KafkaPass)
 	if kafkaConsumer != nil {
 		kafkaConsumer.Start(context.Background(), func(ctx context.Context, action string, payload map[string]interface{}) {
 			// Extremely simple routing for kafka commands
