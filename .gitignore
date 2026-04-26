@@ -7,3 +7,5 @@ services/safty-and-verification/.env
 *.env
 services/safty-and-verification/database_setup.sql
 services/safty-and-verification/.env
+config.bat
+node_modules
