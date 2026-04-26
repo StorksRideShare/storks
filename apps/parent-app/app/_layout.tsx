@@ -14,6 +14,7 @@ global.Buffer = Buffer;
 
 import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider";
 import "@/global.css";
+import { DemoProvider } from "@/context/DemoContext";
 
 import LoadingScreen from "@/components/LoadingScreen";
 
@@ -73,20 +74,22 @@ function RootLayoutNav() {
   return (
     <GluestackUIProvider mode="dark">
       <ThemeProvider value={DarkTheme}>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(auth)" />
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="(driver)" />
-          <Stack.Screen name="(verify)" />
-          <Stack.Screen name="(groups)" />
-          <Stack.Screen name="(offer)" />
-          <Stack.Screen name="(track)" />
-          <Stack.Screen name="onboarding" options={{ headerShown: false }} />
-          <Stack.Screen name="modal" options={{ presentation: "modal" }} />
-          <Stack.Screen name="search-account" options={{ presentation: "modal", headerShown: false }} />
-          <Stack.Screen name="chats" />
-          <Stack.Screen name="+not-found" />
-        </Stack>
+        <DemoProvider>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="(auth)" />
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="(driver)" />
+            <Stack.Screen name="(verify)" />
+            <Stack.Screen name="(groups)" />
+            <Stack.Screen name="(offer)" />
+            <Stack.Screen name="(track)" />
+            <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+            <Stack.Screen name="modal" options={{ presentation: "modal" }} />
+            <Stack.Screen name="search-account" options={{ presentation: "modal", headerShown: false }} />
+            <Stack.Screen name="chats" />
+            <Stack.Screen name="+not-found" />
+          </Stack>
+        </DemoProvider>
       </ThemeProvider>
     </GluestackUIProvider>
   );

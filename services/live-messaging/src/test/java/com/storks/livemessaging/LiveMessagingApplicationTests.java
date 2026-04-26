@@ -1,28 +1,20 @@
-<<<<<<<< HEAD:services/admin-and-analytics/src/test/java/com/storks/admiinandanalytics/AdminAndAnalyticsApplicationTests.java
-package com.storks.admiinandanalytics;
- 
-========
 package com.storks.livemessaging;
 
->>>>>>>> origin/development:services/live-messaging/src/test/java/com/storks/livemessaging/LiveMessagingApplicationTests.java
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
- 
+import org.springframework.kafka.test.context.EmbeddedKafka;
+
+import org.springframework.boot.test.mock.mockito.MockBean;
+
 @SpringBootTest
-<<<<<<<< HEAD:services/admin-and-analytics/src/test/java/com/storks/admiinandanalytics/AdminAndAnalyticsApplicationTests.java
-class AdminAndAnalyticsApplicationTests {
- 
-    @Test
-    void contextLoads() {
-    }
- 
-}
-========
+@EmbeddedKafka(partitions = 1)
 class LiveMessagingApplicationTests {
 
+    @MockBean
+    private org.springframework.security.oauth2.jwt.JwtDecoder jwtDecoder;
+
     @Test
     void contextLoads() {
     }
 
 }
->>>>>>>> origin/development:services/live-messaging/src/test/java/com/storks/livemessaging/LiveMessagingApplicationTests.java

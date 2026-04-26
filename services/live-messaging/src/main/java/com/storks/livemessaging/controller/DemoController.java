@@ -22,6 +22,30 @@ import java.util.UUID;
 public class DemoController {
 
     private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final com.storks.livemessaging.repositories.ChildGroupRepository childGroupRepository;
+
+    @org.springframework.web.bind.annotation.GetMapping("/verification-contexts")
+    public ResponseEntity<java.util.List<com.storks.livemessaging.dto.VerificationDemoContext>> getVerificationContexts(@org.springframework.security.core.annotation.AuthenticationPrincipal com.storks.models.dto.UserAuthClaim claim) {
+        log.info("Demo: getVerificationContexts for user {}", claim != null ? claim.userId() : "NULL");
+        if (claim == null || claim.userId() == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        java.util.List<com.storks.models.ChildGroup> groups = childGroupRepository.findByParent_UserId(claim.userId());
+        
+        java.util.List<com.storks.livemessaging.dto.VerificationDemoContext> contexts = groups.stream()
+            .flatMap(group -> group.getChildren().stream()
+                .map(child -> new com.storks.livemessaging.dto.VerificationDemoContext(
+                    group.getGroupId(),
+                    group.getRideId(),
+                    child.getChildId(),
+                    child.getFirstName() + " " + child.getLastName()
+                )))
+            .collect(java.util.stream.Collectors.toList());
+
+        log.info("Demo: Found {} verification contexts", contexts.size());
+        return ResponseEntity.ok(contexts);
+    }
 
     @PostMapping("/offer-created")
     public ResponseEntity<String> triggerOfferCreated(@RequestBody Map<String, String> payload) {

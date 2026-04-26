@@ -8,6 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, Stack } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
 import { useApiClient } from '@/middleware/apiClient';
+import { useDemo } from '@/context/DemoContext';
 
 export default function VerificationDemoScreen() {
   const [timeOfDay, setTimeOfDay] = useState<"morning" | "afternoon">("morning");
@@ -19,21 +20,28 @@ export default function VerificationDemoScreen() {
   const [qrPayload, setQrPayload] = useState('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  const { verificationContext, isLoading: isContextLoading } = useDemo();
   const api = useApiClient("safety-and-verification");
 
-  const demoPayload = {
-    group_id: "e7303649-db50-4091-98c4-3e30266366f7",
-    ride_id: "f8820855-3a0e-4734-bdd9-8b3d5b938c1e",
-    child_id: "2ccd93c1-09b1-4c8c-9699-885f4f11b858"
-  };
-
   const requestPin = () => {
+    if (!verificationContext) {
+      setErrorMsg("No active ride context found for demo.");
+      return;
+    }
+
+    const payload: any = {
+      group_id: verificationContext.groupId,
+    };
+    if (timeOfDay === "morning") {
+      payload.ride_id = verificationContext.rideId;
+    }
+
     setIsLoading(true);
     setErrorMsg(null);
     setShowQr(false);
     setShowPin(false);
     
-    api.post(`/otp/request?type=${timeOfDay}`, demoPayload)
+    api.post(`/otp/request?type=${timeOfDay}`, payload)
       .then((response: any) => {
         setPin(response.pin);
         setShowPin(true);
@@ -54,12 +62,26 @@ export default function VerificationDemoScreen() {
   };
 
   const requestQr = () => {
+    if (!verificationContext) {
+      setErrorMsg("No active ride context found for demo.");
+      return;
+    }
+
+    const payload: any = {
+      group_id: verificationContext.groupId,
+    };
+    if (timeOfDay === "morning") {
+      payload.ride_id = verificationContext.rideId;
+    } else {
+      payload.child_id = verificationContext.childId;
+    }
+
     setIsLoading(true);
     setErrorMsg(null);
     setShowPin(false);
     setShowQr(false);
 
-    api.post(`/qr/request?type=${timeOfDay}`, demoPayload)
+    api.post(`/qr/request?type=${timeOfDay}`, payload)
       .then((response: any) => {
         setQrPayload(JSON.stringify(response.qr_payload));
         setShowQr(true);
@@ -117,27 +139,36 @@ export default function VerificationDemoScreen() {
             </View>
           )}
 
-          <Button onPress={requestPin} disabled={isLoading} className="bg-[#F97316] h-14 rounded-full">
-            <ButtonText className="text-white font-bold text-lg">
-               {isLoading && !showQr ? "Requesting..." : "Request PIN Verification"}
-            </ButtonText>
-          </Button>
-          {showPin && pin ? (
-            <View className="bg-[#1A1919] p-4 rounded-3xl border border-[#333]">
-              <PINShowcase pin={pin} title={`Requested ${timeOfDay === 'morning' ? 'Morning' : 'Afternoon'} PIN`} description="Give this PIN to the driver" />
+          {isContextLoading ? (
+            <View style={{ padding: 40, alignItems: 'center' }}>
+              <ActivityIndicator size="large" color="#F97316" />
+              <Text style={{ color: '#aaa', marginTop: 12 }}>Loading demo context...</Text>
             </View>
-          ) : null}
+          ) : (
+            <>
+              <Button onPress={requestPin} disabled={isLoading} className="bg-[#F97316] h-14 rounded-full">
+                <ButtonText className="text-white font-bold text-lg">
+                  {isLoading && !showQr ? "Requesting..." : "Request PIN Verification"}
+                </ButtonText>
+              </Button>
+              {showPin && pin ? (
+                <View className="bg-[#1A1919] p-4 rounded-3xl border border-[#333]">
+                  <PINShowcase pin={pin} title={`Requested ${timeOfDay === 'morning' ? 'Morning' : 'Afternoon'} PIN`} description="Give this PIN to the driver" />
+                </View>
+              ) : null}
 
-          <Button onPress={requestQr} disabled={isLoading} className="bg-[#F97316] h-14 rounded-full">
-            <ButtonText className="text-white font-bold text-lg">
-              {isLoading && !showPin ? "Requesting..." : "Request QR Code"}
-            </ButtonText>
-          </Button>
-          {showQr && qrPayload ? (
-            <View className="bg-[#1A1919] p-4 rounded-3xl border border-[#333]">
-              <QRShowcase payload={qrPayload} title={`Requested ${timeOfDay === 'morning' ? 'Morning' : 'Afternoon'} QR`} description="Show this QR to the driver" />
-            </View>
-          ) : null}
+              <Button onPress={requestQr} disabled={isLoading} className="bg-[#F97316] h-14 rounded-full">
+                <ButtonText className="text-white font-bold text-lg">
+                  {isLoading && !showPin ? "Requesting..." : "Request QR Code"}
+                </ButtonText>
+              </Button>
+              {showQr && qrPayload ? (
+                <View className="bg-[#1A1919] p-4 rounded-3xl border border-[#333]">
+                  <QRShowcase payload={qrPayload} title={`Requested ${timeOfDay === 'morning' ? 'Morning' : 'Afternoon'} QR`} description="Show this QR to the driver" />
+                </View>
+              ) : null}
+            </>
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>
