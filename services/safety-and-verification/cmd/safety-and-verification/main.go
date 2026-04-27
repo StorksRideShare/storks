@@ -48,7 +48,7 @@ func main() {
 	}
 
 	p := ginprometheus.NewPrometheus("gin")
-	p.SetMetricsPathWithAuth(r, metricsUser, metricsPass)
+	p.SetMetricsPathWithAuth(r, gin.Accounts{metricsUser: metricsPass})
 
 	// Init DB
 	dbPool, err := repository.NewPostgresPool(context.Background(), cfg.DatabaseURL)
