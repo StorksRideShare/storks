@@ -37,8 +37,11 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth.anyRequest().hasRole("METRICS"))
-                .httpBasic(Customizer.withDefaults());
+                .authorizeHttpRequests(auth -> auth
+                        .anyRequest().hasAuthority("ROLE_METRICS")
+                )
+                .httpBasic(Customizer.withDefaults())
+                .userDetailsService(userDetailsService());
         return http.build();
     }
 
@@ -47,13 +50,20 @@ public class SecurityConfig {
         String user = System.getenv("METRICS_USER");
         String pass = System.getenv("METRICS_PASS");
 
-        if (user == null) user = "grafana";
-        if (pass == null) pass = "metrics_password";
+        if (user == null || user.isEmpty()) {
+            user = "grafana";
+        }
+        if (pass == null || pass.isEmpty()) {
+            pass = "metrics_password";
+        }
+
+        // Helpful for debugging in Railway logs (Don't log the password in production normally!)
+        System.out.println("Metrics Auth - User: " + user + " (using " + (System.getenv("METRICS_USER") != null ? "env" : "default") + ")");
 
         UserDetails metricsUser = User.builder()
                 .username(user)
                 .password("{noop}" + pass)
-                .roles("METRICS")
+                .authorities("ROLE_METRICS")
                 .build();
 
         return new InMemoryUserDetailsManager(metricsUser);
