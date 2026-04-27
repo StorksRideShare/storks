@@ -16,6 +16,7 @@ import (
 	"safety-and-verification/internal/service"
 
 	"github.com/gin-contrib/cors"
+	ginprometheus "github.com/zsais/go-gin-prometheus"
 )
 
 func main() {
@@ -34,6 +35,10 @@ func main() {
 		AllowCredentials: true,
 		MaxAge:           604800, // 1 week
 	}))
+
+	// Prometheus
+	p := ginprometheus.NewPrometheus("gin")
+	p.Use(r)
 
 	// Init DB
 	dbPool, err := repository.NewPostgresPool(context.Background(), cfg.DatabaseURL)
