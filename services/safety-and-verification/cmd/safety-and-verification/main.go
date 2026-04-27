@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
@@ -28,7 +29,7 @@ func main() {
 	// Cors
 	r := gin.Default()
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"*"},
+		AllowOrigins:     []string{"*", "https://kavindunirmal.grafana.net", "https://grafana.com"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Content-Type", "Authorization", "Content-Length", "Accept-Encoding", "X-CSRF-Token", "Origin", "Accept"},
 		ExposeHeaders:    []string{"Content-Length"},
@@ -36,9 +37,18 @@ func main() {
 		MaxAge:           604800, // 1 week
 	}))
 
-	// Prometheus
+	// Prometheus (Protected by Basic Auth)
+	metricsUser := os.Getenv("METRICS_USER")
+	metricsPass := os.Getenv("METRICS_PASS")
+	if metricsUser == "" {
+		metricsUser = "grafana"
+	}
+	if metricsPass == "" {
+		metricsPass = "metrics_password"
+	}
+
 	p := ginprometheus.NewPrometheus("gin")
-	p.Use(r)
+	p.SetMetricsPathWithAuth(r, metricsUser, metricsPass)
 
 	// Init DB
 	dbPool, err := repository.NewPostgresPool(context.Background(), cfg.DatabaseURL)

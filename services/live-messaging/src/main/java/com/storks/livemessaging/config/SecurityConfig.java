@@ -1,14 +1,18 @@
 package com.storks.livemessaging.config;
 
 import com.storks.common.auth.UserAuthJwtAuthenticationConverter;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -23,6 +27,35 @@ import java.util.List;
 public class SecurityConfig {
 
     private final UserAuthJwtAuthenticationConverter userAuthJwtAuthenticationConverter;
+
+    @Bean
+    @Order(1)
+    public SecurityFilterChain metricsFilterChain(HttpSecurity http) throws Exception {
+        http
+                .securityMatcher("/actuator/**")
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(Customizer.withDefaults())
+                .authorizeHttpRequests(auth -> auth.anyRequest().hasRole("METRICS"))
+                .httpBasic(Customizer.withDefaults());
+        return http.build();
+    }
+
+    @Bean
+    public UserDetailsService userDetailsService() {
+        String user = System.getenv("METRICS_USER");
+        String pass = System.getenv("METRICS_PASS");
+
+        if (user == null) user = "grafana";
+        if (pass == null) pass = "metrics_password";
+
+        UserDetails metricsUser = User.builder()
+                .username(user)
+                .password("{noop}" + pass)
+                .roles("METRICS")
+                .build();
+
+        return new InMemoryUserDetailsManager(metricsUser);
+    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -56,7 +89,8 @@ public class SecurityConfig {
                 "http://localhost:8086",
                 "http://localhost:8087",
                 "http://localhost:8088",
-                "http://localhost:8089"
+                "http://localhost:8089",
+                "https://kavindunirmal.grafana.net"
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE"));
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
