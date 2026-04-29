@@ -9,8 +9,9 @@ const SERVER_IP =
 
 export const API_BASE_URL = `http://${SERVER_IP}:8080`;
 
-/** WebSocket base URL for the live-messaging service (port 8086) */
-export const WS_BASE_URL = `ws://${SERVER_IP}:8086/ws`;
+export const WS_BASE_URL =
+  (process.env.EXPO_PUBLIC_LIVE_MESSAGING_URL?.replace(/^http/, "ws") ??
+    `ws://${SERVER_IP}:8086`) + "/ws";
 
 export type ServiceName =
   | "admin-and-analytics"
@@ -73,10 +74,9 @@ export function createApiClient(
       ...((options.headers as Record<string, string>) || {}),
     };
 
-    // Paths passed to get/post/etc must NOT include the prefix —
-    // the prefix is injected here to prevent doubled /api/v1/api/v1 paths.
+    const sanitizedBaseUrl = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
     const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-    const url = `${baseUrl}${prefix}${normalizedPath}`;
+    const url = `${sanitizedBaseUrl}${prefix}${normalizedPath}`;
 
     if (__DEV__) console.log(`[API] ${options.method || "GET"} ${url}`);
 
@@ -137,8 +137,16 @@ export function useApiClient(
 ) {
   const { session } = useSession();
   const port = SERVICE_PORTS[service];
-  const baseUrl = getBaseUrl(port);
 
+  const baseUrl = useMemo(() => {
+    if (service === "live-messaging" && process.env.EXPO_PUBLIC_LIVE_MESSAGING_URL) {
+      return process.env.EXPO_PUBLIC_LIVE_MESSAGING_URL;
+    }
+    if (service === "safety-and-verification" && process.env.EXPO_PUBLIC_SAFETY_VERIFICATION_URL) {
+      return process.env.EXPO_PUBLIC_SAFETY_VERIFICATION_URL;
+    }
+    return getBaseUrl(port);
+  }, [service, port]);
 
   const sessionId = session?.id;
 

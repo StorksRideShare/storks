@@ -92,18 +92,8 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
             CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedHeaders(List.of("*"));
-        configuration.setAllowedOrigins(Arrays.asList(
-                "http://localhost:8080",
-                "http://localhost:8081",
-                "http://localhost:8082",
-                "http://localhost:8083",
-                "http://localhost:8085",
-                "http://localhost:8086",
-                "http://localhost:8087",
-                "http://localhost:8088",
-                "http://localhost:8089",
-                "https://kavindunirmal.grafana.net"
-        ));
+        configuration.setAllowedOriginPatterns(List.of("*"));
+
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE"));
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

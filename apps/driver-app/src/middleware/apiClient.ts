@@ -9,8 +9,9 @@ const SERVER_IP =
 
 export const API_BASE_URL = `http://${SERVER_IP}:8080`;
 
-/** WebSocket base URL for the live-messaging service */
-export const WS_BASE_URL = `ws://${SERVER_IP}:8086/ws`;
+export const WS_BASE_URL =
+  (process.env.EXPO_PUBLIC_LIVE_MESSAGING_URL?.replace(/^http/, "ws") ??
+    `ws://${SERVER_IP}:8086`) + "/ws";
 
 export type ServiceName =
   | "admin-and-analytics"
@@ -77,8 +78,9 @@ export function createApiClient(
     if (path.startsWith("http")) {
       url = path;
     } else {
+      const sanitizedBaseUrl = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
       const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-      url = `${baseUrl}${prefix}${normalizedPath}`;
+      url = `${sanitizedBaseUrl}${prefix}${normalizedPath}`;
     }
 
     console.log(`API REQUEST: ${options.method || "GET"} ${url}`);
@@ -130,10 +132,19 @@ export function useApiClient(
   const { getToken } = useAuth();
 
   const port = SERVICE_PORTS[service];
-  const baseUrl = getBaseUrl(port);
+  
+  const baseUrl = useMemo(() => {
+    if (service === "live-messaging" && process.env.EXPO_PUBLIC_LIVE_MESSAGING_URL) {
+      return process.env.EXPO_PUBLIC_LIVE_MESSAGING_URL;
+    }
+    if (service === "safety-and-verification" && process.env.EXPO_PUBLIC_SAFETY_VERIFICATION_URL) {
+      return process.env.EXPO_PUBLIC_SAFETY_VERIFICATION_URL;
+    }
+    return getBaseUrl(port);
+  }, [service, port]);
 
   return useMemo(
     () => createApiClient(getToken, baseUrl, prefix),
-    [getToken, service, baseUrl, prefix],
+    [getToken, baseUrl, prefix],
   );
 }
