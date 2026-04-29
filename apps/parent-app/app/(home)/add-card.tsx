@@ -6,7 +6,7 @@ import { VStack } from "@/components/ui/vstack";
 import { Text } from "@/components/ui/text";
 import { Button, ButtonText } from "@/components/ui/button";
 import { ChevronLeft, CheckCircle2, AlertCircle } from "lucide-react-native";
-import { router, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams, Stack } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Modal } from "react-native";
 
@@ -52,6 +52,31 @@ export default function AddCardScreen() {
     setCardNumber(formattedValue);
   };
 
+  const validateInputs = () => {
+    if (!cardName.trim() || !cardNumber.trim() || !cvv.trim() || !expiry.trim()) {
+      showInsight('warning', 'Missing Details', 'Please fill in all the required card fields.');
+      return false;
+    }
+
+    if (!expiry.match(/^(0[1-9]|1[0-2])\/\d{2}$/)) {
+      showInsight('warning', 'Expiry Date', 'Please enter a valid expiry date in MM/YY format.');
+      return false;
+    }
+
+    const [month, year] = expiry.split('/').map(num => parseInt(num, 10));
+    const fullYear = 2000 + year;
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1;
+    const currentYear = now.getFullYear();
+
+    if (fullYear < currentYear || (fullYear === currentYear && month < currentMonth)) {
+      showInsight('warning', 'Expired Card', 'This card has already expired.');
+      return false;
+    }
+
+    return true;
+  };
+
   const handleExpiryChange = (text: string) => {
     let numericValue = text.replace(/\D/g, '');
     if (numericValue.length >= 2) {
@@ -61,12 +86,8 @@ export default function AddCardScreen() {
   };
 
   const handleSaveAndPay = async () => {
-    // Keep a basic check to prevent entirely empty submissions firing off network requests.
-    if (!cardName.trim() || !cardNumber.trim() || !cvv.trim() || !expiry.trim()) {
-      showInsight('warning', 'Missing Details', 'Please fill in all the required card fields.');
-      return;
-    }
-    
+    if (!validateInputs()) return;
+
     if (!bookingId) return;
 
     try {
@@ -92,7 +113,7 @@ export default function AddCardScreen() {
         let errorMsg = errorData.message || "Failed to save card securely.";
         // Springboot prefixes our RuntimeExceptions with this. Cleaning it for UI.
         if (errorMsg.startsWith("Validation Error: ")) {
-             errorMsg = errorMsg.replace("Validation Error: ", "");
+          errorMsg = errorMsg.replace("Validation Error: ", "");
         }
         throw new Error(errorMsg);
       }
@@ -122,6 +143,7 @@ export default function AddCardScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-[#0F0E0E]">
+      <Stack.Screen options={{ headerShown: false }} />
       <HStack className="px-5 py-4 items-center justify-between">
         <Pressable onPress={() => router.back()}>
           <ChevronLeft color="#F97316" size={28} />
@@ -226,7 +248,7 @@ export default function AddCardScreen() {
         <Box className="flex-1 justify-center items-center bg-black/80 px-6">
           <VStack space="xl" className="w-full bg-[#1A1919] border border-gray-800 rounded-[40px] p-8 items-center shadow-2xl">
             <Box className={`p-6 rounded-full ${insight.type === 'success' ? 'bg-green-500/10' :
-                insight.type === 'warning' ? 'bg-yellow-500/10' : 'bg-red-500/10'
+              insight.type === 'warning' ? 'bg-yellow-500/10' : 'bg-red-500/10'
               }`}>
               {insight.type === 'success' ? (
                 <CheckCircle2 color="#22C55E" size={64} />

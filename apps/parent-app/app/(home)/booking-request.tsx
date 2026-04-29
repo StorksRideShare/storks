@@ -12,7 +12,7 @@ import {
   CheckCircle2,
   AlertCircle
 } from "lucide-react-native";
-import { router, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams, Stack } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LoggedParentID } from "@/logged_parent";
 import { useToast, Toast, ToastTitle } from "@/components/ui/toast";
@@ -185,11 +185,12 @@ export default function BookingRequestScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-[#0F0E0E]">
+      <Stack.Screen options={{ headerShown: false }} />
       <HStack className="px-5 py-4 items-center justify-between">
         <Pressable onPress={() => router.back()}>
           <ChevronLeft color="#F97316" size={28} />
         </Pressable>
-        <Text className="text-orange-500 font-bold text-2xl">Search a Driver</Text>
+        <Text className="text-orange-500 font-bold text-2xl">Booking Request</Text>
         <Box className="w-7" />
       </HStack>
 

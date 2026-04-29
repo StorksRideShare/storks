@@ -5,7 +5,6 @@ import org.springframework.stereotype.Service;
 import wdse17.bookingandpayment.dto.OfferDTO;
 import wdse17.bookingandpayment.entity.Offer;
 import wdse17.bookingandpayment.entity.Asset;
-import wdse17.bookingandpayment.entity.Location;
 import wdse17.bookingandpayment.repository.OfferRepository;
 
 import java.util.List;

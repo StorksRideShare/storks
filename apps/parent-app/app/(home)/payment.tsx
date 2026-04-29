@@ -12,7 +12,7 @@ import {
   CheckCircle2,
   AlertCircle
 } from "lucide-react-native";
-import { router, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams, Stack } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Modal } from "react-native";
 import { LoggedParentID } from "../../logged_parent";
@@ -103,6 +103,7 @@ export default function PaymentScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-[#0F0E0E]">
+      <Stack.Screen options={{ headerShown: false }} />
       <HStack className="px-5 py-4 items-center justify-between">
         <Pressable onPress={() => router.back()}>
           <ChevronLeft color="#F97316" size={28} />

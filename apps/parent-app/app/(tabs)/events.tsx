@@ -10,7 +10,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { LoggedParentID } from "../../logged_parent";
 import { useToast, Toast, ToastTitle } from "@/components/ui/toast";
 import { CheckCircle2, XCircle } from "lucide-react-native";
-import { router, useFocusEffect } from "expo-router";
+import { router, useFocusEffect, Stack } from "expo-router";
 
 const SERVER_IP = process.env.EXPO_PUBLIC_SERVER_IP || (Platform.OS === "android" ? "10.0.2.2" : "localhost");
 const API_BASE_URL = `http://${SERVER_IP}:8080`;
@@ -164,6 +164,7 @@ export default function EventsScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-[#0F0E0E] px-5">
+      <Stack.Screen options={{ headerShown: false }} />
       <HStack className="justify-between items-center py-4 mb-4">
         <Text className="text-white font-bold text-2xl">Storks</Text>
         <Text className="text-orange-500 font-bold text-3xl">Events</Text>

@@ -62,7 +62,7 @@ function RootLayoutNav() {
     <GluestackUIProvider mode="dark">
       <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
         <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
-          <Stack>
+          <Stack screenOptions={{ title: "Storks" }}>
             <Stack.Screen name="(home)" options={{ headerShown: false }} />
             <Stack.Screen name="(auth)" options={{ headerShown: false }} />
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
