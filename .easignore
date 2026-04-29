@@ -1,0 +1,58 @@
+# ==========================================
+# EAS Build Ignore (Monorepo Root)
+# ==========================================
+
+# 1. Global Dependencies & Caches
+node_modules/
+.pnpm-store/
+.cache/
+.expo/
+
+# 2. Ignore other Apps in the monorepo
+apps/admin/
+apps/admin-web/
+apps/driver-app/
+apps/website/
+
+# 3. Ignore Backend Services & Shared Code (unless specifically needed)
+services/
+libs/
+shared/
+infrastructure/
+docs/
+tests/
+
+# 4. Native Build Artifacts
+**/android/build/
+**/android/app/build/
+**/ios/build/
+**/.cxx/
+**/*.jks
+**/*.p8
+**/*.p12
+**/*.key
+**/*.mobileprovision
+
+# 5. Build & Output Directories
+**/dist/
+**/build/
+**/target/
+**/bin/
+**/.gradle/
+
+# 6. Environment & Secrets
+.env
+.env*.local
+**/*.sql
+
+# 7. Debug & IDEs
+.vscode/
+.idea/
+.DS_Store
+*.log
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# 8. Specific App ignores
+apps/parent-app/ui_design/

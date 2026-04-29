@@ -61,8 +61,12 @@ export default function ChatRoom() {
   /** Backend UUID of the current user */
   const myBackendIdRef = useRef<string | null>(null);
 
-  // Room name
-  const displayName = (() => {
+  // Room name for the header
+  const headerTitle = (() => {
+    if (room?.chatRoomType === "GROUP") {
+      const driver = room.participants?.find((p: any) => p.role === "DRIVER");
+      return driver ? `${driver.firstName}'s Group` : (name || "Group Chat");
+    }
     if (room?.participants && user?.id) {
       const other = room.participants.find((p: any) => p.providerUserId !== user.id);
       if (other) return `${other.firstName ?? ""} ${other.lastName ?? ""}`.trim() || name || "Chat";
@@ -283,10 +287,6 @@ export default function ChatRoom() {
     const isFirstInGroup = !nextMsg || !sameGroup(nextMsg, msg);
     const isLastInGroup = !prevMsg || !sameGroup(prevMsg, msg);
 
-    // Margin bottom affects spacing to the older message (which is above it in the screen)
-    // Wait, in inverted list, margin bottom adds space below the item (towards the bottom of the screen).
-    // The bottom of the screen is the NEWER direction.
-    // So if it's the last in group (closest to bottom of screen), we add margin below it to separate it from the next group's first message.
     const marginBottom = isLastInGroup ? 12 : 2;
 
     if (isSystem) {
@@ -307,6 +307,9 @@ export default function ChatRoom() {
     const time = msg.sentAt
       ? new Date(msg.sentAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
       : "";
+
+    const sender = room?.participants?.find((p: any) => p.userId === msg.senderId);
+    const isDriver = sender?.role === "DRIVER";
 
     // Bubble tail shape
     const bubbleRadius = isLastInGroup
@@ -332,16 +335,25 @@ export default function ChatRoom() {
         >
           {/* Sender label — only chronologically first bubble in a group from the other person */}
           {!isMe && isFirstInGroup && (
-            <Text className="text-[10px] text-orange-400 font-semibold mb-1 px-1">
-              {displayName}
-            </Text>
+            <HStack space="xs" className="items-center mb-1 px-1">
+              <Text className="text-[10px] text-orange-400 font-semibold">
+                {sender ? `${sender.firstName} ${sender.lastName}`.trim() : "Unknown"}
+              </Text>
+              {isDriver && (
+                <Box className="bg-yellow-500 ml-2 px-1.5 py-0.5 rounded-sm">
+                  <Text className="text-[8px] text-black font-bold uppercase">Driver</Text>
+                </Box>
+              )}
+            </HStack>
           )}
 
           <Box
             className={`px-4 py-2 ${bubbleRadius} ${
               isMe
                 ? "bg-orange-500 shadow-sm"
-                : "bg-gray-800 border border-gray-700"
+                : isDriver
+                  ? "bg-gray-800 border border-orange-300"
+                  : "bg-gray-800 border border-gray-700"
             }`}
           >
             <Text className="text-white text-sm leading-5">{msg.content}</Text>
@@ -362,56 +374,63 @@ export default function ChatRoom() {
   if (loading) return <ChatRoomSkeleton />;
 
   return (
-    <Box
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
       style={{
         flex: 1,
         backgroundColor: colors.background,
-        paddingTop: insets.top,
-        paddingBottom: insets.bottom,
       }}
+      keyboardVerticalOffset={0}
     >
-      {/* Header */}
-      <HStack className="px-4 py-3 items-center border-b border-gray-800 bg-black" space="md">
-        <Pressable onPress={() => router.back()}>
-          <ArrowLeft size={24} color="#ffffff" />
-        </Pressable>
-
-        <Link href={{ pathname: "/chats/[id]/profile", params: { id } }} asChild>
-          <Pressable className="flex-1 flex-row items-center gap-3">
-            <Avatar size="sm">
-              <AvatarFallbackText>{displayName}</AvatarFallbackText>
-            </Avatar>
-            <VStack>
-              <Text className="text-white font-bold">{displayName}</Text>
-              <Text className={`text-[10px] ${isConnected ? "text-green-500" : "text-gray-500"}`}>
-                {isConnected ? "Online" : "Connecting..."}
-              </Text>
-            </VStack>
-          </Pressable>
-        </Link>
-      </HStack>
-
-      {/* Messages */}
-      <View style={{ flex: 1 }}>
-        <FlatList
-          ref={flatListRef}
-          className="flex-1 px-4"
-          data={messages}
-          keyExtractor={(item) => item.messageId}
-          renderItem={renderMessage}
-          inverted
-          contentContainerStyle={{ paddingVertical: 16 }}
-          onEndReached={loadMore}
-          onEndReachedThreshold={0.5}
-          ListFooterComponent={fetchingMore ? <Spinner size="small" color="#fab260ff" /> : null}
-        />
-      </View>
-
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+      <Box
+        style={{
+          flex: 1,
+          paddingTop: insets.top,
+        }}
       >
-        <HStack className="p-4 bg-black border-t border-gray-800 items-end gap-2">
+        {/* Header */}
+        <HStack className="px-4 py-3 items-center border-b border-gray-800 bg-black" space="md">
+          <Pressable onPress={() => router.back()}>
+            <ArrowLeft size={24} color="#ffffff" />
+          </Pressable>
+
+          <Link href={{ pathname: "/chats/[id]/profile", params: { id } }} asChild>
+            <Pressable className="flex-1 flex-row items-center gap-3">
+              <Avatar size="sm">
+                <AvatarFallbackText>{headerTitle}</AvatarFallbackText>
+              </Avatar>
+              <VStack>
+                <Text className="text-white font-bold">{headerTitle}</Text>
+                <Text className={`text-[10px] ${isConnected ? "text-green-500" : "text-gray-500"}`}>
+                  {isConnected ? "Online" : "Connecting..."}
+                </Text>
+              </VStack>
+            </Pressable>
+          </Link>
+        </HStack>
+
+        {/* Messages */}
+        <View style={{ flex: 1 }}>
+          <FlatList
+            ref={flatListRef}
+            className="flex-1 px-4"
+            data={messages}
+            keyExtractor={(item) => item.messageId}
+            renderItem={renderMessage}
+            inverted
+            contentContainerStyle={{ paddingVertical: 16 }}
+            onEndReached={loadMore}
+            onEndReachedThreshold={0.5}
+            ListFooterComponent={fetchingMore ? <Spinner size="small" color="#fab260ff" /> : null}
+            keyboardShouldPersistTaps="handled"
+          />
+        </View>
+
+        {/* Input */}
+        <HStack 
+          className="px-4 pt-4 bg-black border-t border-gray-800 items-end gap-2"
+          style={{ paddingBottom: Math.max(insets.bottom, 16) }}
+        >
           <Box className="flex-1 rounded-2xl border border-brand/60 px-3 py-1">
             <Input className="w-full border-0">
               <InputField
@@ -434,7 +453,7 @@ export default function ChatRoom() {
             <Send size={20} color="#ffffff" />
           </Pressable>
         </HStack>
-      </KeyboardAvoidingView>
-    </Box>
+      </Box>
+    </KeyboardAvoidingView>
   );
 }

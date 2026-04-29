@@ -40,7 +40,7 @@ public class LocalUserAuthServiceImpl implements UserAuthService {
             user = new Parent();
             user.setProviderUserId(providerUserId);
             user.setProviderType(ProviderType.CLERK);
-            user.setEmail(email != null ? email : "unknown@example.com");
+            user.setEmail(email != null ? email : "not-provided@storks.app");
             user.setFirstName(firstName != null ? firstName : "Unknown");
             user.setLastName(lastName != null ? lastName : "User");
             user.setProfilePictureUrl(pictureUrl);

@@ -5,6 +5,11 @@ spring:
     url: ${NEON_DB_URL}
     username: ${NEON_DB_USERNAME}
     password: ${NEON_DB_PASSWORD}
+    hikari:
+      max-lifetime: 240000 # 4 minutes
+      keepalive-time: 60000 # 1 minute
+      validation-timeout: 3000
+
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:

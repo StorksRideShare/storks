@@ -79,7 +79,7 @@ func AuthMiddleware(dbPool *pgxpool.Pool, redisClient *redis.Client, clerkSecret
 				}
 
 				if emailStr == "" {
-					emailStr = "demo@example.com"
+					emailStr = "not-provided@storks.app"
 				}
 
 				// Generate uuid

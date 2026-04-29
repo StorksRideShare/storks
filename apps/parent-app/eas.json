@@ -1,0 +1,29 @@
+{
+  "cli": {
+    "version": ">= 18.8.1",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_cmVhbC1iaXJkLTIwLmNsZXJrLmFjY291bnRzLmRldiQ",
+        "EXPO_PUBLIC_LIVE_MESSAGING_URL": "https://storks-messaging-production.up.railway.app",
+        "EXPO_PUBLIC_SAFETY_VERIFICATION_URL": "https://storks-safety-verification-production.up.railway.app/"
+      }
+    },
+    "production": {
+      "autoIncrement": true
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}
