@@ -13,7 +13,7 @@ import {
   CheckCircle2,
   X,
 } from "lucide-react-native";
-import { router } from "expo-router";
+import { router, Stack } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LoggedParentID } from "@/logged_parent";
 
@@ -147,9 +147,10 @@ export default function SearchDriverScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-[#0F0E0E]">
+      <Stack.Screen options={{ headerShown: false }} />
       <HStack className="px-5 py-4 items-center justify-between">
         <Text className="text-white font-bold text-2xl">Storks</Text>
-        <Text className="text-orange-500 font-bold text-2xl">Search a Driver</Text>
+        <Text className="text-orange-500 font-bold text-2xl">Find a Driver</Text>
         <Box className="w-7" />
       </HStack>
 

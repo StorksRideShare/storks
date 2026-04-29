@@ -9,7 +9,7 @@ import {
   ChevronLeft,
   ChevronDown,
 } from "lucide-react-native";
-import { router } from "expo-router";
+import { router, Stack } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function ChildScheduleScreen() {
@@ -24,6 +24,7 @@ export default function ChildScheduleScreen() {
 
   return (
     <StyledSafeAreaView className="flex-1 bg-[#0F0E0E]">
+      <Stack.Screen options={{ headerShown: false }} />
       {/* Header */}
       <HStack className="px-5 py-4 items-center justify-between">
         <Pressable onPress={() => router.back()}>

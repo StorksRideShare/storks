@@ -58,26 +58,22 @@ public class CardService {
             throw new RuntimeException("Validation Error: CVV must be exactly 3 digits.");
         }
 
-        // VExpiry Date (Format MM/YY and logic)
+        // Expiry Date (Format MM/YY and logic)
         String expiry = request.getExpiry();
-        if (expiry == null || !expiry.matches("^\\d{2}/\\d{2}$")) {
+        if (expiry == null || !expiry.matches("^(0[1-9]|1[0-2])/\\d{2}$")) {
             throw new RuntimeException("Validation Error: Please enter a valid expiry date (MM/YY).");
         }
 
-        String[] parts = expiry.split("/");
-        int month = Integer.parseInt(parts[0]);
-        int year = Integer.parseInt(parts[1]) + 2000;
+        try {
+            java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("MM/yy");
+            java.time.YearMonth expiryDate = java.time.YearMonth.parse(expiry, formatter);
+            java.time.YearMonth currentMonth = java.time.YearMonth.now();
 
-        if (month < 1 || month > 12) {
-            throw new RuntimeException("Validation Error: Month must be between 01 and 12.");
-        }
-
-        java.time.LocalDate nowDate = java.time.LocalDate.now();
-        int currentMonth = nowDate.getMonthValue();
-        int currentYear = nowDate.getYear();
-
-        if (year < currentYear || (year == currentYear && month < currentMonth)) {
-            throw new RuntimeException("Validation Error: The expiry date has already passed.");
+            if (expiryDate.isBefore(currentMonth)) {
+                throw new RuntimeException("Validation Error: The card has already expired.");
+            }
+        } catch (java.time.format.DateTimeParseException e) {
+            throw new RuntimeException("Validation Error: Invalid expiry date format.");
         }
 
         String last4 = rawNumber.substring(rawNumber.length() - 4);
