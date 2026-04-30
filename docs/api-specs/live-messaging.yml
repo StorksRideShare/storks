@@ -5,22 +5,22 @@ info:
   description: Real-time chat and historical message retrieval.
 
 servers:
-  - url: http://localhost:8085/api/v1
-    description: Local Dev Server
+  - url: https://storks-messaging-production.up.railway.app/api/v1
+    description: Production Server
 
 paths:
   /chats:
     get:
       summary: Get active chat rooms for the current user
       responses:
-        '200':
+        "200":
           description: List of chat rooms
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/ChatRoomResponse'
+                  $ref: "#/components/schemas/ChatRoomResponse"
     post:
       summary: Create or restore a chat room with another user
       requestBody:
@@ -28,14 +28,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateChatRequest'
+              $ref: "#/components/schemas/CreateChatRequest"
       responses:
-        '200':
+        "200":
           description: Chat room created or restored
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ChatRoomResponse'
+                $ref: "#/components/schemas/ChatRoomResponse"
 
   /chats/{roomId}:
     get:
@@ -48,12 +48,12 @@ paths:
             type: string
             format: uuid
       responses:
-        '200':
+        "200":
           description: Room details
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ChatRoomResponse'
+                $ref: "#/components/schemas/ChatRoomResponse"
 
   /chats/{roomId}/messages:
     get:
@@ -78,7 +78,7 @@ paths:
             type: string
             default: sentAt,desc
       responses:
-        '200':
+        "200":
           description: Paginated messages
           content:
             application/json:
@@ -88,7 +88,7 @@ paths:
                   content:
                     type: array
                     items:
-                      $ref: '#/components/schemas/Message'
+                      $ref: "#/components/schemas/Message"
                   totalElements:
                     type: integer
                   totalPages:
@@ -105,7 +105,7 @@ paths:
             type: string
             format: uuid
       responses:
-        '200':
+        "200":
           description: List of recent untyped message objects
           content:
             application/json:

@@ -28,9 +28,17 @@ public class UserAuthJwtAuthenticationConverter implements Converter<Jwt, Abstra
             log.debug("Converting JWT for providerUserId: {}", providerUserId);
 
             String email = jwt.getClaimAsString("email");
+            if (email == null) email = jwt.getClaimAsString("email_address");
+            if (email == null) email = jwt.getClaimAsString("primary_email_address");
+
             String firstName = jwt.getClaimAsString("given_name");
+            if (firstName == null) firstName = jwt.getClaimAsString("first_name");
+
             String lastName = jwt.getClaimAsString("family_name");
+            if (lastName == null) lastName = jwt.getClaimAsString("last_name");
+
             String pictureUrl = jwt.getClaimAsString("picture");
+            if (pictureUrl == null) pictureUrl = jwt.getClaimAsString("image_url");
 
             UserAuthClaim claim = userAuthService.getUserAuthClaim(providerUserId, email, firstName, lastName, pictureUrl);
             
