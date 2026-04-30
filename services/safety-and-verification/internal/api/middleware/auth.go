@@ -9,6 +9,7 @@ import (
 
 	"github.com/clerk/clerk-sdk-go/v2"
 	"github.com/clerk/clerk-sdk-go/v2/jwt"
+	"github.com/clerk/clerk-sdk-go/v2/user"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
@@ -73,8 +74,22 @@ func AuthMiddleware(dbPool *pgxpool.Pool, redisClient *redis.Client, clerkSecret
 				// Auto-upsert since the user wasn't found in DB
 				var emailStr string
 				if customClaims, ok := claims.Custom.(map[string]any); ok {
-					if emailRaw, exists := customClaims["email"]; exists {
-						emailStr, _ = emailRaw.(string)
+					// Try multiple possible keys for email
+					for _, key := range []string{"email", "email_address", "primary_email_address"} {
+						if emailRaw, exists := customClaims[key]; exists {
+							emailStr, _ = emailRaw.(string)
+							if emailStr != "" {
+								break
+							}
+						}
+					}
+				}
+
+				if emailStr == "" {
+					// Fallback: Fetch from Clerk API if not in JWT
+					clerkUser, errClerk := user.Get(c.Request.Context(), providerUserID)
+					if errClerk == nil && len(clerkUser.EmailAddresses) > 0 {
+						emailStr = clerkUser.EmailAddresses[0].EmailAddress
 					}
 				}
 

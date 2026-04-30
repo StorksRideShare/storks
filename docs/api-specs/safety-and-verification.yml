@@ -5,15 +5,15 @@ info:
   description: Handles OTP and QR code based verification for rides.
 
 servers:
-  - url: http://localhost:8089/api/v1
-    description: Local Dev Server
+  - url: https://storks-safety-verification-production.up.railway.app/api/v1
+    description: Production Server
 
 paths:
   /health:
     get:
       summary: Health check
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
@@ -38,7 +38,7 @@ paths:
                 role:
                   type: string
       responses:
-        '200':
+        "200":
           description: Mock user created
 
   /otp/request:
@@ -60,7 +60,7 @@ paths:
                   type: string
                   format: uuid
       responses:
-        '200':
+        "200":
           description: OTP generated
           content:
             application/json:
@@ -88,7 +88,7 @@ paths:
                 otp:
                   type: string
       responses:
-        '200':
+        "200":
           description: OTP verified successfully
           content:
             application/json:
@@ -114,7 +114,7 @@ paths:
                   type: string
                   format: uuid
       responses:
-        '200':
+        "200":
           description: QR code data generated
           content:
             application/json:
@@ -142,7 +142,7 @@ paths:
                 qrData:
                   type: string
       responses:
-        '200':
+        "200":
           description: QR code verified successfully
           content:
             application/json:

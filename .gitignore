@@ -15,3 +15,5 @@
 *.gradle/
 *build
 apps/parent-app/ui_design/*
+config.bat
+node_modules
